@@ -5,8 +5,9 @@ import WelcomeScreen from './WelcomeScreen';
 import QuestionCard from './QuestionCard';
 import ProgressBar from './ProgressBar';
 import ResultsScreen from './ResultsScreen';
+import EnrollmentForm from './EnrollmentForm';
 
-type AssessmentState = 'welcome' | 'questions' | 'results';
+type AssessmentState = 'welcome' | 'questions' | 'results' | 'enrollment';
 
 const Assessment = () => {
   const [state, setState] = useState<AssessmentState>('welcome');
@@ -47,15 +48,23 @@ const Assessment = () => {
     setAnswers(new Map());
   };
 
+  const handleEnroll = () => {
+    setState('enrollment');
+  };
+
+  const handleBackToResults = () => {
+    setState('results');
+  };
+
   const result = useMemo((): AssessmentResult | null => {
-    if (state !== 'results') return null;
+    if (state !== 'results' && state !== 'enrollment') return null;
 
     const categoryScores: CategoryScore[] = categories.map((category) => {
       const categoryQuestions = questions.filter((q) => q.category.id === category.id);
       const totalScore = categoryQuestions.reduce((sum, q) => {
         return sum + (answers.get(q.id) || 0);
       }, 0);
-      const maxScore = categoryQuestions.length * 4; // Max score per question is 4
+      const maxScore = categoryQuestions.length * 4;
 
       return {
         categoryId: category.id,
@@ -84,9 +93,14 @@ const Assessment = () => {
     return <WelcomeScreen onStart={handleStart} />;
   }
 
+  if (state === 'enrollment' && result) {
+    const levelInfo = getMaturityLevel(result.overallPercentage);
+    return <EnrollmentForm result={result} levelInfo={levelInfo} onBack={handleBackToResults} />;
+  }
+
   if (state === 'results' && result) {
     const levelInfo = getMaturityLevel(result.overallPercentage);
-    return <ResultsScreen result={result} levelInfo={levelInfo} onRestart={handleRestart} />;
+    return <ResultsScreen result={result} levelInfo={levelInfo} onRestart={handleRestart} onEnroll={handleEnroll} />;
   }
 
   return (
