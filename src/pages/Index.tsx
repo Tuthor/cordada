@@ -1,13 +1,18 @@
-// Update this page (the content is just a fallback if you fail to update the page)
+import Assessment from '@/components/Assessment';
+import { Helmet, HelmetProvider } from 'react-helmet-async';
 
 const Index = () => {
   return (
-    <div className="flex min-h-screen items-center justify-center bg-background">
-      <div className="text-center">
-        <h1 className="mb-4 text-4xl font-bold">Welcome to Your Blank App</h1>
-        <p className="text-xl text-muted-foreground">Start building your amazing project here!</p>
-      </div>
-    </div>
+    <HelmetProvider>
+      <Helmet>
+        <title>Consultant Maturity Assessment | Enterprise Consulting Ecosystem</title>
+        <meta
+          name="description"
+          content="Evaluate your readiness to join an elite consulting ecosystem serving Fortune 500 enterprise clients. Comprehensive assessment across 5 key competencies."
+        />
+      </Helmet>
+      <Assessment />
+    </HelmetProvider>
   );
 };
 
