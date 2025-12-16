@@ -1,6 +1,6 @@
 import { AssessmentResult, MaturityLevelInfo } from '@/types/assessment';
 import { Button } from '@/components/ui/button';
-import { RefreshCw, Award, TrendingUp, CheckCircle, AlertCircle } from 'lucide-react';
+import { RefreshCw, Award, TrendingUp, CheckCircle, AlertCircle, ArrowRight, Users } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import {
   RadarChart,
@@ -15,9 +15,10 @@ interface ResultsScreenProps {
   result: AssessmentResult;
   levelInfo: MaturityLevelInfo;
   onRestart: () => void;
+  onEnroll: () => void;
 }
 
-const ResultsScreen = ({ result, levelInfo, onRestart }: ResultsScreenProps) => {
+const ResultsScreen = ({ result, levelInfo, onRestart, onEnroll }: ResultsScreenProps) => {
   const radarData = result.categoryScores.map((score) => ({
     category: score.categoryName.split(' ')[0],
     score: score.percentage,
@@ -175,12 +176,29 @@ const ResultsScreen = ({ result, levelInfo, onRestart }: ResultsScreenProps) => 
           </div>
         </div>
 
-        {/* Actions */}
-        <div className="mt-8 text-center animate-slide-up" style={{ animationDelay: '300ms' }}>
-          <Button variant="outline" onClick={onRestart} className="gap-2">
-            <RefreshCw className="w-4 h-4" />
-            Retake Assessment
-          </Button>
+        {/* Enrollment CTA */}
+        <div className="mt-8 bg-gradient-hero rounded-2xl p-8 text-center animate-slide-up" style={{ animationDelay: '300ms' }}>
+          <div className="inline-flex items-center gap-2 px-4 py-2 rounded-full bg-white/20 text-primary-foreground mb-4">
+            <Users className="w-4 h-4" />
+            <span className="text-sm font-medium">Join Our Network</span>
+          </div>
+          <h2 className="text-2xl font-bold text-primary-foreground mb-3">
+            Ready to Connect with Enterprise Clients?
+          </h2>
+          <p className="text-primary-foreground/80 mb-6 max-w-xl mx-auto">
+            Enroll in our consultant ecosystem to access exclusive opportunities with Fortune 500 
+            companies and growing enterprises seeking your expertise.
+          </p>
+          <div className="flex flex-col sm:flex-row gap-4 justify-center">
+            <Button variant="outline" onClick={onRestart} className="gap-2 bg-white/10 border-white/30 text-primary-foreground hover:bg-white/20">
+              <RefreshCw className="w-4 h-4" />
+              Retake Assessment
+            </Button>
+            <Button onClick={onEnroll} variant="gold" size="xl" className="gap-2">
+              Enroll Now
+              <ArrowRight className="w-5 h-5" />
+            </Button>
+          </div>
         </div>
       </div>
     </div>
