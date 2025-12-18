@@ -14,6 +14,7 @@ import {
   Linkedin
 } from 'lucide-react';
 import { toast } from '@/hooks/use-toast';
+import { supabase } from '@/integrations/supabase/client';
 
 interface EnrollmentFormProps {
   result: AssessmentResult;
@@ -43,15 +44,32 @@ const EnrollmentForm = ({ result, levelInfo, onBack }: EnrollmentFormProps) => {
     e.preventDefault();
     setIsSubmitting(true);
     
-    // Simulate API call
-    await new Promise(resolve => setTimeout(resolve, 1500));
-    
-    setIsSubmitting(false);
-    setIsSubmitted(true);
-    toast({
-      title: "Application Submitted!",
-      description: "We'll review your profile and get back to you within 48 hours.",
-    });
+    try {
+      const { data, error } = await supabase.functions.invoke('send-enrollment', {
+        body: {
+          ...formData,
+          maturityLevel: levelInfo.name,
+          overallScore: Math.round(result.overallPercentage),
+        },
+      });
+
+      if (error) throw error;
+
+      setIsSubmitted(true);
+      toast({
+        title: "Application Submitted!",
+        description: "We'll review your profile and get back to you within 48 hours.",
+      });
+    } catch (error: any) {
+      console.error('Error submitting enrollment:', error);
+      toast({
+        title: "Submission Failed",
+        description: "There was an error submitting your application. Please try again.",
+        variant: "destructive",
+      });
+    } finally {
+      setIsSubmitting(false);
+    }
   };
 
   if (isSubmitted) {
