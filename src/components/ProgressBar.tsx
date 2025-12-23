@@ -13,7 +13,7 @@ const ProgressBar = ({ current, total, categoryName }: ProgressBarProps) => {
     <div className="w-full">
       <div className="flex justify-between items-center mb-2">
         <span className="text-sm font-medium text-muted-foreground">
-          Question {current} of {total}
+          Pregunta {current} de {total}
           {categoryName && <span className="text-foreground ml-2">• {categoryName}</span>}
         </span>
         <span className="text-sm font-semibold text-foreground">{Math.round(percentage)}%</span>

@@ -5,10 +5,10 @@ const Index = () => {
   return (
     <HelmetProvider>
       <Helmet>
-        <title>Consultant Maturity Assessment | Enterprise Consulting Ecosystem</title>
+        <title>Evaluación de Madurez del Consultor | Ecosistema de Consultoría Empresarial</title>
         <meta
           name="description"
-          content="Evaluate your readiness to join an elite consulting ecosystem serving Fortune 500 enterprise clients. Comprehensive assessment across 5 key competencies."
+          content="Evalúa tu preparación para unirte a un ecosistema élite de consultoría que sirve a clientes empresariales Fortune 500. Evaluación integral en 5 competencias clave."
         />
       </Helmet>
       <Assessment />
