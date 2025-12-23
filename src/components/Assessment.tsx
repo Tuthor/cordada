@@ -106,9 +106,9 @@ const Assessment = () => {
   return (
     <div className="min-h-screen bg-background py-8 lg:py-12">
       <div className="container mx-auto px-4 max-w-3xl">
-        {/* Header */}
+        {/* Encabezado */}
         <div className="mb-8">
-          <h1 className="text-2xl font-bold text-foreground mb-2">Consultant Maturity Assessment</h1>
+          <h1 className="text-2xl font-bold text-foreground mb-2">Evaluación de Madurez del Consultor</h1>
           <ProgressBar
             current={currentQuestionIndex + 1}
             total={questions.length}
@@ -116,7 +116,7 @@ const Assessment = () => {
           />
         </div>
 
-        {/* Question */}
+        {/* Pregunta */}
         <QuestionCard
           key={currentQuestion.id}
           question={currentQuestion}

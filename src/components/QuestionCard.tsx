@@ -28,20 +28,20 @@ const QuestionCard = ({
   return (
     <div className="animate-scale-in">
       <div className="bg-card rounded-2xl shadow-xl border border-border/50 overflow-hidden">
-        {/* Category Header */}
+        {/* Encabezado de Categoría */}
         <div className="bg-secondary/50 px-6 py-4 border-b border-border">
           <span className="text-sm font-medium text-muted-foreground">
             {question.category.name}
           </span>
         </div>
 
-        {/* Question */}
+        {/* Pregunta */}
         <div className="p-6 lg:p-8">
           <h2 className="text-xl lg:text-2xl font-semibold text-foreground mb-8 leading-relaxed">
             {question.text}
           </h2>
 
-          {/* Options */}
+          {/* Opciones */}
           <div className="space-y-3">
             {question.options.map((option) => (
               <button
@@ -85,7 +85,7 @@ const QuestionCard = ({
           </div>
         </div>
 
-        {/* Navigation */}
+        {/* Navegación */}
         <div className="px-6 lg:px-8 pb-6 lg:pb-8 flex justify-between items-center">
           <Button
             variant="ghost"
@@ -94,7 +94,7 @@ const QuestionCard = ({
             className="gap-2"
           >
             <ArrowLeft className="w-4 h-4" />
-            Previous
+            Anterior
           </Button>
           <Button
             variant={isLast ? 'gold' : 'default'}
@@ -102,7 +102,7 @@ const QuestionCard = ({
             disabled={selectedValue === undefined}
             className="gap-2"
           >
-            {isLast ? 'View Results' : 'Next'}
+            {isLast ? 'Ver Resultados' : 'Siguiente'}
             <ArrowRight className="w-4 h-4" />
           </Button>
         </div>

@@ -74,18 +74,18 @@ const ResultsScreen = ({ result, levelInfo, onRestart, onEnroll }: ResultsScreen
   return (
     <div className="min-h-screen bg-background py-8 lg:py-12">
       <div className="container mx-auto px-4 max-w-5xl">
-        {/* Header */}
+        {/* Encabezado */}
         <div className="text-center mb-8 animate-fade-in">
           <div className="inline-flex items-center gap-2 px-4 py-2 rounded-full bg-secondary text-foreground mb-4">
             <Award className="w-4 h-4" />
-            <span className="text-sm font-medium">Assessment Complete</span>
+            <span className="text-sm font-medium">Evaluación Completada</span>
           </div>
           <h1 className="text-3xl lg:text-4xl font-bold text-foreground mb-2">
-            Your Results
+            Tus Resultados
           </h1>
         </div>
 
-        {/* Main Score Card */}
+        {/* Tarjeta de Puntuación Principal */}
         <div className="bg-card rounded-2xl shadow-xl border border-border/50 overflow-hidden mb-8 animate-slide-up">
           <div className="bg-gradient-hero text-primary-foreground p-8 text-center">
             <div className="text-6xl lg:text-7xl font-bold mb-2">
@@ -106,17 +106,17 @@ const ResultsScreen = ({ result, levelInfo, onRestart, onEnroll }: ResultsScreen
               {levelInfo.description}
             </p>
             <div className="bg-secondary/50 rounded-xl p-4 border border-border">
-              <h3 className="font-semibold text-foreground mb-2">Our Recommendation</h3>
+              <h3 className="font-semibold text-foreground mb-2">Nuestra Recomendación</h3>
               <p className="text-muted-foreground">{levelInfo.recommendation}</p>
             </div>
           </div>
         </div>
 
-        {/* Detailed Results */}
+        {/* Resultados Detallados */}
         <div className="grid lg:grid-cols-2 gap-8">
-          {/* Radar Chart */}
+          {/* Gráfico Radar */}
           <div className="bg-card rounded-2xl shadow-lg border border-border/50 p-6 animate-slide-up" style={{ animationDelay: '100ms' }}>
-            <h2 className="text-xl font-semibold text-foreground mb-4">Competency Overview</h2>
+            <h2 className="text-xl font-semibold text-foreground mb-4">Resumen de Competencias</h2>
             <div className="h-[300px]">
               <ResponsiveContainer width="100%" height="100%">
                 <RadarChart data={radarData}>
@@ -131,7 +131,7 @@ const ResultsScreen = ({ result, levelInfo, onRestart, onEnroll }: ResultsScreen
                     tick={{ fill: 'hsl(var(--muted-foreground))', fontSize: 10 }}
                   />
                   <Radar
-                    name="Score"
+                    name="Puntuación"
                     dataKey="score"
                     stroke="hsl(var(--gold))"
                     fill="hsl(var(--gold))"
@@ -143,9 +143,9 @@ const ResultsScreen = ({ result, levelInfo, onRestart, onEnroll }: ResultsScreen
             </div>
           </div>
 
-          {/* Category Breakdown */}
+          {/* Desglose por Categorías */}
           <div className="bg-card rounded-2xl shadow-lg border border-border/50 p-6 animate-slide-up" style={{ animationDelay: '200ms' }}>
-            <h2 className="text-xl font-semibold text-foreground mb-4">Category Scores</h2>
+            <h2 className="text-xl font-semibold text-foreground mb-4">Puntuaciones por Categoría</h2>
             <div className="space-y-4">
               {result.categoryScores.map((score) => {
                 const Icon = getScoreIcon(score.percentage);
@@ -176,26 +176,26 @@ const ResultsScreen = ({ result, levelInfo, onRestart, onEnroll }: ResultsScreen
           </div>
         </div>
 
-        {/* Enrollment CTA */}
+        {/* CTA de Inscripción */}
         <div className="mt-8 bg-gradient-hero rounded-2xl p-8 text-center animate-slide-up" style={{ animationDelay: '300ms' }}>
           <div className="inline-flex items-center gap-2 px-4 py-2 rounded-full bg-white/20 text-primary-foreground mb-4">
             <Users className="w-4 h-4" />
-            <span className="text-sm font-medium">Join Our Network</span>
+            <span className="text-sm font-medium">Únete a Nuestra Red</span>
           </div>
           <h2 className="text-2xl font-bold text-primary-foreground mb-3">
-            Ready to Connect with Enterprise Clients?
+            ¿Listo para Conectar con Clientes Empresariales?
           </h2>
           <p className="text-primary-foreground/80 mb-6 max-w-xl mx-auto">
-            Enroll in our consultant ecosystem to access exclusive opportunities with Fortune 500 
-            companies and growing enterprises seeking your expertise.
+            Inscríbete en nuestro ecosistema de consultores para acceder a oportunidades exclusivas con empresas 
+            Fortune 500 y empresas en crecimiento que buscan tu experiencia.
           </p>
           <div className="flex flex-col sm:flex-row gap-4 justify-center">
             <Button variant="outline" onClick={onRestart} className="gap-2 bg-white/10 border-white/30 text-primary-foreground hover:bg-white/20">
               <RefreshCw className="w-4 h-4" />
-              Retake Assessment
+              Repetir Evaluación
             </Button>
             <Button onClick={onEnroll} variant="gold" size="xl" className="gap-2">
-              Enroll Now
+              Inscribirse Ahora
               <ArrowRight className="w-5 h-5" />
             </Button>
           </div>

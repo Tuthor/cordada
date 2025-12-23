@@ -9,48 +9,48 @@ const WelcomeScreen = ({ onStart }: WelcomeScreenProps) => {
   const features = [
     {
       icon: Target,
-      title: '5 Key Competencies',
-      description: 'Comprehensive evaluation across critical consulting dimensions',
+      title: '5 Competencias Clave',
+      description: 'Evaluación integral en dimensiones críticas de consultoría',
     },
     {
       icon: Clock,
-      title: '10-15 Minutes',
-      description: 'Quick assessment designed for busy professionals',
+      title: '10-15 Minutos',
+      description: 'Evaluación rápida diseñada para profesionales ocupados',
     },
     {
       icon: Shield,
-      title: 'Confidential',
-      description: 'Your responses are secure and private',
+      title: 'Confidencial',
+      description: 'Tus respuestas son seguras y privadas',
     },
   ];
 
   return (
     <div className="min-h-screen bg-background">
-      {/* Hero Section */}
+      {/* Sección Hero */}
       <div className="bg-gradient-hero text-primary-foreground">
         <div className="container mx-auto px-4 py-16 lg:py-24">
           <div className="max-w-3xl mx-auto text-center animate-fade-in">
             <div className="inline-flex items-center gap-2 px-4 py-2 rounded-full bg-gold/20 text-gold mb-6">
               <Shield className="w-4 h-4" />
-              <span className="text-sm font-medium">Enterprise Consultant Assessment</span>
+              <span className="text-sm font-medium">Evaluación de Consultores Empresariales</span>
             </div>
             <h1 className="text-4xl lg:text-5xl font-bold mb-6 leading-tight">
-              Discover Your Consulting{' '}
-              <span className="text-gradient-gold">Maturity Level</span>
+              Descubre Tu Nivel de{' '}
+              <span className="text-gradient-gold">Madurez en Consultoría</span>
             </h1>
             <p className="text-lg lg:text-xl text-primary-foreground/80 mb-8 leading-relaxed">
-              Our diagnostic tool evaluates your readiness to join an elite consulting ecosystem 
-              serving Fortune 500 enterprise clients.
+              Nuestra herramienta de diagnóstico evalúa tu preparación para unirte a un ecosistema 
+              de consultoría élite que sirve a clientes empresariales Fortune 500.
             </p>
             <Button variant="gold" size="xl" onClick={onStart} className="group">
-              Begin Assessment
+              Iniciar Evaluación
               <ArrowRight className="w-5 h-5 group-hover:translate-x-1 transition-transform" />
             </Button>
           </div>
         </div>
       </div>
 
-      {/* Features Section */}
+      {/* Sección de Características */}
       <div className="container mx-auto px-4 py-16">
         <div className="grid md:grid-cols-3 gap-8 max-w-4xl mx-auto">
           {features.map((feature, index) => (
@@ -68,18 +68,18 @@ const WelcomeScreen = ({ onStart }: WelcomeScreenProps) => {
           ))}
         </div>
 
-        {/* What We Assess */}
+        {/* Qué Evaluamos */}
         <div className="max-w-3xl mx-auto mt-16">
           <h2 className="text-2xl font-bold text-center text-foreground mb-8">
-            What We Evaluate
+            Qué Evaluamos
           </h2>
           <div className="grid sm:grid-cols-2 gap-4">
             {[
-              'Technical expertise and domain knowledge',
-              'Client relationship management',
-              'Communication and presentation skills',
-              'Problem-solving capabilities',
-              'Professional standards and ethics',
+              'Experiencia técnica y conocimiento del dominio',
+              'Gestión de relaciones con clientes',
+              'Habilidades de comunicación y presentación',
+              'Capacidades de resolución de problemas',
+              'Estándares profesionales y ética',
             ].map((item, index) => (
               <div
                 key={index}
