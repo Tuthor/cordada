@@ -90,6 +90,14 @@ const WelcomeScreen = ({ onStart }: WelcomeScreenProps) => {
               </div>
             ))}
           </div>
+          
+          {/* Botón duplicado al final */}
+          <div className="text-center mt-10">
+            <Button variant="gold" size="xl" onClick={onStart} className="group">
+              Iniciar Evaluación
+              <ArrowRight className="w-5 h-5 group-hover:translate-x-1 transition-transform" />
+            </Button>
+          </div>
         </div>
       </div>
     </div>
