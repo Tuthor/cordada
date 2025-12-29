@@ -10,6 +10,28 @@ const corsHeaders = {
     "authorization, x-client-info, apikey, content-type",
 };
 
+// Simple in-memory rate limiting (resets on function cold start)
+const rateLimitMap = new Map<string, { count: number; resetTime: number }>();
+const RATE_LIMIT_WINDOW_MS = 60 * 60 * 1000; // 1 hour
+const MAX_REQUESTS_PER_WINDOW = 3; // Max 3 enrollments per hour per IP/email
+
+function isRateLimited(key: string): boolean {
+  const now = Date.now();
+  const record = rateLimitMap.get(key);
+  
+  if (!record || now > record.resetTime) {
+    rateLimitMap.set(key, { count: 1, resetTime: now + RATE_LIMIT_WINDOW_MS });
+    return false;
+  }
+  
+  if (record.count >= MAX_REQUESTS_PER_WINDOW) {
+    return true;
+  }
+  
+  record.count++;
+  return false;
+}
+
 interface EnrollmentRequest {
   fullName: string;
   email: string;
@@ -31,7 +53,30 @@ const handler = async (req: Request): Promise<Response> => {
 
   try {
     const data: EnrollmentRequest = await req.json();
-    console.log("Received enrollment data:", data);
+    console.log("Received enrollment data for:", data.email);
+
+    // Rate limiting by email
+    if (isRateLimited(data.email.toLowerCase())) {
+      console.warn("Rate limit exceeded for email:", data.email);
+      return new Response(
+        JSON.stringify({ error: "Too many enrollment attempts. Please try again later." }),
+        {
+          status: 429,
+          headers: { "Content-Type": "application/json", ...corsHeaders },
+        }
+      );
+    }
+
+    // Basic input validation
+    if (!data.email || !data.fullName || data.fullName.length > 200 || data.email.length > 255) {
+      return new Response(
+        JSON.stringify({ error: "Invalid input data" }),
+        {
+          status: 400,
+          headers: { "Content-Type": "application/json", ...corsHeaders },
+        }
+      );
+    }
 
     // Initialize Supabase client with service role key
     const supabaseUrl = Deno.env.get("SUPABASE_URL")!;
