@@ -1,5 +1,6 @@
 import { serve } from "https://deno.land/std@0.190.0/http/server.ts";
 import { Resend } from "https://esm.sh/resend@2.0.0";
+import { createClient } from "https://esm.sh/@supabase/supabase-js@2";
 
 const resend = new Resend(Deno.env.get("RESEND_API_KEY"));
 
@@ -32,45 +33,82 @@ const handler = async (req: Request): Promise<Response> => {
     const data: EnrollmentRequest = await req.json();
     console.log("Received enrollment data:", data);
 
+    // Initialize Supabase client with service role key
+    const supabaseUrl = Deno.env.get("SUPABASE_URL")!;
+    const supabaseServiceKey = Deno.env.get("SUPABASE_SERVICE_ROLE_KEY")!;
+    const supabase = createClient(supabaseUrl, supabaseServiceKey);
+
+    // Save to database
+    const { data: insertedData, error: dbError } = await supabase
+      .from("enrollments")
+      .insert({
+        full_name: data.fullName,
+        email: data.email,
+        phone: data.phone,
+        company: data.company,
+        linkedin: data.linkedIn,
+        expertise: data.expertise,
+        years_experience: data.yearsExperience,
+        motivation: data.motivation,
+        maturity_level: data.maturityLevel,
+        overall_score: data.overallScore,
+        status: "pending",
+      })
+      .select()
+      .single();
+
+    if (dbError) {
+      console.error("Database error:", dbError);
+      throw new Error(`Failed to save enrollment: ${dbError.message}`);
+    }
+
+    console.log("Enrollment saved to database:", insertedData);
+
+    // Send notification email
     const emailResponse = await resend.emails.send({
       from: "Consultant Enrollment <onboarding@resend.dev>",
       to: ["pablo@corte.cl"],
-      subject: `New Consultant Enrollment: ${data.fullName} - ${data.maturityLevel}`,
+      subject: `Nueva Inscripción de Consultor: ${data.fullName} - ${data.maturityLevel}`,
       html: `
-        <h1>New Consultant Enrollment Request</h1>
+        <h1>Nueva Solicitud de Inscripción de Consultor</h1>
         
-        <h2>Personal Information</h2>
+        <h2>Información Personal</h2>
         <ul>
-          <li><strong>Full Name:</strong> ${data.fullName}</li>
+          <li><strong>Nombre Completo:</strong> ${data.fullName}</li>
           <li><strong>Email:</strong> ${data.email}</li>
-          <li><strong>Phone:</strong> ${data.phone}</li>
-          <li><strong>Company:</strong> ${data.company}</li>
-          <li><strong>LinkedIn:</strong> ${data.linkedIn || 'Not provided'}</li>
+          <li><strong>Teléfono:</strong> ${data.phone}</li>
+          <li><strong>Empresa:</strong> ${data.company}</li>
+          <li><strong>LinkedIn:</strong> ${data.linkedIn || 'No proporcionado'}</li>
         </ul>
         
-        <h2>Professional Background</h2>
+        <h2>Experiencia Profesional</h2>
         <ul>
-          <li><strong>Primary Expertise:</strong> ${data.expertise}</li>
-          <li><strong>Years of Experience:</strong> ${data.yearsExperience}</li>
+          <li><strong>Especialidad Principal:</strong> ${data.expertise}</li>
+          <li><strong>Años de Experiencia:</strong> ${data.yearsExperience}</li>
         </ul>
         
-        <h2>Assessment Results</h2>
+        <h2>Resultados de la Evaluación</h2>
         <ul>
-          <li><strong>Maturity Level:</strong> ${data.maturityLevel}</li>
-          <li><strong>Overall Score:</strong> ${data.overallScore}%</li>
+          <li><strong>Nivel de Madurez:</strong> ${data.maturityLevel}</li>
+          <li><strong>Puntuación General:</strong> ${data.overallScore}%</li>
         </ul>
         
-        <h2>Motivation</h2>
+        <h2>Motivación</h2>
         <p>${data.motivation}</p>
         
         <hr>
-        <p><em>Submitted on ${new Date().toLocaleString()}</em></p>
+        <p><em>Enviado el ${new Date().toLocaleString('es-CL')}</em></p>
       `,
     });
 
-    console.log("Email sent successfully:", emailResponse);
+    if (emailResponse.error) {
+      console.error("Email error:", emailResponse.error);
+      // Don't throw - data is saved, just log the email error
+    } else {
+      console.log("Email sent successfully:", emailResponse);
+    }
 
-    return new Response(JSON.stringify({ success: true }), {
+    return new Response(JSON.stringify({ success: true, id: insertedData.id }), {
       status: 200,
       headers: {
         "Content-Type": "application/json",

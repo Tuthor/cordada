@@ -14,7 +14,54 @@ export type Database = {
   }
   public: {
     Tables: {
-      [_ in never]: never
+      enrollments: {
+        Row: {
+          company: string | null
+          created_at: string
+          email: string
+          expertise: string | null
+          full_name: string
+          id: string
+          linkedin: string | null
+          maturity_level: string | null
+          motivation: string | null
+          overall_score: number | null
+          phone: string | null
+          status: string | null
+          years_experience: string | null
+        }
+        Insert: {
+          company?: string | null
+          created_at?: string
+          email: string
+          expertise?: string | null
+          full_name: string
+          id?: string
+          linkedin?: string | null
+          maturity_level?: string | null
+          motivation?: string | null
+          overall_score?: number | null
+          phone?: string | null
+          status?: string | null
+          years_experience?: string | null
+        }
+        Update: {
+          company?: string | null
+          created_at?: string
+          email?: string
+          expertise?: string | null
+          full_name?: string
+          id?: string
+          linkedin?: string | null
+          maturity_level?: string | null
+          motivation?: string | null
+          overall_score?: number | null
+          phone?: string | null
+          status?: string | null
+          years_experience?: string | null
+        }
+        Relationships: []
+      }
     }
     Views: {
       [_ in never]: never
