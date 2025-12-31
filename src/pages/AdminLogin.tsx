@@ -146,14 +146,17 @@ const AdminLogin = () => {
     setIsResetting(true);
 
     try {
-      const { error } = await supabase.auth.resetPasswordForEmail(resetEmail, {
-        redirectTo: `${window.location.origin}/admin/login`,
+      const response = await supabase.functions.invoke('send-password-reset', {
+        body: {
+          email: resetEmail,
+          redirectUrl: `${window.location.origin}/admin/login`,
+        },
       });
 
-      if (error) {
+      if (response.error) {
         toast({
           title: "Error",
-          description: error.message,
+          description: response.error.message || "No se pudo enviar el email",
           variant: "destructive",
         });
         return;
