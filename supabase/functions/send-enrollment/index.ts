@@ -5,10 +5,21 @@ import { z } from "https://esm.sh/zod@3.22.4";
 
 const resend = new Resend(Deno.env.get("RESEND_API_KEY"));
 
-const corsHeaders = {
-  "Access-Control-Allow-Origin": "*",
-  "Access-Control-Allow-Headers":
-    "authorization, x-client-info, apikey, content-type",
+// Allowed origins for CORS - restrict to your domains
+const ALLOWED_ORIGINS = [
+  'https://daimjfuxgcjdwmwqwtgg.lovableproject.com',
+  'https://lovable.dev',
+  'http://localhost:8080',
+  'http://localhost:5173',
+];
+
+const getCorsHeaders = (origin: string | null) => {
+  const allowedOrigin = ALLOWED_ORIGINS.includes(origin || '') ? origin : ALLOWED_ORIGINS[0];
+  return {
+    "Access-Control-Allow-Origin": allowedOrigin!,
+    "Access-Control-Allow-Headers": "authorization, x-client-info, apikey, content-type",
+    "Access-Control-Allow-Credentials": "true",
+  };
 };
 
 // Simple in-memory rate limiting (resets on function cold start)
@@ -76,6 +87,9 @@ const enrollmentSchema = z.object({
 type EnrollmentRequest = z.infer<typeof enrollmentSchema>;
 
 const handler = async (req: Request): Promise<Response> => {
+  const origin = req.headers.get("origin");
+  const corsHeaders = getCorsHeaders(origin);
+
   // Handle CORS preflight requests
   if (req.method === "OPTIONS") {
     return new Response(null, { headers: corsHeaders });
@@ -210,7 +224,7 @@ const handler = async (req: Request): Promise<Response> => {
       JSON.stringify({ error: "An unexpected error occurred. Please try again." }),
       {
         status: 500,
-        headers: { "Content-Type": "application/json", ...corsHeaders },
+        headers: { "Content-Type": "application/json", ...getCorsHeaders(req.headers.get("origin")) },
       }
     );
   }

@@ -4,10 +4,21 @@ import { createClient } from "https://esm.sh/@supabase/supabase-js@2";
 
 const resend = new Resend(Deno.env.get("RESEND_API_KEY"));
 
-const corsHeaders = {
-  "Access-Control-Allow-Origin": "*",
-  "Access-Control-Allow-Headers":
-    "authorization, x-client-info, apikey, content-type",
+// Allowed origins for CORS - restrict to your domains
+const ALLOWED_ORIGINS = [
+  'https://daimjfuxgcjdwmwqwtgg.lovableproject.com',
+  'https://lovable.dev',
+  'http://localhost:8080',
+  'http://localhost:5173',
+];
+
+const getCorsHeaders = (origin: string | null) => {
+  const allowedOrigin = ALLOWED_ORIGINS.includes(origin || '') ? origin : ALLOWED_ORIGINS[0];
+  return {
+    "Access-Control-Allow-Origin": allowedOrigin!,
+    "Access-Control-Allow-Headers": "authorization, x-client-info, apikey, content-type",
+    "Access-Control-Allow-Credentials": "true",
+  };
 };
 
 interface PasswordResetRequest {
@@ -18,6 +29,8 @@ interface PasswordResetRequest {
 const handler = async (req: Request): Promise<Response> => {
   const startTime = Date.now();
   const MIN_RESPONSE_TIME = 500; // Normalize response times to prevent timing attacks
+  const origin = req.headers.get("origin");
+  const corsHeaders = getCorsHeaders(origin);
   
   console.log("Password reset request received");
 
@@ -148,7 +161,7 @@ const handler = async (req: Request): Promise<Response> => {
       await new Promise(resolve => setTimeout(resolve, MIN_RESPONSE_TIME - elapsed));
     }
     return new Response(
-      JSON.stringify({ error: error.message }),
+      JSON.stringify({ error: "An error occurred processing your request" }),
       {
         status: 500,
         headers: { "Content-Type": "application/json", ...corsHeaders },
