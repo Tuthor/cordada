@@ -149,7 +149,7 @@ const AdminLogin = () => {
       const response = await supabase.functions.invoke('send-password-reset', {
         body: {
           email: resetEmail,
-          redirectUrl: `${window.location.origin}/admin/login`,
+          redirectUrl: `${window.location.origin}/admin/reset-password`,
         },
       });
 
