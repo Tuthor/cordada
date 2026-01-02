@@ -9,7 +9,6 @@ import { Eye, EyeOff, Lock, ArrowLeft, CheckCircle } from "lucide-react";
 import { z } from "zod";
 
 const passwordSchema = z.object({
-  currentPassword: z.string().min(1, "La contraseña actual es requerida"),
   newPassword: z.string().min(6, "La nueva contraseña debe tener al menos 6 caracteres"),
   confirmPassword: z.string().min(1, "Confirma tu nueva contraseña"),
 }).refine((data) => data.newPassword === data.confirmPassword, {
@@ -18,10 +17,8 @@ const passwordSchema = z.object({
 });
 
 const ResetPassword = () => {
-  const [currentPassword, setCurrentPassword] = useState("");
   const [newPassword, setNewPassword] = useState("");
   const [confirmPassword, setConfirmPassword] = useState("");
-  const [showCurrentPassword, setShowCurrentPassword] = useState(false);
   const [showNewPassword, setShowNewPassword] = useState(false);
   const [showConfirmPassword, setShowConfirmPassword] = useState(false);
   const [loading, setLoading] = useState(false);
@@ -67,7 +64,7 @@ const ResetPassword = () => {
 
   const validateForm = () => {
     try {
-      passwordSchema.parse({ currentPassword, newPassword, confirmPassword });
+      passwordSchema.parse({ newPassword, confirmPassword });
       setErrors({});
       return true;
     } catch (error) {
@@ -92,19 +89,7 @@ const ResetPassword = () => {
     setLoading(true);
 
     try {
-      // First verify the current password by attempting to sign in
-      const { error: signInError } = await supabase.auth.signInWithPassword({
-        email: userEmail!,
-        password: currentPassword,
-      });
-
-      if (signInError) {
-        setErrors({ currentPassword: "La contraseña actual es incorrecta" });
-        setLoading(false);
-        return;
-      }
-
-      // Update the password
+      // Update the password directly - the reset token proves authorization
       const { error: updateError } = await supabase.auth.updateUser({
         password: newPassword,
       });
@@ -163,33 +148,6 @@ const ResetPassword = () => {
         </CardHeader>
         <CardContent>
           <form onSubmit={handleSubmit} className="space-y-4">
-            {/* Current Password */}
-            <div className="space-y-2">
-              <label htmlFor="currentPassword" className="text-sm font-medium">
-                Contraseña Actual
-              </label>
-              <div className="relative">
-                <Input
-                  id="currentPassword"
-                  type={showCurrentPassword ? "text" : "password"}
-                  placeholder="Ingresa tu contraseña actual"
-                  value={currentPassword}
-                  onChange={(e) => setCurrentPassword(e.target.value)}
-                  className={errors.currentPassword ? "border-destructive pr-10" : "pr-10"}
-                />
-                <button
-                  type="button"
-                  onClick={() => setShowCurrentPassword(!showCurrentPassword)}
-                  className="absolute right-3 top-1/2 -translate-y-1/2 text-muted-foreground hover:text-foreground"
-                >
-                  {showCurrentPassword ? <EyeOff className="h-4 w-4" /> : <Eye className="h-4 w-4" />}
-                </button>
-              </div>
-              {errors.currentPassword && (
-                <p className="text-sm text-destructive">{errors.currentPassword}</p>
-              )}
-            </div>
-
             {/* New Password */}
             <div className="space-y-2">
               <label htmlFor="newPassword" className="text-sm font-medium">

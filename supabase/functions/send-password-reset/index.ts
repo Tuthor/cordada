@@ -16,12 +16,24 @@ interface PasswordResetRequest {
 }
 
 const handler = async (req: Request): Promise<Response> => {
+  const startTime = Date.now();
+  const MIN_RESPONSE_TIME = 500; // Normalize response times to prevent timing attacks
+  
   console.log("Password reset request received");
 
   // Handle CORS preflight requests
   if (req.method === "OPTIONS") {
     return new Response(null, { headers: corsHeaders });
   }
+  
+  // Helper to ensure consistent response timing
+  const normalizedResponse = async (response: Response): Promise<Response> => {
+    const elapsed = Date.now() - startTime;
+    if (elapsed < MIN_RESPONSE_TIME) {
+      await new Promise(resolve => setTimeout(resolve, MIN_RESPONSE_TIME - elapsed));
+    }
+    return response;
+  };
 
   try {
     const { email, redirectUrl }: PasswordResetRequest = await req.json();
@@ -29,13 +41,13 @@ const handler = async (req: Request): Promise<Response> => {
     console.log(`Processing password reset for email: ${email}`);
 
     if (!email) {
-      return new Response(
+      return normalizedResponse(new Response(
         JSON.stringify({ error: "Email is required" }),
         {
           status: 400,
           headers: { "Content-Type": "application/json", ...corsHeaders },
         }
-      );
+      ));
     }
 
     // Create Supabase admin client
@@ -62,27 +74,27 @@ const handler = async (req: Request): Promise<Response> => {
     // If user doesn't exist, return success anyway (security: don't reveal if email exists)
     if (linkError) {
       console.log("User not found or error generating link:", linkError.message);
-      // Return success to prevent email enumeration
-      return new Response(
+      // Return success to prevent email enumeration with normalized timing
+      return normalizedResponse(new Response(
         JSON.stringify({ success: true, message: "If this email exists, a reset link has been sent" }),
         {
           status: 200,
           headers: { "Content-Type": "application/json", ...corsHeaders },
         }
-      );
+      ));
     }
 
     const resetLink = data.properties?.action_link;
     
     if (!resetLink) {
       console.error("No reset link generated");
-      return new Response(
+      return normalizedResponse(new Response(
         JSON.stringify({ error: "Failed to generate reset link" }),
         {
           status: 500,
           headers: { "Content-Type": "application/json", ...corsHeaders },
         }
-      );
+      ));
     }
 
     console.log("Reset link generated successfully");
@@ -122,15 +134,19 @@ const handler = async (req: Request): Promise<Response> => {
 
     console.log("Email sent successfully:", emailResponse);
 
-    return new Response(
+    return normalizedResponse(new Response(
       JSON.stringify({ success: true, message: "Password reset email sent" }),
       {
         status: 200,
         headers: { "Content-Type": "application/json", ...corsHeaders },
       }
-    );
+    ));
   } catch (error: any) {
     console.error("Error in password reset function:", error);
+    const elapsed = Date.now() - startTime;
+    if (elapsed < MIN_RESPONSE_TIME) {
+      await new Promise(resolve => setTimeout(resolve, MIN_RESPONSE_TIME - elapsed));
+    }
     return new Response(
       JSON.stringify({ error: error.message }),
       {
