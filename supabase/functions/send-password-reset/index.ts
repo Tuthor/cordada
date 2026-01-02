@@ -59,12 +59,14 @@ const handler = async (req: Request): Promise<Response> => {
       },
     });
 
+    // If user doesn't exist, return success anyway (security: don't reveal if email exists)
     if (linkError) {
-      console.error("Error generating reset link:", linkError);
+      console.log("User not found or error generating link:", linkError.message);
+      // Return success to prevent email enumeration
       return new Response(
-        JSON.stringify({ error: "Failed to generate reset link" }),
+        JSON.stringify({ success: true, message: "If this email exists, a reset link has been sent" }),
         {
-          status: 500,
+          status: 200,
           headers: { "Content-Type": "application/json", ...corsHeaders },
         }
       );
