@@ -1,4 +1,5 @@
-import { useState } from 'react';
+import { useState, useRef } from 'react';
+import ReCAPTCHA from 'react-google-recaptcha';
 import { Button } from '@/components/ui/button';
 import { AssessmentResult, MaturityLevelInfo } from '@/types/assessment';
 import { 
@@ -11,7 +12,8 @@ import {
   Mail,
   User,
   Phone,
-  Linkedin
+  Linkedin,
+  ShieldCheck
 } from 'lucide-react';
 import { toast } from '@/hooks/use-toast';
 import { supabase } from '@/integrations/supabase/client';
@@ -21,6 +23,8 @@ interface EnrollmentFormProps {
   levelInfo: MaturityLevelInfo;
   onBack: () => void;
 }
+
+const RECAPTCHA_SITE_KEY = import.meta.env.VITE_RECAPTCHA_SITE_KEY;
 
 const EnrollmentForm = ({ result, levelInfo, onBack }: EnrollmentFormProps) => {
   const [formData, setFormData] = useState({
@@ -35,6 +39,16 @@ const EnrollmentForm = ({ result, levelInfo, onBack }: EnrollmentFormProps) => {
   });
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [isSubmitted, setIsSubmitted] = useState(false);
+  const [captchaVerified, setCaptchaVerified] = useState(false);
+  const recaptchaRef = useRef<ReCAPTCHA>(null);
+
+  const handleCaptchaChange = (token: string | null) => {
+    setCaptchaVerified(!!token);
+  };
+
+  const handleCaptchaExpired = () => {
+    setCaptchaVerified(false);
+  };
 
   const handleChange = (e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement | HTMLSelectElement>) => {
     setFormData({ ...formData, [e.target.name]: e.target.value });
@@ -314,12 +328,44 @@ const EnrollmentForm = ({ result, levelInfo, onBack }: EnrollmentFormProps) => {
             </div>
           </div>
 
+          {/* CAPTCHA */}
+          <div className="mt-6 flex flex-col items-center">
+            <div className="flex items-center gap-2 mb-3">
+              <ShieldCheck className="w-4 h-4 text-muted-foreground" />
+              <span className="text-sm text-muted-foreground">Verifica que no eres un robot</span>
+            </div>
+            {RECAPTCHA_SITE_KEY ? (
+              <ReCAPTCHA
+                ref={recaptchaRef}
+                sitekey={RECAPTCHA_SITE_KEY}
+                onChange={handleCaptchaChange}
+                onExpired={handleCaptchaExpired}
+                theme="light"
+              />
+            ) : (
+              <p className="text-sm text-destructive">Error: CAPTCHA no configurado</p>
+            )}
+            {captchaVerified && (
+              <div className="flex items-center gap-2 mt-2 text-success">
+                <CheckCircle className="w-4 h-4" />
+                <span className="text-sm">Verificación completada</span>
+              </div>
+            )}
+          </div>
+
           {/* Enviar */}
           <div className="mt-8 flex flex-col sm:flex-row gap-4 justify-between items-center">
             <Button type="button" variant="outline" onClick={onBack}>
               Volver a Resultados
             </Button>
-            <Button type="submit" variant="gold" size="xl" disabled={isSubmitting} className="gap-2">
+            <Button 
+              type="submit" 
+              variant="gold" 
+              size="xl" 
+              disabled={isSubmitting || !captchaVerified} 
+              className="gap-2"
+              title={!captchaVerified ? "Completa la verificación CAPTCHA primero" : ""}
+            >
               {isSubmitting ? (
                 <>
                   <span className="animate-spin">⏳</span>
