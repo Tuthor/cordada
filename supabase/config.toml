@@ -1,5 +1,8 @@
 project_id = "daimjfuxgcjdwmwqwtgg"
 
+[functions.public-config]
+verify_jwt = false
+
 [functions.send-enrollment]
 verify_jwt = false
 
