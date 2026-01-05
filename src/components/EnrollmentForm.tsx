@@ -1,4 +1,4 @@
-import { useState, useRef } from 'react';
+import { useEffect, useRef, useState } from 'react';
 import ReCAPTCHA from 'react-google-recaptcha';
 import { Button } from '@/components/ui/button';
 import { AssessmentResult, MaturityLevelInfo } from '@/types/assessment';
@@ -24,8 +24,6 @@ interface EnrollmentFormProps {
   onBack: () => void;
 }
 
-const RECAPTCHA_SITE_KEY = import.meta.env.VITE_RECAPTCHA_SITE_KEY;
-
 const EnrollmentForm = ({ result, levelInfo, onBack }: EnrollmentFormProps) => {
   const [formData, setFormData] = useState({
     fullName: '',
@@ -39,8 +37,39 @@ const EnrollmentForm = ({ result, levelInfo, onBack }: EnrollmentFormProps) => {
   });
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [isSubmitted, setIsSubmitted] = useState(false);
+  const [recaptchaSiteKey, setRecaptchaSiteKey] = useState<string | null>(null);
+  const [isCaptchaKeyLoading, setIsCaptchaKeyLoading] = useState(true);
   const [captchaVerified, setCaptchaVerified] = useState(false);
   const recaptchaRef = useRef<ReCAPTCHA>(null);
+
+  useEffect(() => {
+    let active = true;
+
+    const loadCaptchaKey = async () => {
+      try {
+        const { data, error } = await supabase.functions.invoke('public-config');
+        if (error) throw error;
+
+        const key =
+          (data?.recaptchaSiteKey as string | undefined) ??
+          (data?.recaptcha_site_key as string | undefined) ??
+          '';
+
+        if (active) setRecaptchaSiteKey(key || null);
+      } catch (err) {
+        console.error('Error loading CAPTCHA site key:', err);
+        if (active) setRecaptchaSiteKey(null);
+      } finally {
+        if (active) setIsCaptchaKeyLoading(false);
+      }
+    };
+
+    loadCaptchaKey();
+
+    return () => {
+      active = false;
+    };
+  }, []);
 
   const handleCaptchaChange = (token: string | null) => {
     setCaptchaVerified(!!token);
@@ -334,10 +363,12 @@ const EnrollmentForm = ({ result, levelInfo, onBack }: EnrollmentFormProps) => {
               <ShieldCheck className="w-4 h-4 text-muted-foreground" />
               <span className="text-sm text-muted-foreground">Verifica que no eres un robot</span>
             </div>
-            {RECAPTCHA_SITE_KEY ? (
+            {isCaptchaKeyLoading ? (
+              <p className="text-sm text-muted-foreground">Cargando verificación...</p>
+            ) : recaptchaSiteKey ? (
               <ReCAPTCHA
                 ref={recaptchaRef}
-                sitekey={RECAPTCHA_SITE_KEY}
+                sitekey={recaptchaSiteKey}
                 onChange={handleCaptchaChange}
                 onExpired={handleCaptchaExpired}
                 theme="light"
@@ -362,9 +393,9 @@ const EnrollmentForm = ({ result, levelInfo, onBack }: EnrollmentFormProps) => {
               type="submit" 
               variant="gold" 
               size="xl" 
-              disabled={isSubmitting || !captchaVerified} 
+              disabled={isSubmitting || !captchaVerified || !recaptchaSiteKey} 
               className="gap-2"
-              title={!captchaVerified ? "Completa la verificación CAPTCHA primero" : ""}
+              title={!recaptchaSiteKey ? "CAPTCHA no configurado" : !captchaVerified ? "Completa la verificación CAPTCHA primero" : ""}
             >
               {isSubmitting ? (
                 <>
