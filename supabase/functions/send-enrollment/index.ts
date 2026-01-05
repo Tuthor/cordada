@@ -7,14 +7,30 @@ const resend = new Resend(Deno.env.get("RESEND_API_KEY"));
 
 // Allowed origins for CORS - restrict to your domains
 const ALLOWED_ORIGINS = [
-  'https://daimjfuxgcjdwmwqwtgg.lovableproject.com',
-  'https://lovable.dev',
-  'http://localhost:8080',
-  'http://localhost:5173',
+  "https://daimjfuxgcjdwmwqwtgg.lovableproject.com",
+  "https://lovable.dev",
+  "http://localhost:8080",
+  "http://localhost:5173",
 ];
 
+const isAllowedOrigin = (origin: string | null) => {
+  if (!origin) return false;
+  try {
+    const { hostname } = new URL(origin);
+    return (
+      hostname === "lovable.dev" ||
+      hostname.endsWith(".lovable.dev") ||
+      hostname === "lovableproject.com" ||
+      hostname.endsWith(".lovableproject.com") ||
+      hostname === "localhost"
+    );
+  } catch {
+    return false;
+  }
+};
+
 const getCorsHeaders = (origin: string | null) => {
-  const allowedOrigin = ALLOWED_ORIGINS.includes(origin || '') ? origin : ALLOWED_ORIGINS[0];
+  const allowedOrigin = isAllowedOrigin(origin) ? origin : ALLOWED_ORIGINS[0];
   return {
     "Access-Control-Allow-Origin": allowedOrigin!,
     "Access-Control-Allow-Headers": "authorization, x-client-info, apikey, content-type",
