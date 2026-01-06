@@ -22,6 +22,8 @@ const isAllowedOrigin = (origin: string | null) => {
       hostname.endsWith(".lovable.dev") ||
       hostname === "lovableproject.com" ||
       hostname.endsWith(".lovableproject.com") ||
+      hostname === "lovable.app" ||
+      hostname.endsWith(".lovable.app") ||
       hostname === "localhost"
     );
   } catch {
