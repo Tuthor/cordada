@@ -113,6 +113,9 @@ const AdminLogin = () => {
           return;
         }
 
+        // Store login timestamp for session expiration (24 hours)
+        localStorage.setItem("admin_login_timestamp", Date.now().toString());
+        
         toast({
           title: "Bienvenido",
           description: "Acceso concedido al panel de administración",
