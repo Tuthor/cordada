@@ -75,7 +75,37 @@ const AdminDashboard = () => {
     return () => subscription.unsubscribe();
   }, []);
 
+  const checkSessionExpiration = () => {
+    const loginTimestamp = localStorage.getItem("admin_login_timestamp");
+    if (!loginTimestamp) {
+      return true; // No timestamp means session should be expired
+    }
+    
+    const loginTime = parseInt(loginTimestamp, 10);
+    const now = Date.now();
+    const twentyFourHours = 24 * 60 * 60 * 1000; // 24 hours in milliseconds
+    
+    return (now - loginTime) > twentyFourHours;
+  };
+
+  const handleSessionExpired = async () => {
+    localStorage.removeItem("admin_login_timestamp");
+    await supabase.auth.signOut();
+    toast({
+      title: "Sesión expirada",
+      description: "Tu sesión ha expirado después de 24 horas. Por favor inicia sesión nuevamente.",
+      variant: "destructive",
+    });
+    navigate("/admin/login");
+  };
+
   const checkAdminAccess = async (userId: string) => {
+    // Check if session has expired (24 hours)
+    if (checkSessionExpiration()) {
+      await handleSessionExpired();
+      return;
+    }
+
     const { data: roles } = await supabase
       .from("user_roles")
       .select("role")
@@ -196,6 +226,7 @@ const AdminDashboard = () => {
   };
 
   const handleLogout = async () => {
+    localStorage.removeItem("admin_login_timestamp");
     await supabase.auth.signOut();
     navigate("/admin/login");
   };
