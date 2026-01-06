@@ -97,10 +97,43 @@ const enrollmentSchema = z.object({
   yearsExperience: z.string().max(20, "Years experience too long").optional().nullable(),
   motivation: z.string().max(2000, "Motivation text too long").optional().nullable(),
   maturityLevel: z.string().max(100, "Maturity level too long").optional().nullable(),
-  overallScore: z.number().min(0, "Score cannot be negative").max(100, "Score cannot exceed 100")
+  overallScore: z.number().min(0, "Score cannot be negative").max(100, "Score cannot exceed 100"),
+  captchaToken: z.string().min(1, "CAPTCHA token is required")
 });
 
 type EnrollmentRequest = z.infer<typeof enrollmentSchema>;
+
+// Verify reCAPTCHA token with Google
+async function verifyCaptcha(token: string): Promise<{ success: boolean; score?: number; errorCodes?: string[] }> {
+  const secretKey = Deno.env.get("RECAPTCHA_SECRET_KEY");
+  
+  if (!secretKey) {
+    console.error("RECAPTCHA_SECRET_KEY not configured");
+    return { success: false, errorCodes: ["missing-secret-key"] };
+  }
+
+  try {
+    const response = await fetch("https://www.google.com/recaptcha/api/siteverify", {
+      method: "POST",
+      headers: {
+        "Content-Type": "application/x-www-form-urlencoded",
+      },
+      body: `secret=${encodeURIComponent(secretKey)}&response=${encodeURIComponent(token)}`,
+    });
+
+    const data = await response.json();
+    console.log("reCAPTCHA verification response:", { success: data.success, errorCodes: data["error-codes"] });
+    
+    return {
+      success: data.success === true,
+      score: data.score,
+      errorCodes: data["error-codes"],
+    };
+  } catch (error) {
+    console.error("Error verifying reCAPTCHA:", error);
+    return { success: false, errorCodes: ["verification-failed"] };
+  }
+}
 
 const handler = async (req: Request): Promise<Response> => {
   const origin = req.headers.get("origin");
@@ -133,6 +166,26 @@ const handler = async (req: Request): Promise<Response> => {
     }
 
     const data: EnrollmentRequest = validationResult.data;
+
+    // Server-side CAPTCHA verification
+    console.log("Verifying CAPTCHA token for email:", data.email);
+    const captchaResult = await verifyCaptcha(data.captchaToken);
+    
+    if (!captchaResult.success) {
+      console.warn("CAPTCHA verification failed:", captchaResult.errorCodes);
+      return new Response(
+        JSON.stringify({ 
+          error: "CAPTCHA verification failed. Please try again.",
+          details: captchaResult.errorCodes
+        }),
+        {
+          status: 403,
+          headers: { "Content-Type": "application/json", ...corsHeaders },
+        }
+      );
+    }
+    
+    console.log("CAPTCHA verified successfully for email:", data.email);
 
     // Rate limiting by email
     if (isRateLimited(data.email)) {

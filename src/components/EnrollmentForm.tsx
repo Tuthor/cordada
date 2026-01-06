@@ -39,7 +39,7 @@ const EnrollmentForm = ({ result, levelInfo, onBack }: EnrollmentFormProps) => {
   const [isSubmitted, setIsSubmitted] = useState(false);
   const [recaptchaSiteKey, setRecaptchaSiteKey] = useState<string | null>(null);
   const [isCaptchaKeyLoading, setIsCaptchaKeyLoading] = useState(true);
-  const [captchaVerified, setCaptchaVerified] = useState(false);
+  const [captchaToken, setCaptchaToken] = useState<string | null>(null);
   const recaptchaRef = useRef<ReCAPTCHA>(null);
 
   useEffect(() => {
@@ -72,11 +72,11 @@ const EnrollmentForm = ({ result, levelInfo, onBack }: EnrollmentFormProps) => {
   }, []);
 
   const handleCaptchaChange = (token: string | null) => {
-    setCaptchaVerified(!!token);
+    setCaptchaToken(token);
   };
 
   const handleCaptchaExpired = () => {
-    setCaptchaVerified(false);
+    setCaptchaToken(null);
   };
 
   const handleChange = (e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement | HTMLSelectElement>) => {
@@ -85,6 +85,16 @@ const EnrollmentForm = ({ result, levelInfo, onBack }: EnrollmentFormProps) => {
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
+    
+    if (!captchaToken) {
+      toast({
+        title: "Error de Verificación",
+        description: "Por favor completa la verificación CAPTCHA.",
+        variant: "destructive",
+      });
+      return;
+    }
+    
     setIsSubmitting(true);
     
     try {
@@ -93,6 +103,7 @@ const EnrollmentForm = ({ result, levelInfo, onBack }: EnrollmentFormProps) => {
           ...formData,
           maturityLevel: levelInfo.name,
           overallScore: Math.round(result.overallPercentage),
+          captchaToken: captchaToken,
         },
       });
 
@@ -376,7 +387,7 @@ const EnrollmentForm = ({ result, levelInfo, onBack }: EnrollmentFormProps) => {
             ) : (
               <p className="text-sm text-destructive">Error: CAPTCHA no configurado</p>
             )}
-            {captchaVerified && (
+            {captchaToken && (
               <div className="flex items-center gap-2 mt-2 text-success">
                 <CheckCircle className="w-4 h-4" />
                 <span className="text-sm">Verificación completada</span>
@@ -393,9 +404,9 @@ const EnrollmentForm = ({ result, levelInfo, onBack }: EnrollmentFormProps) => {
               type="submit" 
               variant="gold" 
               size="xl" 
-              disabled={isSubmitting || !captchaVerified || !recaptchaSiteKey} 
+              disabled={isSubmitting || !captchaToken || !recaptchaSiteKey} 
               className="gap-2"
-              title={!recaptchaSiteKey ? "CAPTCHA no configurado" : !captchaVerified ? "Completa la verificación CAPTCHA primero" : ""}
+              title={!recaptchaSiteKey ? "CAPTCHA no configurado" : !captchaToken ? "Completa la verificación CAPTCHA primero" : ""}
             >
               {isSubmitting ? (
                 <>
