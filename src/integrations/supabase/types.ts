@@ -14,6 +14,236 @@ export type Database = {
   }
   public: {
     Tables: {
+      client_companies: {
+        Row: {
+          company_name: string
+          company_size: string | null
+          created_at: string
+          id: string
+          industry: string | null
+          updated_at: string
+          user_id: string
+          website: string | null
+        }
+        Insert: {
+          company_name: string
+          company_size?: string | null
+          created_at?: string
+          id?: string
+          industry?: string | null
+          updated_at?: string
+          user_id: string
+          website?: string | null
+        }
+        Update: {
+          company_name?: string
+          company_size?: string | null
+          created_at?: string
+          id?: string
+          industry?: string | null
+          updated_at?: string
+          user_id?: string
+          website?: string | null
+        }
+        Relationships: []
+      }
+      consultant_profiles: {
+        Row: {
+          created_at: string
+          expertise: string[] | null
+          headline: string | null
+          hourly_rate: number | null
+          id: string
+          is_available: boolean | null
+          linkedin_url: string | null
+          maturity_level: string | null
+          maturity_score: number | null
+          updated_at: string
+          user_id: string
+          years_experience: number | null
+        }
+        Insert: {
+          created_at?: string
+          expertise?: string[] | null
+          headline?: string | null
+          hourly_rate?: number | null
+          id?: string
+          is_available?: boolean | null
+          linkedin_url?: string | null
+          maturity_level?: string | null
+          maturity_score?: number | null
+          updated_at?: string
+          user_id: string
+          years_experience?: number | null
+        }
+        Update: {
+          created_at?: string
+          expertise?: string[] | null
+          headline?: string | null
+          hourly_rate?: number | null
+          id?: string
+          is_available?: boolean | null
+          linkedin_url?: string | null
+          maturity_level?: string | null
+          maturity_score?: number | null
+          updated_at?: string
+          user_id?: string
+          years_experience?: number | null
+        }
+        Relationships: []
+      }
+      consulting_firms: {
+        Row: {
+          created_at: string
+          description: string | null
+          id: string
+          logo_url: string | null
+          name: string
+          owner_id: string
+          updated_at: string
+          website: string | null
+        }
+        Insert: {
+          created_at?: string
+          description?: string | null
+          id?: string
+          logo_url?: string | null
+          name: string
+          owner_id: string
+          updated_at?: string
+          website?: string | null
+        }
+        Update: {
+          created_at?: string
+          description?: string | null
+          id?: string
+          logo_url?: string | null
+          name?: string
+          owner_id?: string
+          updated_at?: string
+          website?: string | null
+        }
+        Relationships: []
+      }
+      course_lessons: {
+        Row: {
+          content: string | null
+          course_id: string
+          created_at: string
+          duration_minutes: number | null
+          id: string
+          order_index: number
+          title: string
+          video_url: string | null
+        }
+        Insert: {
+          content?: string | null
+          course_id: string
+          created_at?: string
+          duration_minutes?: number | null
+          id?: string
+          order_index: number
+          title: string
+          video_url?: string | null
+        }
+        Update: {
+          content?: string | null
+          course_id?: string
+          created_at?: string
+          duration_minutes?: number | null
+          id?: string
+          order_index?: number
+          title?: string
+          video_url?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "course_lessons_course_id_fkey"
+            columns: ["course_id"]
+            isOneToOne: false
+            referencedRelation: "courses"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      course_progress: {
+        Row: {
+          completed_at: string | null
+          course_id: string
+          id: string
+          lesson_id: string | null
+          progress_percent: number | null
+          user_id: string
+        }
+        Insert: {
+          completed_at?: string | null
+          course_id: string
+          id?: string
+          lesson_id?: string | null
+          progress_percent?: number | null
+          user_id: string
+        }
+        Update: {
+          completed_at?: string | null
+          course_id?: string
+          id?: string
+          lesson_id?: string | null
+          progress_percent?: number | null
+          user_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "course_progress_course_id_fkey"
+            columns: ["course_id"]
+            isOneToOne: false
+            referencedRelation: "courses"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "course_progress_lesson_id_fkey"
+            columns: ["lesson_id"]
+            isOneToOne: false
+            referencedRelation: "course_lessons"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      courses: {
+        Row: {
+          created_at: string
+          description: string | null
+          difficulty: string | null
+          duration_minutes: number | null
+          id: string
+          is_published: boolean | null
+          thumbnail_url: string | null
+          title: string
+          updated_at: string
+        }
+        Insert: {
+          created_at?: string
+          description?: string | null
+          difficulty?: string | null
+          duration_minutes?: number | null
+          id?: string
+          is_published?: boolean | null
+          thumbnail_url?: string | null
+          title: string
+          updated_at?: string
+        }
+        Update: {
+          created_at?: string
+          description?: string | null
+          difficulty?: string | null
+          duration_minutes?: number | null
+          id?: string
+          is_published?: boolean | null
+          thumbnail_url?: string | null
+          title?: string
+          updated_at?: string
+        }
+        Relationships: []
+      }
       enrollments: {
         Row: {
           company: string | null
@@ -62,6 +292,201 @@ export type Database = {
         }
         Relationships: []
       }
+      firm_members: {
+        Row: {
+          firm_id: string
+          id: string
+          joined_at: string
+          role: string
+          user_id: string
+        }
+        Insert: {
+          firm_id: string
+          id?: string
+          joined_at?: string
+          role?: string
+          user_id: string
+        }
+        Update: {
+          firm_id?: string
+          id?: string
+          joined_at?: string
+          role?: string
+          user_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "firm_members_firm_id_fkey"
+            columns: ["firm_id"]
+            isOneToOne: false
+            referencedRelation: "consulting_firms"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      profiles: {
+        Row: {
+          avatar_url: string | null
+          bio: string | null
+          created_at: string
+          email: string
+          full_name: string
+          id: string
+          phone: string | null
+          updated_at: string
+          user_id: string
+        }
+        Insert: {
+          avatar_url?: string | null
+          bio?: string | null
+          created_at?: string
+          email: string
+          full_name: string
+          id?: string
+          phone?: string | null
+          updated_at?: string
+          user_id: string
+        }
+        Update: {
+          avatar_url?: string | null
+          bio?: string | null
+          created_at?: string
+          email?: string
+          full_name?: string
+          id?: string
+          phone?: string | null
+          updated_at?: string
+          user_id?: string
+        }
+        Relationships: []
+      }
+      project_messages: {
+        Row: {
+          created_at: string
+          id: string
+          is_read: boolean | null
+          message: string
+          project_id: string
+          recipient_id: string
+          sender_id: string
+        }
+        Insert: {
+          created_at?: string
+          id?: string
+          is_read?: boolean | null
+          message: string
+          project_id: string
+          recipient_id: string
+          sender_id: string
+        }
+        Update: {
+          created_at?: string
+          id?: string
+          is_read?: boolean | null
+          message?: string
+          project_id?: string
+          recipient_id?: string
+          sender_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "project_messages_project_id_fkey"
+            columns: ["project_id"]
+            isOneToOne: false
+            referencedRelation: "projects"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      projects: {
+        Row: {
+          budget_max: number | null
+          budget_min: number | null
+          client_id: string
+          created_at: string
+          description: string
+          duration_weeks: number | null
+          expertise_needed: string[] | null
+          id: string
+          requirements: string | null
+          status: string
+          title: string
+          updated_at: string
+        }
+        Insert: {
+          budget_max?: number | null
+          budget_min?: number | null
+          client_id: string
+          created_at?: string
+          description: string
+          duration_weeks?: number | null
+          expertise_needed?: string[] | null
+          id?: string
+          requirements?: string | null
+          status?: string
+          title: string
+          updated_at?: string
+        }
+        Update: {
+          budget_max?: number | null
+          budget_min?: number | null
+          client_id?: string
+          created_at?: string
+          description?: string
+          duration_weeks?: number | null
+          expertise_needed?: string[] | null
+          id?: string
+          requirements?: string | null
+          status?: string
+          title?: string
+          updated_at?: string
+        }
+        Relationships: []
+      }
+      proposals: {
+        Row: {
+          consultant_id: string
+          cover_letter: string
+          created_at: string
+          id: string
+          project_id: string
+          proposed_budget: number | null
+          proposed_duration_weeks: number | null
+          status: string
+          updated_at: string
+        }
+        Insert: {
+          consultant_id: string
+          cover_letter: string
+          created_at?: string
+          id?: string
+          project_id: string
+          proposed_budget?: number | null
+          proposed_duration_weeks?: number | null
+          status?: string
+          updated_at?: string
+        }
+        Update: {
+          consultant_id?: string
+          cover_letter?: string
+          created_at?: string
+          id?: string
+          project_id?: string
+          proposed_budget?: number | null
+          proposed_duration_weeks?: number | null
+          status?: string
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "proposals_project_id_fkey"
+            columns: ["project_id"]
+            isOneToOne: false
+            referencedRelation: "projects"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       user_roles: {
         Row: {
           created_at: string
@@ -97,7 +522,7 @@ export type Database = {
       }
     }
     Enums: {
-      app_role: "admin" | "user"
+      app_role: "admin" | "user" | "client" | "consultant" | "consulting_firm"
     }
     CompositeTypes: {
       [_ in never]: never
@@ -225,7 +650,7 @@ export type CompositeTypes<
 export const Constants = {
   public: {
     Enums: {
-      app_role: ["admin", "user"],
+      app_role: ["admin", "user", "client", "consultant", "consulting_firm"],
     },
   },
 } as const
