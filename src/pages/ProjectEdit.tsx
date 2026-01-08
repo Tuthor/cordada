@@ -1,5 +1,5 @@
-import { useState } from 'react';
-import { useNavigate } from 'react-router-dom';
+import { useState, useEffect } from 'react';
+import { useParams, useNavigate, Link } from 'react-router-dom';
 import { useForm } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
 import { z } from 'zod';
@@ -13,25 +13,26 @@ import { useToast } from '@/hooks/use-toast';
 import { useAuth } from '@/contexts/AuthContext';
 import { supabase } from '@/integrations/supabase/client';
 import { ArrowLeft } from 'lucide-react';
-import { Link } from 'react-router-dom';
 
 const projectSchema = z.object({
   title: z.string().min(5, 'El título debe tener al menos 5 caracteres'),
   description: z.string().min(20, 'La descripción debe tener al menos 20 caracteres'),
   requirements: z.string().optional(),
-  budget_min: z.coerce.number().min(0).optional(),
-  budget_max: z.coerce.number().min(0).optional(),
-  duration_weeks: z.coerce.number().min(1).max(52).optional(),
+  budget_min: z.coerce.number().min(0).optional().or(z.literal('')),
+  budget_max: z.coerce.number().min(0).optional().or(z.literal('')),
+  duration_weeks: z.coerce.number().min(1).max(52).optional().or(z.literal('')),
   expertise_needed: z.string().optional(),
 });
 
 type ProjectFormData = z.infer<typeof projectSchema>;
 
-const ProjectNew = () => {
+const ProjectEdit = () => {
+  const { id } = useParams<{ id: string }>();
   const navigate = useNavigate();
   const { user } = useAuth();
   const { toast } = useToast();
   const [isSubmitting, setIsSubmitting] = useState(false);
+  const [loading, setLoading] = useState(true);
 
   const form = useForm<ProjectFormData>({
     resolver: zodResolver(projectSchema),
@@ -43,15 +44,55 @@ const ProjectNew = () => {
     },
   });
 
-  const onSubmit = async (data: ProjectFormData) => {
-    if (!user) {
+  useEffect(() => {
+    if (id) {
+      fetchProject();
+    }
+  }, [id]);
+
+  const fetchProject = async () => {
+    const { data, error } = await supabase
+      .from('projects')
+      .select('*')
+      .eq('id', id)
+      .single();
+
+    if (error || !data) {
       toast({
         title: 'Error',
-        description: 'Debes iniciar sesión para crear un proyecto',
+        description: 'No se pudo cargar el proyecto',
         variant: 'destructive',
       });
+      navigate('/projects');
       return;
     }
+
+    // Check ownership
+    if (data.client_id !== user?.id) {
+      toast({
+        title: 'Acceso denegado',
+        description: 'No tienes permiso para editar este proyecto',
+        variant: 'destructive',
+      });
+      navigate('/projects');
+      return;
+    }
+
+    form.reset({
+      title: data.title,
+      description: data.description,
+      requirements: data.requirements || '',
+      budget_min: data.budget_min || '',
+      budget_max: data.budget_max || '',
+      duration_weeks: data.duration_weeks || '',
+      expertise_needed: data.expertise_needed?.join(', ') || '',
+    });
+
+    setLoading(false);
+  };
+
+  const onSubmit = async (data: ProjectFormData) => {
+    if (!user || !id) return;
 
     setIsSubmitting(true);
 
@@ -59,10 +100,9 @@ const ProjectNew = () => {
       ? data.expertise_needed.split(',').map(s => s.trim()).filter(Boolean)
       : null;
 
-    const { data: insertedProject, error } = await supabase
+    const { error } = await supabase
       .from('projects')
-      .insert({
-        client_id: user.id,
+      .update({
         title: data.title,
         description: data.description,
         requirements: data.requirements || null,
@@ -70,41 +110,58 @@ const ProjectNew = () => {
         budget_max: data.budget_max || null,
         duration_weeks: data.duration_weeks || null,
         expertise_needed: expertiseArray,
-        status: 'draft',
       })
-      .select()
-      .single();
+      .eq('id', id);
 
     setIsSubmitting(false);
 
     if (error) {
       toast({
-        title: 'Error al crear proyecto',
+        title: 'Error al actualizar',
         description: error.message,
         variant: 'destructive',
       });
     } else {
       toast({
-        title: 'Proyecto creado',
-        description: 'Tu proyecto ha sido creado como borrador',
+        title: 'Proyecto actualizado',
+        description: 'Los cambios han sido guardados exitosamente',
       });
-      navigate(`/projects/${insertedProject?.id}`);
+      navigate(`/projects/${id}`);
     }
   };
+
+  if (loading) {
+    return (
+      <DashboardLayout>
+        <div className="max-w-2xl mx-auto">
+          <Card className="animate-pulse">
+            <CardContent className="p-8">
+              <div className="h-8 bg-muted rounded w-1/2 mb-4" />
+              <div className="space-y-4">
+                {[1, 2, 3, 4].map(i => (
+                  <div key={i} className="h-10 bg-muted rounded" />
+                ))}
+              </div>
+            </CardContent>
+          </Card>
+        </div>
+      </DashboardLayout>
+    );
+  }
 
   return (
     <DashboardLayout>
       <div className="max-w-2xl mx-auto">
         <div className="mb-6">
           <Button variant="ghost" asChild className="mb-4">
-            <Link to="/projects">
+            <Link to={`/projects/${id}`}>
               <ArrowLeft className="w-4 h-4 mr-2" />
-              Volver a Proyectos
+              Volver al Proyecto
             </Link>
           </Button>
-          <h1 className="text-2xl font-bold text-foreground">Publicar Nuevo Proyecto</h1>
+          <h1 className="text-2xl font-bold text-foreground">Editar Proyecto</h1>
           <p className="text-muted-foreground">
-            Describe tu proyecto para atraer a los mejores consultores
+            Actualiza la información de tu proyecto
           </p>
         </div>
 
@@ -112,7 +169,7 @@ const ProjectNew = () => {
           <CardHeader>
             <CardTitle>Detalles del Proyecto</CardTitle>
             <CardDescription>
-              Proporciona información clara y detallada
+              Modifica los campos que necesites actualizar
             </CardDescription>
           </CardHeader>
           <CardContent>
@@ -253,7 +310,7 @@ const ProjectNew = () => {
                   <Button 
                     type="button" 
                     variant="outline" 
-                    onClick={() => navigate('/projects')}
+                    onClick={() => navigate(`/projects/${id}`)}
                   >
                     Cancelar
                   </Button>
@@ -263,7 +320,7 @@ const ProjectNew = () => {
                     disabled={isSubmitting}
                     className="flex-1"
                   >
-                    {isSubmitting ? 'Publicando...' : 'Publicar Proyecto'}
+                    {isSubmitting ? 'Guardando...' : 'Guardar Cambios'}
                   </Button>
                 </div>
               </form>
@@ -275,4 +332,4 @@ const ProjectNew = () => {
   );
 };
 
-export default ProjectNew;
+export default ProjectEdit;

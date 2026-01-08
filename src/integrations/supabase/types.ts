@@ -445,36 +445,48 @@ export type Database = {
       }
       proposals: {
         Row: {
+          attachment_url: string | null
           consultant_id: string
           cover_letter: string
           created_at: string
+          deliverables: string | null
           id: string
           project_id: string
           proposed_budget: number | null
           proposed_duration_weeks: number | null
+          scope: string | null
           status: string
+          timeline: string | null
           updated_at: string
         }
         Insert: {
+          attachment_url?: string | null
           consultant_id: string
           cover_letter: string
           created_at?: string
+          deliverables?: string | null
           id?: string
           project_id: string
           proposed_budget?: number | null
           proposed_duration_weeks?: number | null
+          scope?: string | null
           status?: string
+          timeline?: string | null
           updated_at?: string
         }
         Update: {
+          attachment_url?: string | null
           consultant_id?: string
           cover_letter?: string
           created_at?: string
+          deliverables?: string | null
           id?: string
           project_id?: string
           proposed_budget?: number | null
           proposed_duration_weeks?: number | null
+          scope?: string | null
           status?: string
+          timeline?: string | null
           updated_at?: string
         }
         Relationships: [
