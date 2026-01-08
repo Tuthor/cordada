@@ -1,9 +1,12 @@
 import { useState, useEffect } from 'react';
+import { Link } from 'react-router-dom';
 import { DashboardLayout } from '@/components/layout/DashboardLayout';
 import { Card, CardContent } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
+import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle } from '@/components/ui/dialog';
+import { Separator } from '@/components/ui/separator';
 import { supabase } from '@/integrations/supabase/client';
 import { useAuth } from '@/contexts/AuthContext';
 import { useToast } from '@/hooks/use-toast';
@@ -13,7 +16,12 @@ import {
   Clock, 
   Calendar,
   Check,
-  X
+  X,
+  Eye,
+  Star,
+  Edit,
+  Paperclip,
+  ExternalLink
 } from 'lucide-react';
 
 interface Proposal {
@@ -21,6 +29,10 @@ interface Proposal {
   project_id: string;
   consultant_id: string;
   cover_letter: string;
+  scope: string | null;
+  deliverables: string | null;
+  timeline: string | null;
+  attachment_url: string | null;
   proposed_budget: number | null;
   proposed_duration_weeks: number | null;
   status: string;
@@ -35,10 +47,11 @@ interface Proposal {
 }
 
 const statusConfig: Record<string, { label: string; variant: 'default' | 'secondary' | 'destructive' | 'outline' }> = {
-  pending: { label: 'Pendiente', variant: 'secondary' },
+  draft: { label: 'Borrador', variant: 'outline' },
+  submitted: { label: 'Enviada', variant: 'secondary' },
+  shortlisted: { label: 'Preseleccionada', variant: 'default' },
   accepted: { label: 'Aceptada', variant: 'default' },
   rejected: { label: 'Rechazada', variant: 'destructive' },
-  withdrawn: { label: 'Retirada', variant: 'outline' },
 };
 
 const Proposals = () => {
@@ -46,6 +59,8 @@ const Proposals = () => {
   const { toast } = useToast();
   const [proposals, setProposals] = useState<Proposal[]>([]);
   const [loading, setLoading] = useState(true);
+  const [selectedProposal, setSelectedProposal] = useState<Proposal | null>(null);
+  const [detailOpen, setDetailOpen] = useState(false);
 
   useEffect(() => {
     if (user) {
@@ -105,7 +120,7 @@ const Proposals = () => {
     setLoading(false);
   };
 
-  const handleUpdateStatus = async (proposalId: string, newStatus: 'accepted' | 'rejected') => {
+  const handleUpdateStatus = async (proposalId: string, newStatus: 'shortlisted' | 'accepted' | 'rejected') => {
     const { error } = await supabase
       .from('proposals')
       .update({ status: newStatus })
@@ -118,11 +133,17 @@ const Proposals = () => {
         variant: 'destructive',
       });
     } else {
+      const statusLabels = {
+        shortlisted: 'preseleccionada',
+        accepted: 'aceptada',
+        rejected: 'rechazada'
+      };
       toast({
         title: 'Propuesta actualizada',
-        description: `La propuesta ha sido ${newStatus === 'accepted' ? 'aceptada' : 'rechazada'}`,
+        description: `La propuesta ha sido ${statusLabels[newStatus]}`,
       });
       fetchProposals();
+      setDetailOpen(false);
     }
   };
 
@@ -139,6 +160,21 @@ const Proposals = () => {
     return proposals.filter((p) => p.status === status);
   };
 
+  const viewProposalDetail = (proposal: Proposal) => {
+    setSelectedProposal(proposal);
+    setDetailOpen(true);
+  };
+
+  const getAttachmentUrl = async (path: string) => {
+    const { data } = await supabase.storage
+      .from('proposal-attachments')
+      .createSignedUrl(path, 3600);
+    
+    if (data?.signedUrl) {
+      window.open(data.signedUrl, '_blank');
+    }
+  };
+
   const ProposalCard = ({ proposal }: { proposal: Proposal }) => (
     <Card className="hover:shadow-lg transition-shadow">
       <CardContent className="p-6">
@@ -151,6 +187,9 @@ const Proposals = () => {
               <Badge variant={statusConfig[proposal.status]?.variant || 'default'}>
                 {statusConfig[proposal.status]?.label || proposal.status}
               </Badge>
+              {proposal.attachment_url && (
+                <Paperclip className="w-4 h-4 text-muted-foreground" />
+              )}
             </div>
 
             {userRole === 'client' && (
@@ -159,7 +198,7 @@ const Proposals = () => {
               </p>
             )}
 
-            <p className="text-muted-foreground mb-4 line-clamp-3">
+            <p className="text-muted-foreground mb-4 line-clamp-2">
               {proposal.cover_letter}
             </p>
 
@@ -183,27 +222,64 @@ const Proposals = () => {
             </div>
           </div>
 
-          {userRole === 'client' && proposal.status === 'pending' && (
-            <div className="flex gap-2">
-              <Button
-                variant="outline"
-                size="sm"
-                className="text-destructive hover:text-destructive"
-                onClick={() => handleUpdateStatus(proposal.id, 'rejected')}
-              >
-                <X className="w-4 h-4 mr-1" />
-                Rechazar
-              </Button>
+          <div className="flex gap-2 flex-wrap lg:flex-nowrap">
+            <Button
+              variant="outline"
+              size="sm"
+              onClick={() => viewProposalDetail(proposal)}
+            >
+              <Eye className="w-4 h-4 mr-1" />
+              Ver Detalles
+            </Button>
+
+            {userRole === 'client' && proposal.status === 'submitted' && (
+              <>
+                <Button
+                  variant="secondary"
+                  size="sm"
+                  onClick={() => handleUpdateStatus(proposal.id, 'shortlisted')}
+                >
+                  <Star className="w-4 h-4 mr-1" />
+                  Preseleccionar
+                </Button>
+              </>
+            )}
+
+            {userRole === 'client' && (proposal.status === 'submitted' || proposal.status === 'shortlisted') && (
+              <>
+                <Button
+                  variant="outline"
+                  size="sm"
+                  className="text-destructive hover:text-destructive"
+                  onClick={() => handleUpdateStatus(proposal.id, 'rejected')}
+                >
+                  <X className="w-4 h-4 mr-1" />
+                  Rechazar
+                </Button>
+                <Button
+                  variant="gold"
+                  size="sm"
+                  onClick={() => handleUpdateStatus(proposal.id, 'accepted')}
+                >
+                  <Check className="w-4 h-4 mr-1" />
+                  Aceptar
+                </Button>
+              </>
+            )}
+
+            {userRole !== 'client' && proposal.status === 'draft' && (
               <Button
                 variant="gold"
                 size="sm"
-                onClick={() => handleUpdateStatus(proposal.id, 'accepted')}
+                asChild
               >
-                <Check className="w-4 h-4 mr-1" />
-                Aceptar
+                <Link to={`/projects/${proposal.project_id}/apply`}>
+                  <Edit className="w-4 h-4 mr-1" />
+                  Continuar
+                </Link>
               </Button>
-            </div>
-          )}
+            )}
+          </div>
         </div>
       </CardContent>
     </Card>
@@ -224,12 +300,20 @@ const Proposals = () => {
 
         {/* Tabs */}
         <Tabs defaultValue="all" className="w-full">
-          <TabsList>
+          <TabsList className="flex-wrap h-auto">
             <TabsTrigger value="all">
               Todas ({proposals.length})
             </TabsTrigger>
-            <TabsTrigger value="pending">
-              Pendientes ({filterProposals('pending').length})
+            {userRole !== 'client' && (
+              <TabsTrigger value="draft">
+                Borradores ({filterProposals('draft').length})
+              </TabsTrigger>
+            )}
+            <TabsTrigger value="submitted">
+              {userRole === 'client' ? 'Pendientes' : 'Enviadas'} ({filterProposals('submitted').length})
+            </TabsTrigger>
+            <TabsTrigger value="shortlisted">
+              Preseleccionadas ({filterProposals('shortlisted').length})
             </TabsTrigger>
             <TabsTrigger value="accepted">
               Aceptadas ({filterProposals('accepted').length})
@@ -239,7 +323,7 @@ const Proposals = () => {
             </TabsTrigger>
           </TabsList>
 
-          {['all', 'pending', 'accepted', 'rejected'].map((tab) => (
+          {['all', 'draft', 'submitted', 'shortlisted', 'accepted', 'rejected'].map((tab) => (
             <TabsContent key={tab} value={tab} className="space-y-4 mt-6">
               {loading ? (
                 <div className="space-y-4">
@@ -275,6 +359,144 @@ const Proposals = () => {
             </TabsContent>
           ))}
         </Tabs>
+
+        {/* Detail Dialog */}
+        <Dialog open={detailOpen} onOpenChange={setDetailOpen}>
+          <DialogContent className="max-w-2xl max-h-[90vh] overflow-y-auto">
+            {selectedProposal && (
+              <>
+                <DialogHeader>
+                  <div className="flex items-center gap-3">
+                    <DialogTitle>{selectedProposal.projects?.title}</DialogTitle>
+                    <Badge variant={statusConfig[selectedProposal.status]?.variant}>
+                      {statusConfig[selectedProposal.status]?.label}
+                    </Badge>
+                  </div>
+                  <DialogDescription>
+                    Propuesta de {selectedProposal.consultant_profile?.full_name || 'Consultor'}
+                  </DialogDescription>
+                </DialogHeader>
+
+                <div className="space-y-6 mt-4">
+                  {/* Key Info */}
+                  <div className="grid grid-cols-2 gap-4 p-4 bg-muted/50 rounded-lg">
+                    <div>
+                      <p className="text-sm text-muted-foreground mb-1">Presupuesto</p>
+                      <p className="font-semibold flex items-center gap-1">
+                        <DollarSign className="w-4 h-4" />
+                        ${selectedProposal.proposed_budget?.toLocaleString() || 'No especificado'}
+                      </p>
+                    </div>
+                    <div>
+                      <p className="text-sm text-muted-foreground mb-1">Duración</p>
+                      <p className="font-semibold flex items-center gap-1">
+                        <Clock className="w-4 h-4" />
+                        {selectedProposal.proposed_duration_weeks 
+                          ? `${selectedProposal.proposed_duration_weeks} semanas` 
+                          : 'No especificada'}
+                      </p>
+                    </div>
+                  </div>
+
+                  {selectedProposal.scope && (
+                    <>
+                      <Separator />
+                      <div>
+                        <h4 className="font-semibold mb-2">Alcance del Trabajo</h4>
+                        <p className="text-muted-foreground whitespace-pre-wrap text-sm">
+                          {selectedProposal.scope}
+                        </p>
+                      </div>
+                    </>
+                  )}
+
+                  {selectedProposal.deliverables && (
+                    <>
+                      <Separator />
+                      <div>
+                        <h4 className="font-semibold mb-2">Entregables</h4>
+                        <p className="text-muted-foreground whitespace-pre-wrap text-sm">
+                          {selectedProposal.deliverables}
+                        </p>
+                      </div>
+                    </>
+                  )}
+
+                  {selectedProposal.timeline && (
+                    <>
+                      <Separator />
+                      <div>
+                        <h4 className="font-semibold mb-2">Timeline</h4>
+                        <p className="text-muted-foreground whitespace-pre-wrap text-sm">
+                          {selectedProposal.timeline}
+                        </p>
+                      </div>
+                    </>
+                  )}
+
+                  <Separator />
+                  <div>
+                    <h4 className="font-semibold mb-2">Carta de Presentación</h4>
+                    <p className="text-muted-foreground whitespace-pre-wrap text-sm">
+                      {selectedProposal.cover_letter}
+                    </p>
+                  </div>
+
+                  {selectedProposal.attachment_url && (
+                    <>
+                      <Separator />
+                      <div>
+                        <h4 className="font-semibold mb-2">Archivo Adjunto</h4>
+                        <Button
+                          variant="outline"
+                          size="sm"
+                          onClick={() => getAttachmentUrl(selectedProposal.attachment_url!)}
+                        >
+                          <Paperclip className="w-4 h-4 mr-2" />
+                          Ver Archivo
+                          <ExternalLink className="w-3 h-3 ml-2" />
+                        </Button>
+                      </div>
+                    </>
+                  )}
+
+                  {/* Actions */}
+                  {userRole === 'client' && (selectedProposal.status === 'submitted' || selectedProposal.status === 'shortlisted') && (
+                    <>
+                      <Separator />
+                      <div className="flex gap-3 justify-end">
+                        {selectedProposal.status === 'submitted' && (
+                          <Button
+                            variant="secondary"
+                            onClick={() => handleUpdateStatus(selectedProposal.id, 'shortlisted')}
+                          >
+                            <Star className="w-4 h-4 mr-2" />
+                            Preseleccionar
+                          </Button>
+                        )}
+                        <Button
+                          variant="outline"
+                          className="text-destructive hover:text-destructive"
+                          onClick={() => handleUpdateStatus(selectedProposal.id, 'rejected')}
+                        >
+                          <X className="w-4 h-4 mr-2" />
+                          Rechazar
+                        </Button>
+                        <Button
+                          variant="gold"
+                          onClick={() => handleUpdateStatus(selectedProposal.id, 'accepted')}
+                        >
+                          <Check className="w-4 h-4 mr-2" />
+                          Aceptar
+                        </Button>
+                      </div>
+                    </>
+                  )}
+                </div>
+              </>
+            )}
+          </DialogContent>
+        </Dialog>
       </div>
     </DashboardLayout>
   );

@@ -1,10 +1,11 @@
 import { useState, useEffect } from 'react';
 import { Link } from 'react-router-dom';
 import { DashboardLayout } from '@/components/layout/DashboardLayout';
-import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
+import { Card, CardContent } from '@/components/ui/card';
 import { Input } from '@/components/ui/input';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
+import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { supabase } from '@/integrations/supabase/client';
 import { useAuth } from '@/contexts/AuthContext';
 import { 
@@ -13,7 +14,8 @@ import {
   Calendar, 
   DollarSign, 
   Plus,
-  Clock
+  Clock,
+  Eye
 } from 'lucide-react';
 
 interface Project {
@@ -28,47 +30,46 @@ interface Project {
   status: string;
   created_at: string;
   client_id: string;
-  profiles: {
-    full_name: string;
-  } | null;
-  client_companies: {
-    company_name: string;
-  } | null;
 }
 
 const statusLabels: Record<string, { label: string; variant: 'default' | 'secondary' | 'destructive' | 'outline' }> = {
+  draft: { label: 'Borrador', variant: 'outline' },
   open: { label: 'Abierto', variant: 'default' },
   in_progress: { label: 'En Progreso', variant: 'secondary' },
   completed: { label: 'Completado', variant: 'outline' },
+  closed: { label: 'Cerrado', variant: 'secondary' },
   cancelled: { label: 'Cancelado', variant: 'destructive' },
 };
 
 const Projects = () => {
-  const { userRole } = useAuth();
+  const { user, userRole } = useAuth();
   const [projects, setProjects] = useState<Project[]>([]);
   const [loading, setLoading] = useState(true);
   const [searchTerm, setSearchTerm] = useState('');
+  const [activeTab, setActiveTab] = useState('all');
 
   useEffect(() => {
     fetchProjects();
-  }, []);
+  }, [user, userRole]);
 
   const fetchProjects = async () => {
-    const { data, error } = await supabase
+    let query = supabase
       .from('projects')
-      .select(`
-        *,
-        profiles!projects_client_id_fkey (
-          full_name
-        ),
-        client_companies!client_companies_user_id_fkey (
-          company_name
-        )
-      `)
+      .select('*')
       .order('created_at', { ascending: false });
 
+    // Clients see their own projects, consultants see all open projects
+    if (userRole === 'client' && user) {
+      query = query.eq('client_id', user.id);
+    } else {
+      // Consultants only see open projects
+      query = query.eq('status', 'open');
+    }
+
+    const { data, error } = await query;
+
     if (!error && data) {
-      setProjects(data as unknown as Project[]);
+      setProjects(data);
     }
     setLoading(false);
   };
@@ -79,8 +80,16 @@ const Projects = () => {
     const expertise = project.expertise_needed?.join(' ').toLowerCase() || '';
     const search = searchTerm.toLowerCase();
     
-    return title.includes(search) || description.includes(search) || expertise.includes(search);
+    const matchesSearch = title.includes(search) || description.includes(search) || expertise.includes(search);
+    
+    if (activeTab === 'all') return matchesSearch;
+    return matchesSearch && project.status === activeTab;
   });
+
+  const getProjectCountByStatus = (status: string | null) => {
+    if (!status) return projects.length;
+    return projects.filter(p => p.status === status).length;
+  };
 
   const formatBudget = (min: number | null, max: number | null) => {
     if (!min && !max) return 'A convenir';
@@ -114,7 +123,7 @@ const Projects = () => {
             <Button variant="gold" asChild>
               <Link to="/projects/new">
                 <Plus className="w-4 h-4 mr-2" />
-                Publicar Proyecto
+                Nuevo Proyecto
               </Link>
             </Button>
           )}
@@ -133,107 +142,173 @@ const Projects = () => {
           </div>
         </div>
 
-        {/* Projects List */}
-        {loading ? (
-          <div className="space-y-4">
-            {[1, 2, 3].map((i) => (
-              <Card key={i} className="animate-pulse">
-                <CardContent className="p-6">
-                  <div className="h-6 bg-muted rounded w-1/3 mb-3" />
-                  <div className="h-4 bg-muted rounded w-full mb-2" />
-                  <div className="h-4 bg-muted rounded w-2/3" />
-                </CardContent>
-              </Card>
-            ))}
-          </div>
-        ) : filteredProjects.length === 0 ? (
-          <Card>
-            <CardContent className="flex flex-col items-center justify-center py-12">
-              <Briefcase className="w-12 h-12 text-muted-foreground mb-4" />
-              <h3 className="text-lg font-semibold text-foreground mb-2">
-                No hay proyectos
-              </h3>
-              <p className="text-muted-foreground text-center max-w-md">
-                {searchTerm
-                  ? 'Intenta con otros términos de búsqueda'
-                  : userRole === 'client'
-                  ? 'Publica tu primer proyecto para recibir propuestas'
-                  : 'Aún no hay proyectos disponibles'}
-              </p>
-              {userRole === 'client' && !searchTerm && (
-                <Button variant="gold" className="mt-4" asChild>
-                  <Link to="/projects/new">
-                    <Plus className="w-4 h-4 mr-2" />
-                    Publicar Proyecto
-                  </Link>
-                </Button>
-              )}
-            </CardContent>
-          </Card>
+        {/* Tabs for Clients */}
+        {userRole === 'client' ? (
+          <Tabs value={activeTab} onValueChange={setActiveTab}>
+            <TabsList>
+              <TabsTrigger value="all">
+                Todos ({getProjectCountByStatus(null)})
+              </TabsTrigger>
+              <TabsTrigger value="draft">
+                Borradores ({getProjectCountByStatus('draft')})
+              </TabsTrigger>
+              <TabsTrigger value="open">
+                Abiertos ({getProjectCountByStatus('open')})
+              </TabsTrigger>
+              <TabsTrigger value="in_progress">
+                En Progreso ({getProjectCountByStatus('in_progress')})
+              </TabsTrigger>
+              <TabsTrigger value="closed">
+                Cerrados ({getProjectCountByStatus('closed')})
+              </TabsTrigger>
+            </TabsList>
+
+            <TabsContent value={activeTab} className="mt-6">
+              <ProjectList 
+                projects={filteredProjects} 
+                loading={loading} 
+                userRole={userRole}
+                searchTerm={searchTerm}
+                formatBudget={formatBudget}
+                formatDate={formatDate}
+              />
+            </TabsContent>
+          </Tabs>
         ) : (
-          <div className="space-y-4">
-            {filteredProjects.map((project) => (
-              <Card key={project.id} className="hover:shadow-lg transition-shadow">
-                <CardContent className="p-6">
-                  <div className="flex flex-col lg:flex-row lg:items-start lg:justify-between gap-4">
-                    <div className="flex-1">
-                      <div className="flex items-center gap-3 mb-2">
-                        <h3 className="text-lg font-semibold text-foreground">
-                          {project.title}
-                        </h3>
-                        <Badge variant={statusLabels[project.status]?.variant || 'default'}>
-                          {statusLabels[project.status]?.label || project.status}
-                        </Badge>
-                      </div>
-                      
-                      <p className="text-muted-foreground mb-4 line-clamp-2">
-                        {project.description}
-                      </p>
-
-                      {project.expertise_needed && project.expertise_needed.length > 0 && (
-                        <div className="flex flex-wrap gap-2 mb-4">
-                          {project.expertise_needed.map((skill, index) => (
-                            <Badge key={index} variant="secondary">
-                              {skill}
-                            </Badge>
-                          ))}
-                        </div>
-                      )}
-
-                      <div className="flex flex-wrap items-center gap-4 text-sm text-muted-foreground">
-                        <span className="flex items-center gap-1">
-                          <DollarSign className="w-4 h-4" />
-                          {formatBudget(project.budget_min, project.budget_max)}
-                        </span>
-                        {project.duration_weeks && (
-                          <span className="flex items-center gap-1">
-                            <Clock className="w-4 h-4" />
-                            {project.duration_weeks} semanas
-                          </span>
-                        )}
-                        <span className="flex items-center gap-1">
-                          <Calendar className="w-4 h-4" />
-                          {formatDate(project.created_at)}
-                        </span>
-                      </div>
-                    </div>
-
-                    <div className="flex flex-col gap-2 lg:items-end">
-                      <p className="text-sm text-muted-foreground">
-                        {project.client_companies?.company_name || project.profiles?.full_name || 'Cliente'}
-                      </p>
-                      <Button variant="gold">
-                        {userRole === 'client' ? 'Ver Detalles' : 'Enviar Propuesta'}
-                      </Button>
-                    </div>
-                  </div>
-                </CardContent>
-              </Card>
-            ))}
-          </div>
+          <ProjectList 
+            projects={filteredProjects} 
+            loading={loading} 
+            userRole={userRole}
+            searchTerm={searchTerm}
+            formatBudget={formatBudget}
+            formatDate={formatDate}
+          />
         )}
       </div>
     </DashboardLayout>
+  );
+};
+
+interface ProjectListProps {
+  projects: Project[];
+  loading: boolean;
+  userRole: string | null;
+  searchTerm: string;
+  formatBudget: (min: number | null, max: number | null) => string;
+  formatDate: (dateString: string) => string;
+}
+
+const ProjectList = ({ projects, loading, userRole, searchTerm, formatBudget, formatDate }: ProjectListProps) => {
+  if (loading) {
+    return (
+      <div className="space-y-4">
+        {[1, 2, 3].map((i) => (
+          <Card key={i} className="animate-pulse">
+            <CardContent className="p-6">
+              <div className="h-6 bg-muted rounded w-1/3 mb-3" />
+              <div className="h-4 bg-muted rounded w-full mb-2" />
+              <div className="h-4 bg-muted rounded w-2/3" />
+            </CardContent>
+          </Card>
+        ))}
+      </div>
+    );
+  }
+
+  if (projects.length === 0) {
+    return (
+      <Card>
+        <CardContent className="flex flex-col items-center justify-center py-12">
+          <Briefcase className="w-12 h-12 text-muted-foreground mb-4" />
+          <h3 className="text-lg font-semibold text-foreground mb-2">
+            No hay proyectos
+          </h3>
+          <p className="text-muted-foreground text-center max-w-md">
+            {searchTerm
+              ? 'Intenta con otros términos de búsqueda'
+              : userRole === 'client'
+              ? 'Publica tu primer proyecto para recibir propuestas'
+              : 'Aún no hay proyectos disponibles'}
+          </p>
+          {userRole === 'client' && !searchTerm && (
+            <Button variant="gold" className="mt-4" asChild>
+              <Link to="/projects/new">
+                <Plus className="w-4 h-4 mr-2" />
+                Nuevo Proyecto
+              </Link>
+            </Button>
+          )}
+        </CardContent>
+      </Card>
+    );
+  }
+
+  return (
+    <div className="space-y-4">
+      {projects.map((project) => (
+        <Card key={project.id} className="hover:shadow-lg transition-shadow">
+          <CardContent className="p-6">
+            <div className="flex flex-col lg:flex-row lg:items-start lg:justify-between gap-4">
+              <div className="flex-1">
+                <div className="flex items-center gap-3 mb-2">
+                  <h3 className="text-lg font-semibold text-foreground">
+                    {project.title}
+                  </h3>
+                  <Badge variant={statusLabels[project.status]?.variant || 'default'}>
+                    {statusLabels[project.status]?.label || project.status}
+                  </Badge>
+                </div>
+                
+                <p className="text-muted-foreground mb-4 line-clamp-2">
+                  {project.description}
+                </p>
+
+                {project.expertise_needed && project.expertise_needed.length > 0 && (
+                  <div className="flex flex-wrap gap-2 mb-4">
+                    {project.expertise_needed.slice(0, 4).map((skill, index) => (
+                      <Badge key={index} variant="secondary">
+                        {skill}
+                      </Badge>
+                    ))}
+                    {project.expertise_needed.length > 4 && (
+                      <Badge variant="secondary">
+                        +{project.expertise_needed.length - 4}
+                      </Badge>
+                    )}
+                  </div>
+                )}
+
+                <div className="flex flex-wrap items-center gap-4 text-sm text-muted-foreground">
+                  <span className="flex items-center gap-1">
+                    <DollarSign className="w-4 h-4" />
+                    {formatBudget(project.budget_min, project.budget_max)}
+                  </span>
+                  {project.duration_weeks && (
+                    <span className="flex items-center gap-1">
+                      <Clock className="w-4 h-4" />
+                      {project.duration_weeks} semanas
+                    </span>
+                  )}
+                  <span className="flex items-center gap-1">
+                    <Calendar className="w-4 h-4" />
+                    {formatDate(project.created_at)}
+                  </span>
+                </div>
+              </div>
+
+              <div className="flex flex-col gap-2 lg:items-end">
+                <Button variant="gold" asChild>
+                  <Link to={`/projects/${project.id}`}>
+                    <Eye className="w-4 h-4 mr-2" />
+                    {userRole === 'client' ? 'Ver Detalles' : 'Ver Proyecto'}
+                  </Link>
+                </Button>
+              </div>
+            </div>
+          </CardContent>
+        </Card>
+      ))}
+    </div>
   );
 };
 
