@@ -7,7 +7,10 @@ import {
   FileText, 
   GraduationCap, 
   Settings,
-  LogOut
+  LogOut,
+  Building2,
+  User,
+  Building
 } from "lucide-react";
 import { NavLink } from "@/components/NavLink";
 import { useAuth } from "@/contexts/AuthContext";
@@ -25,6 +28,13 @@ import {
 } from "@/components/ui/sidebar";
 import { Button } from "@/components/ui/button";
 import { Avatar, AvatarFallback } from "@/components/ui/avatar";
+import { Badge } from "@/components/ui/badge";
+
+const roleLabels: Record<string, { label: string; icon: typeof User; variant: 'default' | 'secondary' | 'outline' }> = {
+  client: { label: 'Cliente', icon: Building2, variant: 'default' },
+  consultant: { label: 'Consultor', icon: User, variant: 'secondary' },
+  consulting_firm: { label: 'Empresa Consultora', icon: Building, variant: 'outline' },
+};
 
 const mainNavItems = [
   { title: "Inicio", url: "/dashboard", icon: Home },
@@ -43,7 +53,7 @@ export function AppSidebar() {
   const { state } = useSidebar();
   const collapsed = state === "collapsed";
   const location = useLocation();
-  const { user, signOut } = useAuth();
+  const { user, userRole, signOut } = useAuth();
 
   const isActive = (path: string) => location.pathname === path;
 
@@ -54,6 +64,9 @@ export function AppSidebar() {
   const userInitials = user?.user_metadata?.full_name
     ? user.user_metadata.full_name.split(' ').map((n: string) => n[0]).join('').toUpperCase()
     : user?.email?.charAt(0).toUpperCase() || 'U';
+
+  const currentRole = userRole && roleLabels[userRole] ? roleLabels[userRole] : null;
+  const RoleIcon = currentRole?.icon;
 
   return (
     <Sidebar collapsible="icon" className="border-r border-border">
@@ -141,9 +154,12 @@ export function AppSidebar() {
               <p className="text-sm font-medium text-foreground truncate">
                 {user?.user_metadata?.full_name || 'Usuario'}
               </p>
-              <p className="text-xs text-muted-foreground truncate">
-                {user?.email}
-              </p>
+              {currentRole && (
+                <Badge variant={currentRole.variant} className="mt-1 text-xs gap-1">
+                  {RoleIcon && <RoleIcon className="h-3 w-3" />}
+                  {currentRole.label}
+                </Badge>
+              )}
             </div>
           )}
           {!collapsed && (
