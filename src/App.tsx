@@ -10,6 +10,9 @@ import Dashboard from "./pages/Dashboard";
 import Directory from "./pages/Directory";
 import Projects from "./pages/Projects";
 import ProjectNew from "./pages/ProjectNew";
+import ProjectDetail from "./pages/ProjectDetail";
+import ProjectEdit from "./pages/ProjectEdit";
+import ProjectApply from "./pages/ProjectApply";
 import Inbox from "./pages/Inbox";
 import Proposals from "./pages/Proposals";
 import Training from "./pages/Training";
@@ -35,6 +38,9 @@ const App = () => (
             <Route path="/directory" element={<Directory />} />
             <Route path="/projects" element={<Projects />} />
             <Route path="/projects/new" element={<ProjectNew />} />
+            <Route path="/projects/:id" element={<ProjectDetail />} />
+            <Route path="/projects/:id/edit" element={<ProjectEdit />} />
+            <Route path="/projects/:id/apply" element={<ProjectApply />} />
             <Route path="/inbox" element={<Inbox />} />
             <Route path="/proposals" element={<Proposals />} />
             <Route path="/training" element={<Training />} />
