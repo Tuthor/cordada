@@ -5,6 +5,7 @@ import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { Badge } from "@/components/ui/badge";
+import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { useToast } from "@/hooks/use-toast";
 import { 
   LogOut, 
@@ -13,7 +14,9 @@ import {
   Loader2, 
   Users, 
   RefreshCw,
-  AlertTriangle
+  AlertTriangle,
+  UserCheck,
+  ClipboardList
 } from "lucide-react";
 import {
   AlertDialog,
@@ -43,11 +46,31 @@ interface Enrollment {
   created_at: string;
 }
 
+interface RegisteredUser {
+  id: string;
+  user_id: string;
+  full_name: string;
+  email: string;
+  phone: string | null;
+  created_at: string;
+  role: string | null;
+}
+
+const roleLabels: Record<string, { label: string; variant: 'default' | 'secondary' | 'outline' }> = {
+  admin: { label: 'Administrador', variant: 'default' },
+  client: { label: 'Cliente', variant: 'secondary' },
+  consultant: { label: 'Consultor', variant: 'outline' },
+  consulting_firm: { label: 'Empresa Consultora', variant: 'outline' },
+};
+
 const AdminDashboard = () => {
   const [enrollments, setEnrollments] = useState<Enrollment[]>([]);
+  const [registeredUsers, setRegisteredUsers] = useState<RegisteredUser[]>([]);
   const [isLoading, setIsLoading] = useState(true);
+  const [isLoadingUsers, setIsLoadingUsers] = useState(true);
   const [isDeleting, setIsDeleting] = useState<string | null>(null);
   const [isCheckingAuth, setIsCheckingAuth] = useState(true);
+  const [activeTab, setActiveTab] = useState("enrollments");
   const navigate = useNavigate();
   const { toast } = useToast();
 
@@ -120,6 +143,7 @@ const AdminDashboard = () => {
 
     setIsCheckingAuth(false);
     fetchEnrollments();
+    fetchRegisteredUsers();
   };
 
   const fetchEnrollments = async () => {
@@ -139,6 +163,48 @@ const AdminDashboard = () => {
       setEnrollments(data || []);
     }
     setIsLoading(false);
+  };
+
+  const fetchRegisteredUsers = async () => {
+    setIsLoadingUsers(true);
+    
+    // First get all profiles
+    const { data: profiles, error: profilesError } = await supabase
+      .from("profiles")
+      .select("*")
+      .order("created_at", { ascending: false });
+
+    if (profilesError) {
+      toast({
+        title: "Error",
+        description: "No se pudieron cargar los usuarios",
+        variant: "destructive",
+      });
+      setIsLoadingUsers(false);
+      return;
+    }
+
+    // Then get all user roles
+    const { data: roles } = await supabase
+      .from("user_roles")
+      .select("user_id, role");
+
+    // Merge profiles with roles
+    const usersWithRoles: RegisteredUser[] = (profiles || []).map(profile => {
+      const userRole = roles?.find(r => r.user_id === profile.user_id);
+      return {
+        id: profile.id,
+        user_id: profile.user_id,
+        full_name: profile.full_name,
+        email: profile.email,
+        phone: profile.phone,
+        created_at: profile.created_at,
+        role: userRole?.role || null,
+      };
+    });
+
+    setRegisteredUsers(usersWithRoles);
+    setIsLoadingUsers(false);
   };
 
   const handleDelete = async (id: string) => {
@@ -263,7 +329,7 @@ const AdminDashboard = () => {
             </div>
             <div>
               <h1 className="text-xl font-bold">Panel de Administración</h1>
-              <p className="text-sm text-primary-foreground/70">Gestión de Inscripciones</p>
+              <p className="text-sm text-primary-foreground/70">Gestión de Usuarios e Inscripciones</p>
             </div>
           </div>
           <Button
@@ -279,127 +345,215 @@ const AdminDashboard = () => {
 
       {/* Main Content */}
       <main className="max-w-7xl mx-auto p-6">
-        <Card>
-          <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-4">
-            <div>
-              <CardTitle className="text-xl">Inscripciones</CardTitle>
-              <CardDescription>
-                {enrollments.length} registro{enrollments.length !== 1 ? "s" : ""} en total
-              </CardDescription>
-            </div>
-            <div className="flex gap-2">
-              <Button
-                variant="outline"
-                size="sm"
-                onClick={fetchEnrollments}
-                disabled={isLoading}
-              >
-                <RefreshCw className={`w-4 h-4 mr-2 ${isLoading ? "animate-spin" : ""}`} />
-                Actualizar
-              </Button>
-              <Button
-                variant="default"
-                size="sm"
-                onClick={handleExportCSV}
-                className="bg-gradient-gold text-accent-foreground hover:opacity-90"
-              >
-                <Download className="w-4 h-4 mr-2" />
-                Exportar CSV
-              </Button>
-            </div>
-          </CardHeader>
-          <CardContent>
-            {isLoading ? (
-              <div className="flex items-center justify-center py-12">
-                <Loader2 className="w-8 h-8 animate-spin text-muted-foreground" />
-              </div>
-            ) : enrollments.length === 0 ? (
-              <div className="text-center py-12 text-muted-foreground">
-                <Users className="w-12 h-12 mx-auto mb-4 opacity-50" />
-                <p>No hay inscripciones registradas</p>
-              </div>
-            ) : (
-              <div className="overflow-x-auto">
-                <Table>
-                  <TableHeader>
-                    <TableRow>
-                      <TableHead>Nombre</TableHead>
-                      <TableHead>Email</TableHead>
-                      <TableHead>Empresa</TableHead>
-                      <TableHead>Especialidad</TableHead>
-                      <TableHead>Nivel</TableHead>
-                      <TableHead className="text-center">Puntuación</TableHead>
-                      <TableHead>Fecha</TableHead>
-                      <TableHead className="text-right">Acciones</TableHead>
-                    </TableRow>
-                  </TableHeader>
-                  <TableBody>
-                    {enrollments.map((enrollment) => (
-                      <TableRow key={enrollment.id}>
-                        <TableCell className="font-medium">
-                          {enrollment.full_name}
-                        </TableCell>
-                        <TableCell>{enrollment.email}</TableCell>
-                        <TableCell>{enrollment.company || "-"}</TableCell>
-                        <TableCell>{enrollment.expertise || "-"}</TableCell>
-                        <TableCell>
-                          <Badge variant={getLevelBadgeVariant(enrollment.maturity_level)}>
-                            {enrollment.maturity_level || "N/A"}
-                          </Badge>
-                        </TableCell>
-                        <TableCell className="text-center">
-                          {enrollment.overall_score !== null ? `${enrollment.overall_score}%` : "-"}
-                        </TableCell>
-                        <TableCell>
-                          {new Date(enrollment.created_at).toLocaleDateString("es-CL")}
-                        </TableCell>
-                        <TableCell className="text-right">
-                          <AlertDialog>
-                            <AlertDialogTrigger asChild>
-                              <Button
-                                variant="ghost"
-                                size="sm"
-                                className="text-destructive hover:text-destructive hover:bg-destructive/10"
-                                disabled={isDeleting === enrollment.id}
-                              >
-                                {isDeleting === enrollment.id ? (
-                                  <Loader2 className="w-4 h-4 animate-spin" />
-                                ) : (
-                                  <Trash2 className="w-4 h-4" />
-                                )}
-                              </Button>
-                            </AlertDialogTrigger>
-                            <AlertDialogContent>
-                              <AlertDialogHeader>
-                                <AlertDialogTitle className="flex items-center gap-2">
-                                  <AlertTriangle className="w-5 h-5 text-destructive" />
-                                  Confirmar eliminación
-                                </AlertDialogTitle>
-                                <AlertDialogDescription>
-                                  ¿Estás seguro de eliminar la inscripción de{" "}
-                                  <strong>{enrollment.full_name}</strong>? Esta acción no se puede deshacer.
-                                </AlertDialogDescription>
-                              </AlertDialogHeader>
-                              <AlertDialogFooter>
-                                <AlertDialogCancel>Cancelar</AlertDialogCancel>
-                                <AlertDialogAction
-                                  onClick={() => handleDelete(enrollment.id)}
-                                  className="bg-destructive text-destructive-foreground hover:bg-destructive/90"
-                                >
-                                  Eliminar
-                                </AlertDialogAction>
-                              </AlertDialogFooter>
-                            </AlertDialogContent>
-                          </AlertDialog>
-                        </TableCell>
-                      </TableRow>
-                    ))}
-                  </TableBody>
-                </Table>
-              </div>
-            )}
-          </CardContent>
-        </Card>
+        <Tabs value={activeTab} onValueChange={setActiveTab} className="space-y-4">
+          <TabsList className="grid w-full max-w-md grid-cols-2">
+            <TabsTrigger value="enrollments" className="gap-2">
+              <ClipboardList className="w-4 h-4" />
+              Inscripciones
+            </TabsTrigger>
+            <TabsTrigger value="users" className="gap-2">
+              <UserCheck className="w-4 h-4" />
+              Usuarios
+            </TabsTrigger>
+          </TabsList>
+
+          {/* Enrollments Tab */}
+          <TabsContent value="enrollments">
+            <Card>
+              <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-4">
+                <div>
+                  <CardTitle className="text-xl">Inscripciones</CardTitle>
+                  <CardDescription>
+                    {enrollments.length} registro{enrollments.length !== 1 ? "s" : ""} en total
+                  </CardDescription>
+                </div>
+                <div className="flex gap-2">
+                  <Button
+                    variant="outline"
+                    size="sm"
+                    onClick={fetchEnrollments}
+                    disabled={isLoading}
+                  >
+                    <RefreshCw className={`w-4 h-4 mr-2 ${isLoading ? "animate-spin" : ""}`} />
+                    Actualizar
+                  </Button>
+                  <Button
+                    variant="default"
+                    size="sm"
+                    onClick={handleExportCSV}
+                    className="bg-gradient-gold text-accent-foreground hover:opacity-90"
+                  >
+                    <Download className="w-4 h-4 mr-2" />
+                    Exportar CSV
+                  </Button>
+                </div>
+              </CardHeader>
+              <CardContent>
+                {isLoading ? (
+                  <div className="flex items-center justify-center py-12">
+                    <Loader2 className="w-8 h-8 animate-spin text-muted-foreground" />
+                  </div>
+                ) : enrollments.length === 0 ? (
+                  <div className="text-center py-12 text-muted-foreground">
+                    <ClipboardList className="w-12 h-12 mx-auto mb-4 opacity-50" />
+                    <p>No hay inscripciones registradas</p>
+                  </div>
+                ) : (
+                  <div className="overflow-x-auto">
+                    <Table>
+                      <TableHeader>
+                        <TableRow>
+                          <TableHead>Nombre</TableHead>
+                          <TableHead>Email</TableHead>
+                          <TableHead>Empresa</TableHead>
+                          <TableHead>Especialidad</TableHead>
+                          <TableHead>Nivel</TableHead>
+                          <TableHead className="text-center">Puntuación</TableHead>
+                          <TableHead>Fecha</TableHead>
+                          <TableHead className="text-right">Acciones</TableHead>
+                        </TableRow>
+                      </TableHeader>
+                      <TableBody>
+                        {enrollments.map((enrollment) => (
+                          <TableRow key={enrollment.id}>
+                            <TableCell className="font-medium">
+                              {enrollment.full_name}
+                            </TableCell>
+                            <TableCell>{enrollment.email}</TableCell>
+                            <TableCell>{enrollment.company || "-"}</TableCell>
+                            <TableCell>{enrollment.expertise || "-"}</TableCell>
+                            <TableCell>
+                              <Badge variant={getLevelBadgeVariant(enrollment.maturity_level)}>
+                                {enrollment.maturity_level || "N/A"}
+                              </Badge>
+                            </TableCell>
+                            <TableCell className="text-center">
+                              {enrollment.overall_score !== null ? `${enrollment.overall_score}%` : "-"}
+                            </TableCell>
+                            <TableCell>
+                              {new Date(enrollment.created_at).toLocaleDateString("es-CL")}
+                            </TableCell>
+                            <TableCell className="text-right">
+                              <AlertDialog>
+                                <AlertDialogTrigger asChild>
+                                  <Button
+                                    variant="ghost"
+                                    size="sm"
+                                    className="text-destructive hover:text-destructive hover:bg-destructive/10"
+                                    disabled={isDeleting === enrollment.id}
+                                  >
+                                    {isDeleting === enrollment.id ? (
+                                      <Loader2 className="w-4 h-4 animate-spin" />
+                                    ) : (
+                                      <Trash2 className="w-4 h-4" />
+                                    )}
+                                  </Button>
+                                </AlertDialogTrigger>
+                                <AlertDialogContent>
+                                  <AlertDialogHeader>
+                                    <AlertDialogTitle className="flex items-center gap-2">
+                                      <AlertTriangle className="w-5 h-5 text-destructive" />
+                                      Confirmar eliminación
+                                    </AlertDialogTitle>
+                                    <AlertDialogDescription>
+                                      ¿Estás seguro de eliminar la inscripción de{" "}
+                                      <strong>{enrollment.full_name}</strong>? Esta acción no se puede deshacer.
+                                    </AlertDialogDescription>
+                                  </AlertDialogHeader>
+                                  <AlertDialogFooter>
+                                    <AlertDialogCancel>Cancelar</AlertDialogCancel>
+                                    <AlertDialogAction
+                                      onClick={() => handleDelete(enrollment.id)}
+                                      className="bg-destructive text-destructive-foreground hover:bg-destructive/90"
+                                    >
+                                      Eliminar
+                                    </AlertDialogAction>
+                                  </AlertDialogFooter>
+                                </AlertDialogContent>
+                              </AlertDialog>
+                            </TableCell>
+                          </TableRow>
+                        ))}
+                      </TableBody>
+                    </Table>
+                  </div>
+                )}
+              </CardContent>
+            </Card>
+          </TabsContent>
+
+          {/* Registered Users Tab */}
+          <TabsContent value="users">
+            <Card>
+              <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-4">
+                <div>
+                  <CardTitle className="text-xl">Usuarios Registrados</CardTitle>
+                  <CardDescription>
+                    {registeredUsers.length} usuario{registeredUsers.length !== 1 ? "s" : ""} en la plataforma
+                  </CardDescription>
+                </div>
+                <Button
+                  variant="outline"
+                  size="sm"
+                  onClick={fetchRegisteredUsers}
+                  disabled={isLoadingUsers}
+                >
+                  <RefreshCw className={`w-4 h-4 mr-2 ${isLoadingUsers ? "animate-spin" : ""}`} />
+                  Actualizar
+                </Button>
+              </CardHeader>
+              <CardContent>
+                {isLoadingUsers ? (
+                  <div className="flex items-center justify-center py-12">
+                    <Loader2 className="w-8 h-8 animate-spin text-muted-foreground" />
+                  </div>
+                ) : registeredUsers.length === 0 ? (
+                  <div className="text-center py-12 text-muted-foreground">
+                    <UserCheck className="w-12 h-12 mx-auto mb-4 opacity-50" />
+                    <p>No hay usuarios registrados</p>
+                  </div>
+                ) : (
+                  <div className="overflow-x-auto">
+                    <Table>
+                      <TableHeader>
+                        <TableRow>
+                          <TableHead>Nombre</TableHead>
+                          <TableHead>Email</TableHead>
+                          <TableHead>Teléfono</TableHead>
+                          <TableHead>Rol</TableHead>
+                          <TableHead>Fecha Registro</TableHead>
+                        </TableRow>
+                      </TableHeader>
+                      <TableBody>
+                        {registeredUsers.map((user) => (
+                          <TableRow key={user.id}>
+                            <TableCell className="font-medium">
+                              {user.full_name}
+                            </TableCell>
+                            <TableCell>{user.email}</TableCell>
+                            <TableCell>{user.phone || "-"}</TableCell>
+                            <TableCell>
+                              {user.role ? (
+                                <Badge variant={roleLabels[user.role]?.variant || 'outline'}>
+                                  {roleLabels[user.role]?.label || user.role}
+                                </Badge>
+                              ) : (
+                                <span className="text-muted-foreground text-sm">Sin rol</span>
+                              )}
+                            </TableCell>
+                            <TableCell>
+                              {new Date(user.created_at).toLocaleDateString("es-CL")}
+                            </TableCell>
+                          </TableRow>
+                        ))}
+                      </TableBody>
+                    </Table>
+                  </div>
+                )}
+              </CardContent>
+            </Card>
+          </TabsContent>
+        </Tabs>
       </main>
     </div>
   );
