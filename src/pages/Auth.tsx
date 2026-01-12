@@ -3,7 +3,7 @@ import { useNavigate } from 'react-router-dom';
 import { useForm } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
 import { z } from 'zod';
-import { Briefcase, Mail, Lock, User, Building2, Users } from 'lucide-react';
+import { Briefcase, Mail, Lock, User, Building2, Users, ArrowLeft, Loader2 } from 'lucide-react';
 import { useAuth } from '@/contexts/AuthContext';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
@@ -12,6 +12,7 @@ import { Form, FormControl, FormField, FormItem, FormLabel, FormMessage } from '
 import { RadioGroup, RadioGroupItem } from '@/components/ui/radio-group';
 import { useToast } from '@/hooks/use-toast';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
+import { supabase } from '@/integrations/supabase/client';
 
 const signInSchema = z.object({
   email: z.string().email('Email inválido'),
@@ -56,6 +57,9 @@ const Auth = () => {
   const { user, signIn, signUp, loading } = useAuth();
   const { toast } = useToast();
   const [isSubmitting, setIsSubmitting] = useState(false);
+  const [showResetPassword, setShowResetPassword] = useState(false);
+  const [resetEmail, setResetEmail] = useState('');
+  const [resetLoading, setResetLoading] = useState(false);
 
   const signInForm = useForm<SignInFormData>({
     resolver: zodResolver(signInSchema),
@@ -116,6 +120,61 @@ const Auth = () => {
         description: 'Tu cuenta ha sido creada exitosamente.',
       });
       navigate('/dashboard');
+    }
+  };
+
+  const handleResetPassword = async (e: React.FormEvent) => {
+    e.preventDefault();
+    
+    if (!resetEmail) {
+      toast({
+        title: "Error",
+        description: "Por favor ingresa tu email",
+        variant: "destructive",
+      });
+      return;
+    }
+
+    const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+    if (!emailRegex.test(resetEmail)) {
+      toast({
+        title: "Error",
+        description: "Por favor ingresa un email válido",
+        variant: "destructive",
+      });
+      return;
+    }
+
+    setResetLoading(true);
+
+    try {
+      const redirectUrl = `${window.location.origin}/reset-password`;
+      
+      const { data, error } = await supabase.functions.invoke('send-password-reset', {
+        body: { 
+          email: resetEmail,
+          redirectUrl: redirectUrl
+        }
+      });
+
+      if (error) throw error;
+
+      toast({
+        title: "Correo enviado",
+        description: "Si el email está registrado, recibirás un enlace para restablecer tu contraseña.",
+      });
+      
+      setShowResetPassword(false);
+      setResetEmail('');
+    } catch (error: any) {
+      console.error('Error sending reset email:', error);
+      toast({
+        title: "Error",
+        description: "Ocurrió un error al enviar el correo. Intenta de nuevo.",
+        variant: "destructive",
+      });
+    } finally {
+      setResetLoading(false);
     }
   };
 
@@ -182,6 +241,52 @@ const Auth = () => {
             </CardDescription>
           </CardHeader>
           <CardContent>
+            {showResetPassword ? (
+              <div className="space-y-4">
+                <button
+                  type="button"
+                  onClick={() => setShowResetPassword(false)}
+                  className="flex items-center gap-2 text-sm text-muted-foreground hover:text-foreground transition-colors"
+                >
+                  <ArrowLeft className="w-4 h-4" />
+                  Volver al inicio de sesión
+                </button>
+                <div className="text-center mb-4">
+                  <h3 className="text-lg font-semibold">Recuperar contraseña</h3>
+                  <p className="text-sm text-muted-foreground">
+                    Ingresa tu email y te enviaremos un enlace para restablecer tu contraseña
+                  </p>
+                </div>
+                <form onSubmit={handleResetPassword} className="space-y-4">
+                  <div className="relative">
+                    <Mail className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
+                    <Input
+                      type="email"
+                      placeholder="tu@email.com"
+                      value={resetEmail}
+                      onChange={(e) => setResetEmail(e.target.value)}
+                      className="pl-10"
+                      disabled={resetLoading}
+                    />
+                  </div>
+                  <Button 
+                    type="submit" 
+                    className="w-full" 
+                    variant="gold"
+                    disabled={resetLoading}
+                  >
+                    {resetLoading ? (
+                      <>
+                        <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+                        Enviando...
+                      </>
+                    ) : (
+                      'Enviar enlace de recuperación'
+                    )}
+                  </Button>
+                </form>
+              </div>
+            ) : (
             <Tabs defaultValue="signin" className="w-full">
               <TabsList className="grid w-full grid-cols-2 mb-6">
                 <TabsTrigger value="signin">Iniciar Sesión</TabsTrigger>
@@ -240,6 +345,15 @@ const Auth = () => {
                     >
                       {isSubmitting ? 'Iniciando sesión...' : 'Iniciar Sesión'}
                     </Button>
+                    <div className="text-center mt-4">
+                      <button
+                        type="button"
+                        onClick={() => setShowResetPassword(true)}
+                        className="text-sm text-primary hover:underline"
+                      >
+                        ¿Olvidaste tu contraseña?
+                      </button>
+                    </div>
                   </form>
                 </Form>
               </TabsContent>
@@ -361,6 +475,7 @@ const Auth = () => {
                 </Form>
               </TabsContent>
             </Tabs>
+            )}
           </CardContent>
         </Card>
       </div>
