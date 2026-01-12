@@ -69,8 +69,10 @@ const AdminDashboard = () => {
   const [isLoading, setIsLoading] = useState(true);
   const [isLoadingUsers, setIsLoadingUsers] = useState(true);
   const [isDeleting, setIsDeleting] = useState<string | null>(null);
+  const [isDeletingUser, setIsDeletingUser] = useState<string | null>(null);
   const [isCheckingAuth, setIsCheckingAuth] = useState(true);
   const [activeTab, setActiveTab] = useState("enrollments");
+  const [currentAdminId, setCurrentAdminId] = useState<string | null>(null);
   const navigate = useNavigate();
   const { toast } = useToast();
 
@@ -141,6 +143,7 @@ const AdminDashboard = () => {
       return;
     }
 
+    setCurrentAdminId(userId);
     setIsCheckingAuth(false);
     fetchEnrollments();
     fetchRegisteredUsers();
@@ -228,6 +231,46 @@ const AdminDashboard = () => {
       setEnrollments(enrollments.filter(e => e.id !== id));
     }
     setIsDeleting(null);
+  };
+
+  const handleDeleteUser = async (userId: string) => {
+    if (userId === currentAdminId) {
+      toast({
+        title: "Error",
+        description: "No puedes eliminar tu propia cuenta de administrador",
+        variant: "destructive",
+      });
+      return;
+    }
+
+    setIsDeletingUser(userId);
+    
+    // Delete from user_roles first (if exists)
+    await supabase
+      .from("user_roles")
+      .delete()
+      .eq("user_id", userId);
+
+    // Delete from profiles
+    const { error: profileError } = await supabase
+      .from("profiles")
+      .delete()
+      .eq("user_id", userId);
+
+    if (profileError) {
+      toast({
+        title: "Error",
+        description: "No se pudo eliminar el usuario",
+        variant: "destructive",
+      });
+    } else {
+      toast({
+        title: "Eliminado",
+        description: "El usuario fue eliminado correctamente",
+      });
+      setRegisteredUsers(registeredUsers.filter(u => u.user_id !== userId));
+    }
+    setIsDeletingUser(null);
   };
 
   const handleExportCSV = () => {
@@ -522,6 +565,7 @@ const AdminDashboard = () => {
                           <TableHead>Teléfono</TableHead>
                           <TableHead>Rol</TableHead>
                           <TableHead>Fecha Registro</TableHead>
+                          <TableHead className="text-right">Acciones</TableHead>
                         </TableRow>
                       </TableHeader>
                       <TableBody>
@@ -543,6 +587,49 @@ const AdminDashboard = () => {
                             </TableCell>
                             <TableCell>
                               {new Date(user.created_at).toLocaleDateString("es-CL")}
+                            </TableCell>
+                            <TableCell className="text-right">
+                              {user.user_id === currentAdminId ? (
+                                <span className="text-xs text-muted-foreground">Tu cuenta</span>
+                              ) : (
+                                <AlertDialog>
+                                  <AlertDialogTrigger asChild>
+                                    <Button
+                                      variant="ghost"
+                                      size="sm"
+                                      className="text-destructive hover:text-destructive hover:bg-destructive/10"
+                                      disabled={isDeletingUser === user.user_id}
+                                    >
+                                      {isDeletingUser === user.user_id ? (
+                                        <Loader2 className="w-4 h-4 animate-spin" />
+                                      ) : (
+                                        <Trash2 className="w-4 h-4" />
+                                      )}
+                                    </Button>
+                                  </AlertDialogTrigger>
+                                  <AlertDialogContent>
+                                    <AlertDialogHeader>
+                                      <AlertDialogTitle className="flex items-center gap-2">
+                                        <AlertTriangle className="w-5 h-5 text-destructive" />
+                                        Confirmar eliminación
+                                      </AlertDialogTitle>
+                                      <AlertDialogDescription>
+                                        ¿Estás seguro de eliminar al usuario{" "}
+                                        <strong>{user.full_name || user.email}</strong>? Esta acción eliminará su perfil y roles.
+                                      </AlertDialogDescription>
+                                    </AlertDialogHeader>
+                                    <AlertDialogFooter>
+                                      <AlertDialogCancel>Cancelar</AlertDialogCancel>
+                                      <AlertDialogAction
+                                        onClick={() => handleDeleteUser(user.user_id)}
+                                        className="bg-destructive text-destructive-foreground hover:bg-destructive/90"
+                                      >
+                                        Eliminar
+                                      </AlertDialogAction>
+                                    </AlertDialogFooter>
+                                  </AlertDialogContent>
+                                </AlertDialog>
+                              )}
                             </TableCell>
                           </TableRow>
                         ))}
