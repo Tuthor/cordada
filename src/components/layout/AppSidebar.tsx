@@ -1,4 +1,5 @@
 import { useLocation } from "react-router-dom";
+import { useState, useEffect } from "react";
 import { 
   Home, 
   Users, 
@@ -14,6 +15,7 @@ import {
 } from "lucide-react";
 import { NavLink } from "@/components/NavLink";
 import { useAuth } from "@/contexts/AuthContext";
+import { supabase } from "@/integrations/supabase/client";
 import {
   Sidebar,
   SidebarContent,
@@ -36,15 +38,6 @@ const roleLabels: Record<string, { label: string; icon: typeof User; variant: 'd
   consulting_firm: { label: 'Empresa Consultora', icon: Building, variant: 'outline' },
 };
 
-const mainNavItems = [
-  { title: "Inicio", url: "/dashboard", icon: Home },
-  { title: "Directorio", url: "/directory", icon: Users },
-  { title: "Proyectos", url: "/projects", icon: Briefcase },
-  { title: "Inbox", url: "/inbox", icon: Inbox },
-  { title: "Propuestas", url: "/proposals", icon: FileText },
-  { title: "Capacitación", url: "/training", icon: GraduationCap },
-];
-
 const settingsNavItems = [
   { title: "Configuración", url: "/settings", icon: Settings },
 ];
@@ -54,6 +47,57 @@ export function AppSidebar() {
   const collapsed = state === "collapsed";
   const location = useLocation();
   const { user, userRole, signOut } = useAuth();
+  const [unreadCount, setUnreadCount] = useState(0);
+
+  useEffect(() => {
+    if (user) {
+      fetchUnreadCount();
+      const channel = subscribeToMessages();
+      return () => {
+        supabase.removeChannel(channel);
+      };
+    }
+  }, [user]);
+
+  const fetchUnreadCount = async () => {
+    if (!user) return;
+    
+    const { count } = await supabase
+      .from('project_messages')
+      .select('*', { count: 'exact', head: true })
+      .eq('recipient_id', user.id)
+      .eq('is_read', false);
+    
+    setUnreadCount(count || 0);
+  };
+
+  const subscribeToMessages = () => {
+    const channel = supabase
+      .channel('sidebar-unread')
+      .on(
+        'postgres_changes',
+        {
+          event: '*',
+          schema: 'public',
+          table: 'project_messages',
+        },
+        () => {
+          fetchUnreadCount();
+        }
+      )
+      .subscribe();
+
+    return channel;
+  };
+
+  const mainNavItems = [
+    { title: "Inicio", url: "/dashboard", icon: Home, badge: 0 },
+    { title: "Directorio", url: "/directory", icon: Users, badge: 0 },
+    { title: "Proyectos", url: "/projects", icon: Briefcase, badge: 0 },
+    { title: "Inbox", url: "/inbox", icon: Inbox, badge: unreadCount },
+    { title: "Propuestas", url: "/proposals", icon: FileText, badge: 0 },
+    { title: "Capacitación", url: "/training", icon: GraduationCap, badge: 0 },
+  ];
 
   const isActive = (path: string) => location.pathname === path;
 
@@ -100,11 +144,25 @@ export function AppSidebar() {
                   >
                     <NavLink 
                       to={item.url} 
-                      className="flex items-center gap-3"
+                      className="flex items-center gap-3 relative"
                       activeClassName="bg-primary/10 text-primary font-medium"
                     >
-                      <item.icon className="h-5 w-5" />
-                      {!collapsed && <span>{item.title}</span>}
+                      <div className="relative">
+                        <item.icon className="h-5 w-5" />
+                        {item.badge > 0 && (
+                          <span className="absolute -top-1 -right-1 h-4 w-4 rounded-full bg-destructive text-destructive-foreground text-[10px] font-bold flex items-center justify-center">
+                            {item.badge > 9 ? '9+' : item.badge}
+                          </span>
+                        )}
+                      </div>
+                      {!collapsed && (
+                        <span className="flex-1">{item.title}</span>
+                      )}
+                      {!collapsed && item.badge > 0 && (
+                        <Badge variant="destructive" className="text-xs h-5 min-w-5 flex items-center justify-center">
+                          {item.badge > 99 ? '99+' : item.badge}
+                        </Badge>
+                      )}
                     </NavLink>
                   </SidebarMenuButton>
                 </SidebarMenuItem>
