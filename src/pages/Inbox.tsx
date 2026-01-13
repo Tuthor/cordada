@@ -7,8 +7,22 @@ import { Avatar, AvatarFallback } from '@/components/ui/avatar';
 import { Badge } from '@/components/ui/badge';
 import { supabase } from '@/integrations/supabase/client';
 import { useAuth } from '@/contexts/AuthContext';
-import { Search, MessageSquare, Send } from 'lucide-react';
+import { Search, MessageSquare, Send, Plus, Users } from 'lucide-react';
 import { Textarea } from '@/components/ui/textarea';
+import {
+  Dialog,
+  DialogContent,
+  DialogHeader,
+  DialogTitle,
+  DialogTrigger,
+} from '@/components/ui/dialog';
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from '@/components/ui/select';
 
 interface ProjectMessage {
   id: string;
@@ -36,19 +50,37 @@ interface Conversation {
   unread_count: number;
 }
 
+interface MutualProject {
+  id: string;
+  title: string;
+  client_id: string;
+  consultant_id: string;
+  client_name: string;
+  consultant_name: string;
+  status: string;
+}
+
 const Inbox = () => {
-  const { user } = useAuth();
+  const { user, userRole } = useAuth();
   const [conversations, setConversations] = useState<Conversation[]>([]);
   const [loading, setLoading] = useState(true);
   const [searchTerm, setSearchTerm] = useState('');
   const [selectedConversation, setSelectedConversation] = useState<Conversation | null>(null);
   const [messages, setMessages] = useState<ProjectMessage[]>([]);
   const [newMessage, setNewMessage] = useState('');
+  
+  // New conversation dialog
+  const [showNewConversation, setShowNewConversation] = useState(false);
+  const [mutualProjects, setMutualProjects] = useState<MutualProject[]>([]);
+  const [selectedProject, setSelectedProject] = useState<string>('');
+  const [loadingProjects, setLoadingProjects] = useState(false);
 
   useEffect(() => {
     if (user) {
       fetchConversations();
-      subscribeToMessages();
+      fetchMutualProjects();
+      const cleanup = subscribeToMessages();
+      return cleanup;
     }
   }, [user]);
 
@@ -79,10 +111,124 @@ const Inbox = () => {
     };
   };
 
+  const fetchMutualProjects = async () => {
+    if (!user) return;
+    setLoadingProjects(true);
+
+    try {
+      // Get projects where user is client with accepted proposals
+      const { data: clientProjects } = await supabase
+        .from('projects')
+        .select(`
+          id,
+          title,
+          client_id,
+          status,
+          proposals!inner(
+            consultant_id,
+            status
+          )
+        `)
+        .eq('client_id', user.id)
+        .eq('proposals.status', 'accepted');
+
+      // Get projects where user is consultant with accepted proposals
+      const { data: consultantProjects } = await supabase
+        .from('proposals')
+        .select(`
+          consultant_id,
+          status,
+          projects!inner(
+            id,
+            title,
+            client_id,
+            status
+          )
+        `)
+        .eq('consultant_id', user.id)
+        .eq('status', 'accepted');
+
+      const projectsList: MutualProject[] = [];
+
+      // Process client projects
+      if (clientProjects) {
+        for (const project of clientProjects) {
+          const proposals = project.proposals as any[];
+          for (const proposal of proposals) {
+            // Get consultant name
+            const { data: consultantProfile } = await supabase
+              .from('profiles')
+              .select('full_name')
+              .eq('user_id', proposal.consultant_id)
+              .maybeSingle();
+
+            // Get client name
+            const { data: clientProfile } = await supabase
+              .from('profiles')
+              .select('full_name')
+              .eq('user_id', project.client_id)
+              .maybeSingle();
+
+            projectsList.push({
+              id: project.id,
+              title: project.title,
+              client_id: project.client_id,
+              consultant_id: proposal.consultant_id,
+              client_name: clientProfile?.full_name || 'Cliente',
+              consultant_name: consultantProfile?.full_name || 'Consultor',
+              status: project.status,
+            });
+          }
+        }
+      }
+
+      // Process consultant projects
+      if (consultantProjects) {
+        for (const proposal of consultantProjects) {
+          const project = proposal.projects as any;
+          
+          // Avoid duplicates
+          if (projectsList.some(p => p.id === project.id && p.consultant_id === proposal.consultant_id)) {
+            continue;
+          }
+
+          // Get consultant name
+          const { data: consultantProfile } = await supabase
+            .from('profiles')
+            .select('full_name')
+            .eq('user_id', proposal.consultant_id)
+            .maybeSingle();
+
+          // Get client name
+          const { data: clientProfile } = await supabase
+            .from('profiles')
+            .select('full_name')
+            .eq('user_id', project.client_id)
+            .maybeSingle();
+
+          projectsList.push({
+            id: project.id,
+            title: project.title,
+            client_id: project.client_id,
+            consultant_id: proposal.consultant_id,
+            client_name: clientProfile?.full_name || 'Cliente',
+            consultant_name: consultantProfile?.full_name || 'Consultor',
+            status: project.status,
+          });
+        }
+      }
+
+      setMutualProjects(projectsList);
+    } catch (error) {
+      console.error('Error fetching mutual projects:', error);
+    }
+    
+    setLoadingProjects(false);
+  };
+
   const fetchConversations = async () => {
     if (!user) return;
 
-    // Get messages where user is sender or recipient
     const { data, error } = await supabase
       .from('project_messages')
       .select(`
@@ -99,7 +245,6 @@ const Inbox = () => {
       .order('created_at', { ascending: false });
 
     if (!error && data) {
-      // Group by project and other user
       const convMap = new Map<string, Conversation>();
       
       for (const msg of data) {
@@ -107,7 +252,6 @@ const Inbox = () => {
         const key = `${msg.project_id}-${otherId}`;
         
         if (!convMap.has(key)) {
-          // Fetch other user's name
           const { data: profile } = await supabase
             .from('profiles')
             .select('full_name')
@@ -152,7 +296,6 @@ const Inbox = () => {
     if (data) {
       setMessages(data as ProjectMessage[]);
 
-      // Mark as read
       await supabase
         .from('project_messages')
         .update({ is_read: true })
@@ -181,6 +324,43 @@ const Inbox = () => {
     fetchMessages(selectedConversation.project_id, selectedConversation.other_user_id);
   };
 
+  const handleStartNewConversation = async () => {
+    if (!user || !selectedProject) return;
+
+    const project = mutualProjects.find(p => p.id === selectedProject);
+    if (!project) return;
+
+    // Determine the other user based on current user role
+    const otherUserId = project.client_id === user.id ? project.consultant_id : project.client_id;
+    const otherUserName = project.client_id === user.id ? project.consultant_name : project.client_name;
+
+    // Check if conversation already exists
+    const existingConv = conversations.find(
+      c => c.project_id === project.id && c.other_user_id === otherUserId
+    );
+
+    if (existingConv) {
+      setSelectedConversation(existingConv);
+      fetchMessages(existingConv.project_id, existingConv.other_user_id);
+    } else {
+      // Create new conversation placeholder
+      const newConv: Conversation = {
+        project_id: project.id,
+        project_title: project.title,
+        other_user_id: otherUserId,
+        other_user_name: otherUserName,
+        last_message: '',
+        last_message_at: new Date().toISOString(),
+        unread_count: 0,
+      };
+      setSelectedConversation(newConv);
+      setMessages([]);
+    }
+
+    setShowNewConversation(false);
+    setSelectedProject('');
+  };
+
   const formatDate = (dateString: string) => {
     const date = new Date(dateString);
     const today = new Date();
@@ -201,6 +381,14 @@ const Inbox = () => {
     conv.other_user_name.toLowerCase().includes(searchTerm.toLowerCase())
   );
 
+  // Filter projects that don't already have a conversation
+  const availableProjects = mutualProjects.filter(project => {
+    const otherUserId = project.client_id === user?.id ? project.consultant_id : project.client_id;
+    return !conversations.some(
+      c => c.project_id === project.id && c.other_user_id === otherUserId
+    );
+  });
+
   return (
     <DashboardLayout>
       <div className="h-[calc(100vh-8rem)]">
@@ -208,10 +396,76 @@ const Inbox = () => {
           {/* Conversations List */}
           <Card className="w-full md:w-96 flex flex-col">
             <CardHeader className="pb-3">
-              <CardTitle className="flex items-center gap-2">
-                <MessageSquare className="w-5 h-5" />
-                Inbox
-              </CardTitle>
+              <div className="flex items-center justify-between">
+                <CardTitle className="flex items-center gap-2">
+                  <MessageSquare className="w-5 h-5" />
+                  Inbox
+                </CardTitle>
+                <Dialog open={showNewConversation} onOpenChange={setShowNewConversation}>
+                  <DialogTrigger asChild>
+                    <Button size="sm" variant="outline" className="gap-1">
+                      <Plus className="w-4 h-4" />
+                      Nueva
+                    </Button>
+                  </DialogTrigger>
+                  <DialogContent>
+                    <DialogHeader>
+                      <DialogTitle className="flex items-center gap-2">
+                        <Users className="w-5 h-5" />
+                        Nueva Conversación
+                      </DialogTitle>
+                    </DialogHeader>
+                    <div className="space-y-4 pt-4">
+                      <p className="text-sm text-muted-foreground">
+                        Selecciona un proyecto activo para iniciar una conversación con el cliente o consultor asociado.
+                      </p>
+                      {loadingProjects ? (
+                        <div className="text-center py-4 text-muted-foreground">
+                          Cargando proyectos...
+                        </div>
+                      ) : availableProjects.length === 0 && mutualProjects.length === 0 ? (
+                        <div className="text-center py-4 text-muted-foreground">
+                          No tienes proyectos activos con propuestas aceptadas.
+                        </div>
+                      ) : availableProjects.length === 0 ? (
+                        <div className="text-center py-4 text-muted-foreground">
+                          Ya tienes conversaciones con todos tus contactos de proyectos activos.
+                        </div>
+                      ) : (
+                        <>
+                          <Select value={selectedProject} onValueChange={setSelectedProject}>
+                            <SelectTrigger>
+                              <SelectValue placeholder="Selecciona un proyecto" />
+                            </SelectTrigger>
+                            <SelectContent className="bg-background border">
+                              {availableProjects.map((project) => (
+                                <SelectItem key={project.id} value={project.id}>
+                                  <div className="flex flex-col">
+                                    <span className="font-medium">{project.title}</span>
+                                    <span className="text-xs text-muted-foreground">
+                                      {project.client_id === user?.id 
+                                        ? `Consultor: ${project.consultant_name}`
+                                        : `Cliente: ${project.client_name}`
+                                      }
+                                    </span>
+                                  </div>
+                                </SelectItem>
+                              ))}
+                            </SelectContent>
+                          </Select>
+                          <Button 
+                            onClick={handleStartNewConversation} 
+                            disabled={!selectedProject}
+                            className="w-full"
+                          >
+                            Iniciar Conversación
+                          </Button>
+                        </>
+                      )}
+                    </div>
+                  </DialogContent>
+                </Dialog>
+              </div>
               <div className="relative mt-2">
                 <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
                 <Input
@@ -238,9 +492,19 @@ const Inbox = () => {
               ) : filteredConversations.length === 0 ? (
                 <div className="flex flex-col items-center justify-center h-full p-4 text-center">
                   <MessageSquare className="w-12 h-12 text-muted-foreground mb-3" />
-                  <p className="text-muted-foreground">
+                  <p className="text-muted-foreground mb-3">
                     {searchTerm ? 'No se encontraron conversaciones' : 'No tienes mensajes aún'}
                   </p>
+                  {!searchTerm && mutualProjects.length > 0 && (
+                    <Button 
+                      size="sm" 
+                      variant="outline" 
+                      onClick={() => setShowNewConversation(true)}
+                    >
+                      <Plus className="w-4 h-4 mr-1" />
+                      Iniciar conversación
+                    </Button>
+                  )}
                 </div>
               ) : (
                 <div className="divide-y divide-border">
@@ -312,29 +576,38 @@ const Inbox = () => {
                   </div>
                 </CardHeader>
                 <CardContent className="flex-1 overflow-y-auto p-4 space-y-4">
-                  {messages.map((msg) => (
-                    <div
-                      key={msg.id}
-                      className={`flex ${msg.sender_id === user?.id ? 'justify-end' : 'justify-start'}`}
-                    >
-                      <div
-                        className={`max-w-[70%] rounded-lg p-3 ${
-                          msg.sender_id === user?.id
-                            ? 'bg-primary text-primary-foreground'
-                            : 'bg-muted'
-                        }`}
-                      >
-                        <p className="text-sm">{msg.message}</p>
-                        <p className={`text-xs mt-1 ${
-                          msg.sender_id === user?.id
-                            ? 'text-primary-foreground/70'
-                            : 'text-muted-foreground'
-                        }`}>
-                          {formatDate(msg.created_at)}
-                        </p>
-                      </div>
+                  {messages.length === 0 ? (
+                    <div className="flex flex-col items-center justify-center h-full text-center">
+                      <MessageSquare className="w-12 h-12 text-muted-foreground mb-3" />
+                      <p className="text-muted-foreground">
+                        Inicia la conversación enviando un mensaje
+                      </p>
                     </div>
-                  ))}
+                  ) : (
+                    messages.map((msg) => (
+                      <div
+                        key={msg.id}
+                        className={`flex ${msg.sender_id === user?.id ? 'justify-end' : 'justify-start'}`}
+                      >
+                        <div
+                          className={`max-w-[70%] rounded-lg p-3 ${
+                            msg.sender_id === user?.id
+                              ? 'bg-primary text-primary-foreground'
+                              : 'bg-muted'
+                          }`}
+                        >
+                          <p className="text-sm">{msg.message}</p>
+                          <p className={`text-xs mt-1 ${
+                            msg.sender_id === user?.id
+                              ? 'text-primary-foreground/70'
+                              : 'text-muted-foreground'
+                          }`}>
+                            {formatDate(msg.created_at)}
+                          </p>
+                        </div>
+                      </div>
+                    ))
+                  )}
                 </CardContent>
                 <div className="p-4 border-t">
                   <div className="flex gap-2">
@@ -362,9 +635,18 @@ const Inbox = () => {
                 <h3 className="text-lg font-semibold text-foreground mb-2">
                   Selecciona una conversación
                 </h3>
-                <p className="text-muted-foreground">
-                  Elige una conversación de la lista para ver los mensajes
+                <p className="text-muted-foreground mb-4">
+                  Elige una conversación de la lista o inicia una nueva
                 </p>
+                {mutualProjects.length > 0 && (
+                  <Button 
+                    variant="outline" 
+                    onClick={() => setShowNewConversation(true)}
+                  >
+                    <Plus className="w-4 h-4 mr-2" />
+                    Nueva conversación
+                  </Button>
+                )}
               </div>
             )}
           </Card>
