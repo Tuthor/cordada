@@ -11,7 +11,8 @@ import {
   LogOut,
   Building2,
   User,
-  Building
+  Building,
+  ClipboardCheck
 } from "lucide-react";
 import { NavLink } from "@/components/NavLink";
 import { useAuth } from "@/contexts/AuthContext";
@@ -90,14 +91,27 @@ export function AppSidebar() {
     return channel;
   };
 
-  const mainNavItems = [
-    { title: "Inicio", url: "/dashboard", icon: Home, badge: 0 },
-    { title: "Directorio", url: "/directory", icon: Users, badge: 0 },
-    { title: "Proyectos", url: "/projects", icon: Briefcase, badge: 0 },
-    { title: "Inbox", url: "/inbox", icon: Inbox, badge: unreadCount },
-    { title: "Propuestas", url: "/proposals", icon: FileText, badge: 0 },
-    { title: "Capacitación", url: "/training", icon: GraduationCap, badge: 0 },
-  ];
+  const getNavItems = () => {
+    const baseItems = [
+      { title: "Inicio", url: "/dashboard", icon: Home, badge: 0 },
+      { title: "Directorio", url: "/directory", icon: Users, badge: 0 },
+      { title: "Proyectos", url: "/projects", icon: Briefcase, badge: 0 },
+      { title: "Inbox", url: "/inbox", icon: Inbox, badge: unreadCount },
+      { title: "Propuestas", url: "/proposals", icon: FileText, badge: 0 },
+      { title: "Capacitación", url: "/training", icon: GraduationCap, badge: 0 },
+    ];
+
+    // Add requirements link based on role
+    if (userRole === "client") {
+      baseItems.push({ title: "Requisitos", url: "/requirements", icon: ClipboardCheck, badge: 0 });
+    } else if (userRole === "consultant") {
+      baseItems.push({ title: "Requisitos", url: "/consultant-requirements", icon: ClipboardCheck, badge: 0 });
+    }
+
+    return baseItems;
+  };
+
+  const mainNavItems = getNavItems();
 
   const isActive = (path: string) => location.pathname === path;
 

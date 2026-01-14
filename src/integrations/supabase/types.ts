@@ -47,6 +47,33 @@ export type Database = {
         }
         Relationships: []
       }
+      client_requirements: {
+        Row: {
+          client_id: string
+          created_at: string
+          description: string | null
+          id: string
+          name: string
+          updated_at: string
+        }
+        Insert: {
+          client_id: string
+          created_at?: string
+          description?: string | null
+          id?: string
+          name: string
+          updated_at?: string
+        }
+        Update: {
+          client_id?: string
+          created_at?: string
+          description?: string | null
+          id?: string
+          name?: string
+          updated_at?: string
+        }
+        Relationships: []
+      }
       consultant_profiles: {
         Row: {
           created_at: string
@@ -91,6 +118,56 @@ export type Database = {
           years_experience?: number | null
         }
         Relationships: []
+      }
+      consultant_requirement_evidence: {
+        Row: {
+          consultant_id: string
+          created_at: string
+          evidence_file_name: string | null
+          evidence_file_url: string | null
+          id: string
+          requirement_id: string
+          reviewed_at: string | null
+          reviewer_notes: string | null
+          status: string
+          submitted_at: string | null
+          updated_at: string
+        }
+        Insert: {
+          consultant_id: string
+          created_at?: string
+          evidence_file_name?: string | null
+          evidence_file_url?: string | null
+          id?: string
+          requirement_id: string
+          reviewed_at?: string | null
+          reviewer_notes?: string | null
+          status?: string
+          submitted_at?: string | null
+          updated_at?: string
+        }
+        Update: {
+          consultant_id?: string
+          created_at?: string
+          evidence_file_name?: string | null
+          evidence_file_url?: string | null
+          id?: string
+          requirement_id?: string
+          reviewed_at?: string | null
+          reviewer_notes?: string | null
+          status?: string
+          submitted_at?: string | null
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "consultant_requirement_evidence_requirement_id_fkey"
+            columns: ["requirement_id"]
+            isOneToOne: false
+            referencedRelation: "client_requirements"
+            referencedColumns: ["id"]
+          },
+        ]
       }
       consulting_firms: {
         Row: {
