@@ -21,6 +21,8 @@ import NotFound from "./pages/NotFound";
 import AdminLogin from "./pages/AdminLogin";
 import AdminDashboard from "./pages/AdminDashboard";
 import ResetPassword from "./pages/ResetPassword";
+import ClientRequirements from "./pages/ClientRequirements";
+import ConsultantRequirements from "./pages/ConsultantRequirements";
 
 const queryClient = new QueryClient();
 
@@ -45,6 +47,8 @@ const App = () => (
             <Route path="/proposals" element={<Proposals />} />
             <Route path="/training" element={<Training />} />
             <Route path="/settings" element={<Settings />} />
+            <Route path="/requirements" element={<ClientRequirements />} />
+            <Route path="/consultant-requirements" element={<ConsultantRequirements />} />
             <Route path="/admin" element={<Navigate to="/admin/login" replace />} />
             <Route path="/admin/login" element={<AdminLogin />} />
             <Route path="/admin/dashboard" element={<AdminDashboard />} />
