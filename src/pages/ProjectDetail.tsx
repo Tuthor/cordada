@@ -8,6 +8,7 @@ import { Separator } from '@/components/ui/separator';
 import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle, DialogTrigger } from '@/components/ui/dialog';
 import { supabase } from '@/integrations/supabase/client';
 import { useAuth } from '@/contexts/AuthContext';
+import { useClientCompliance } from '@/hooks/useClientCompliance';
 import { useToast } from '@/hooks/use-toast';
 import { 
   ArrowLeft, 
@@ -22,7 +23,9 @@ import {
   CheckCircle,
   XCircle,
   Eye,
-  EyeOff
+  EyeOff,
+  Lock,
+  AlertCircle
 } from 'lucide-react';
 
 interface Project {
@@ -60,6 +63,7 @@ const ProjectDetail = () => {
   const { id } = useParams<{ id: string }>();
   const navigate = useNavigate();
   const { user, userRole } = useAuth();
+  const { isCompliantWithClient, hasAnyRequirements, loading: complianceLoading } = useClientCompliance();
   const { toast } = useToast();
   
   const [project, setProject] = useState<Project | null>(null);
@@ -70,6 +74,10 @@ const ProjectDetail = () => {
   const [hasApplied, setHasApplied] = useState(false);
 
   const isOwner = user?.id === project?.client_id;
+  const isConsultant = userRole !== 'client';
+  const clientHasRequirements = project ? hasAnyRequirements(project.client_id) : false;
+  const isCompliant = !clientHasRequirements || (project ? isCompliantWithClient(project.client_id) : true);
+  const isLocked = isConsultant && clientHasRequirements && !isCompliant && !isOwner;
 
   useEffect(() => {
     if (id) {
@@ -200,7 +208,7 @@ const ProjectDetail = () => {
     });
   };
 
-  if (loading) {
+  if (loading || complianceLoading) {
     return (
       <DashboardLayout>
         <div className="max-w-4xl mx-auto">
@@ -342,7 +350,7 @@ const ProjectDetail = () => {
               )}
 
               {/* Consultant Actions */}
-              {!isOwner && userRole !== 'client' && project.status === 'open' && (
+              {!isOwner && userRole !== 'client' && project.status === 'open' && !isLocked && (
                 <Button 
                   variant="gold" 
                   disabled={hasApplied}
@@ -361,8 +369,34 @@ const ProjectDetail = () => {
                   )}
                 </Button>
               )}
+
+              {/* Locked state for consultant */}
+              {isLocked && (
+                <Button variant="outline" asChild>
+                  <Link to="/consultant-requirements">
+                    <Lock className="w-4 h-4 mr-2" />
+                    Cumplir Requisitos
+                  </Link>
+                </Button>
+              )}
             </div>
           </CardHeader>
+
+          {/* Locked warning banner */}
+          {isLocked && (
+            <div className="mx-6 mb-4 p-4 bg-orange-500/10 border border-orange-500/20 rounded-lg flex items-start gap-3">
+              <AlertCircle className="w-5 h-5 text-orange-600 mt-0.5 flex-shrink-0" />
+              <div>
+                <h4 className="font-medium text-orange-600">Acceso restringido</h4>
+                <p className="text-sm text-orange-600/80 mt-1">
+                  Debes cumplir con los requisitos de este cliente para poder ver los detalles completos y enviar propuestas.{' '}
+                  <Link to="/consultant-requirements" className="underline font-medium">
+                    Ver requisitos pendientes
+                  </Link>
+                </p>
+              </div>
+            </div>
+          )}
 
           <CardContent className="space-y-6">
             {/* Key Info */}
@@ -395,13 +429,22 @@ const ProjectDetail = () => {
             {/* Description */}
             <div>
               <h3 className="font-semibold mb-3">Descripción del Proyecto</h3>
-              <p className="text-muted-foreground whitespace-pre-wrap">
-                {project.description}
-              </p>
+              {isLocked ? (
+                <div className="p-4 bg-muted rounded-lg text-center">
+                  <Lock className="w-6 h-6 mx-auto mb-2 text-muted-foreground" />
+                  <p className="text-muted-foreground text-sm">
+                    Completa los requisitos del cliente para ver la descripción completa
+                  </p>
+                </div>
+              ) : (
+                <p className="text-muted-foreground whitespace-pre-wrap">
+                  {project.description}
+                </p>
+              )}
             </div>
 
             {/* Requirements */}
-            {project.requirements && (
+            {project.requirements && !isLocked && (
               <>
                 <Separator />
                 <div>
