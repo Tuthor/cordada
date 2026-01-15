@@ -8,6 +8,7 @@ import { Badge } from '@/components/ui/badge';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { supabase } from '@/integrations/supabase/client';
 import { useAuth } from '@/contexts/AuthContext';
+import { useClientCompliance } from '@/hooks/useClientCompliance';
 import { 
   Search, 
   Briefcase, 
@@ -15,7 +16,9 @@ import {
   DollarSign, 
   Plus,
   Clock,
-  Eye
+  Eye,
+  Lock,
+  AlertCircle
 } from 'lucide-react';
 
 interface Project {
@@ -43,6 +46,7 @@ const statusLabels: Record<string, { label: string; variant: 'default' | 'second
 
 const Projects = () => {
   const { user, userRole } = useAuth();
+  const { isCompliantWithClient, hasAnyRequirements, loading: complianceLoading } = useClientCompliance();
   const [projects, setProjects] = useState<Project[]>([]);
   const [loading, setLoading] = useState(true);
   const [searchTerm, setSearchTerm] = useState('');
@@ -166,22 +170,26 @@ const Projects = () => {
             <TabsContent value={activeTab} className="mt-6">
               <ProjectList 
                 projects={filteredProjects} 
-                loading={loading} 
+                loading={loading || complianceLoading} 
                 userRole={userRole}
                 searchTerm={searchTerm}
                 formatBudget={formatBudget}
                 formatDate={formatDate}
+                isCompliantWithClient={isCompliantWithClient}
+                hasAnyRequirements={hasAnyRequirements}
               />
             </TabsContent>
           </Tabs>
         ) : (
           <ProjectList 
             projects={filteredProjects} 
-            loading={loading} 
+            loading={loading || complianceLoading} 
             userRole={userRole}
             searchTerm={searchTerm}
             formatBudget={formatBudget}
             formatDate={formatDate}
+            isCompliantWithClient={isCompliantWithClient}
+            hasAnyRequirements={hasAnyRequirements}
           />
         )}
       </div>
@@ -196,9 +204,20 @@ interface ProjectListProps {
   searchTerm: string;
   formatBudget: (min: number | null, max: number | null) => string;
   formatDate: (dateString: string) => string;
+  isCompliantWithClient?: (clientId: string) => boolean;
+  hasAnyRequirements?: (clientId: string) => boolean;
 }
 
-const ProjectList = ({ projects, loading, userRole, searchTerm, formatBudget, formatDate }: ProjectListProps) => {
+const ProjectList = ({ 
+  projects, 
+  loading, 
+  userRole, 
+  searchTerm, 
+  formatBudget, 
+  formatDate,
+  isCompliantWithClient,
+  hasAnyRequirements
+}: ProjectListProps) => {
   if (loading) {
     return (
       <div className="space-y-4">
@@ -245,69 +264,103 @@ const ProjectList = ({ projects, loading, userRole, searchTerm, formatBudget, fo
 
   return (
     <div className="space-y-4">
-      {projects.map((project) => (
-        <Card key={project.id} className="hover:shadow-lg transition-shadow">
-          <CardContent className="p-6">
-            <div className="flex flex-col lg:flex-row lg:items-start lg:justify-between gap-4">
-              <div className="flex-1">
-                <div className="flex items-center gap-3 mb-2">
-                  <h3 className="text-lg font-semibold text-foreground">
-                    {project.title}
-                  </h3>
-                  <Badge variant={statusLabels[project.status]?.variant || 'default'}>
-                    {statusLabels[project.status]?.label || project.status}
-                  </Badge>
-                </div>
-                
-                <p className="text-muted-foreground mb-4 line-clamp-2">
-                  {project.description}
-                </p>
+      {projects.map((project) => {
+        const isConsultant = userRole !== 'client';
+        const clientHasRequirements = isConsultant && hasAnyRequirements?.(project.client_id);
+        const isCompliant = !clientHasRequirements || isCompliantWithClient?.(project.client_id);
+        const isLocked = isConsultant && clientHasRequirements && !isCompliant;
 
-                {project.expertise_needed && project.expertise_needed.length > 0 && (
-                  <div className="flex flex-wrap gap-2 mb-4">
-                    {project.expertise_needed.slice(0, 4).map((skill, index) => (
-                      <Badge key={index} variant="secondary">
-                        {skill}
-                      </Badge>
-                    ))}
-                    {project.expertise_needed.length > 4 && (
-                      <Badge variant="secondary">
-                        +{project.expertise_needed.length - 4}
+        return (
+          <Card key={project.id} className={`hover:shadow-lg transition-shadow ${isLocked ? 'opacity-75' : ''}`}>
+            <CardContent className="p-6">
+              <div className="flex flex-col lg:flex-row lg:items-start lg:justify-between gap-4">
+                <div className="flex-1">
+                  <div className="flex items-center gap-3 mb-2">
+                    <h3 className="text-lg font-semibold text-foreground">
+                      {project.title}
+                    </h3>
+                    <Badge variant={statusLabels[project.status]?.variant || 'default'}>
+                      {statusLabels[project.status]?.label || project.status}
+                    </Badge>
+                    {isLocked && (
+                      <Badge variant="outline" className="gap-1 text-orange-600 border-orange-600">
+                        <Lock className="w-3 h-3" />
+                        Requisitos pendientes
                       </Badge>
                     )}
                   </div>
-                )}
+                  
+                  <p className="text-muted-foreground mb-4 line-clamp-2">
+                    {project.description}
+                  </p>
 
-                <div className="flex flex-wrap items-center gap-4 text-sm text-muted-foreground">
-                  <span className="flex items-center gap-1">
-                    <DollarSign className="w-4 h-4" />
-                    {formatBudget(project.budget_min, project.budget_max)}
-                  </span>
-                  {project.duration_weeks && (
-                    <span className="flex items-center gap-1">
-                      <Clock className="w-4 h-4" />
-                      {project.duration_weeks} semanas
-                    </span>
+                  {project.expertise_needed && project.expertise_needed.length > 0 && (
+                    <div className="flex flex-wrap gap-2 mb-4">
+                      {project.expertise_needed.slice(0, 4).map((skill, index) => (
+                        <Badge key={index} variant="secondary">
+                          {skill}
+                        </Badge>
+                      ))}
+                      {project.expertise_needed.length > 4 && (
+                        <Badge variant="secondary">
+                          +{project.expertise_needed.length - 4}
+                        </Badge>
+                      )}
+                    </div>
                   )}
-                  <span className="flex items-center gap-1">
-                    <Calendar className="w-4 h-4" />
-                    {formatDate(project.created_at)}
-                  </span>
+
+                  <div className="flex flex-wrap items-center gap-4 text-sm text-muted-foreground">
+                    <span className="flex items-center gap-1">
+                      <DollarSign className="w-4 h-4" />
+                      {formatBudget(project.budget_min, project.budget_max)}
+                    </span>
+                    {project.duration_weeks && (
+                      <span className="flex items-center gap-1">
+                        <Clock className="w-4 h-4" />
+                        {project.duration_weeks} semanas
+                      </span>
+                    )}
+                    <span className="flex items-center gap-1">
+                      <Calendar className="w-4 h-4" />
+                      {formatDate(project.created_at)}
+                    </span>
+                  </div>
+
+                  {isLocked && (
+                    <div className="mt-4 p-3 bg-orange-500/10 rounded-lg flex items-start gap-2">
+                      <AlertCircle className="w-4 h-4 text-orange-600 mt-0.5 flex-shrink-0" />
+                      <p className="text-sm text-orange-600">
+                        Debes cumplir con los requisitos de este cliente para poder ver y aplicar a este proyecto.{' '}
+                        <Link to="/consultant-requirements" className="underline font-medium">
+                          Ver requisitos
+                        </Link>
+                      </p>
+                    </div>
+                  )}
+                </div>
+
+                <div className="flex flex-col gap-2 lg:items-end">
+                  {isLocked ? (
+                    <Button variant="outline" asChild>
+                      <Link to="/consultant-requirements">
+                        <Lock className="w-4 h-4 mr-2" />
+                        Cumplir Requisitos
+                      </Link>
+                    </Button>
+                  ) : (
+                    <Button variant="gold" asChild>
+                      <Link to={`/projects/${project.id}`}>
+                        <Eye className="w-4 h-4 mr-2" />
+                        {userRole === 'client' ? 'Ver Detalles' : 'Ver Proyecto'}
+                      </Link>
+                    </Button>
+                  )}
                 </div>
               </div>
-
-              <div className="flex flex-col gap-2 lg:items-end">
-                <Button variant="gold" asChild>
-                  <Link to={`/projects/${project.id}`}>
-                    <Eye className="w-4 h-4 mr-2" />
-                    {userRole === 'client' ? 'Ver Detalles' : 'Ver Proyecto'}
-                  </Link>
-                </Button>
-              </div>
-            </div>
-          </CardContent>
-        </Card>
-      ))}
+            </CardContent>
+          </Card>
+        );
+      })}
     </div>
   );
 };

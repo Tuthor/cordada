@@ -1,5 +1,5 @@
 import { useState, useEffect, useRef } from "react";
-import { useNavigate } from "react-router-dom";
+import { useNavigate, Link } from "react-router-dom";
 import { useAuth } from "@/contexts/AuthContext";
 import { DashboardLayout } from "@/components/layout/DashboardLayout";
 import { Button } from "@/components/ui/button";
@@ -7,6 +7,7 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/com
 import { Badge } from "@/components/ui/badge";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
+import { Progress } from "@/components/ui/progress";
 import {
   Dialog,
   DialogContent,
@@ -23,7 +24,19 @@ import {
 } from "@/components/ui/accordion";
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
-import { Upload, CheckCircle, XCircle, Clock, FileText, Send, User } from "lucide-react";
+import { 
+  Upload, 
+  CheckCircle, 
+  XCircle, 
+  Clock, 
+  FileText, 
+  Send, 
+  Building2, 
+  Lock, 
+  Unlock, 
+  Briefcase,
+  ChevronRight
+} from "lucide-react";
 
 interface Requirement {
   id: string;
@@ -32,6 +45,7 @@ interface Requirement {
   description: string | null;
   created_at: string;
   client_name?: string;
+  company_name?: string;
 }
 
 interface Evidence {
@@ -45,11 +59,23 @@ interface Evidence {
   reviewer_notes: string | null;
 }
 
+interface ClientWithRequirements {
+  client_id: string;
+  client_name: string;
+  company_name?: string;
+  requirements: Requirement[];
+  approvedCount: number;
+  totalCount: number;
+  isCompliant: boolean;
+  projectCount: number;
+}
+
 export default function ConsultantRequirements() {
   const { user } = useAuth();
   const navigate = useNavigate();
   const [requirements, setRequirements] = useState<Requirement[]>([]);
   const [myEvidences, setMyEvidences] = useState<Evidence[]>([]);
+  const [clientsData, setClientsData] = useState<ClientWithRequirements[]>([]);
   const [loading, setLoading] = useState(true);
   const [uploadingFor, setUploadingFor] = useState<string | null>(null);
   const [selectedFile, setSelectedFile] = useState<File | null>(null);
@@ -75,31 +101,69 @@ export default function ConsultantRequirements() {
 
       if (reqError) throw reqError;
 
-      // Get client names
+      // Get client names and companies
       if (reqData && reqData.length > 0) {
         const clientIds = [...new Set(reqData.map(r => r.client_id))];
-        const { data: profiles } = await supabase
-          .from("profiles")
-          .select("user_id, full_name")
-          .in("user_id", clientIds);
+        
+        const [profilesResult, companiesResult, projectsResult] = await Promise.all([
+          supabase.from("profiles").select("user_id, full_name").in("user_id", clientIds),
+          supabase.from("client_companies").select("user_id, company_name").in("user_id", clientIds),
+          supabase.from("projects").select("id, client_id").in("client_id", clientIds).eq("status", "open")
+        ]);
 
         const requirementsWithNames = reqData.map(r => ({
           ...r,
-          client_name: profiles?.find(p => p.user_id === r.client_id)?.full_name || "Cliente"
+          client_name: profilesResult.data?.find(p => p.user_id === r.client_id)?.full_name || "Cliente",
+          company_name: companiesResult.data?.find(c => c.user_id === r.client_id)?.company_name
         }));
         setRequirements(requirementsWithNames);
+
+        // Fetch my evidences
+        const { data: evidenceData, error: evidenceError } = await supabase
+          .from("consultant_requirement_evidence")
+          .select("*")
+          .eq("consultant_id", user?.id);
+
+        if (evidenceError) throw evidenceError;
+        setMyEvidences(evidenceData || []);
+
+        // Group by client and calculate compliance
+        const clientsMap = new Map<string, ClientWithRequirements>();
+        
+        requirementsWithNames.forEach(req => {
+          if (!clientsMap.has(req.client_id)) {
+            clientsMap.set(req.client_id, {
+              client_id: req.client_id,
+              client_name: req.client_name || "Cliente",
+              company_name: req.company_name,
+              requirements: [],
+              approvedCount: 0,
+              totalCount: 0,
+              isCompliant: false,
+              projectCount: projectsResult.data?.filter(p => p.client_id === req.client_id).length || 0
+            });
+          }
+          
+          const client = clientsMap.get(req.client_id)!;
+          client.requirements.push(req);
+          client.totalCount++;
+          
+          const evidence = evidenceData?.find(e => e.requirement_id === req.id);
+          if (evidence?.status === "approved") {
+            client.approvedCount++;
+          }
+        });
+
+        // Update compliance status
+        clientsMap.forEach(client => {
+          client.isCompliant = client.totalCount > 0 && client.approvedCount === client.totalCount;
+        });
+
+        setClientsData(Array.from(clientsMap.values()));
       } else {
         setRequirements([]);
+        setClientsData([]);
       }
-
-      // Fetch my evidences
-      const { data: evidenceData, error: evidenceError } = await supabase
-        .from("consultant_requirement_evidence")
-        .select("*")
-        .eq("consultant_id", user?.id);
-
-      if (evidenceError) throw evidenceError;
-      setMyEvidences(evidenceData || []);
     } catch (error) {
       console.error("Error fetching data:", error);
       toast.error("Error al cargar los requisitos");
@@ -229,15 +293,13 @@ export default function ConsultantRequirements() {
     }
   };
 
-  // Group requirements by client
-  const requirementsByClient = requirements.reduce((acc, req) => {
-    const clientName = req.client_name || "Cliente";
-    if (!acc[clientName]) {
-      acc[clientName] = [];
-    }
-    acc[clientName].push(req);
-    return acc;
-  }, {} as Record<string, Requirement[]>);
+  const getComplianceColor = (approved: number, total: number) => {
+    if (total === 0) return "bg-muted";
+    const percentage = (approved / total) * 100;
+    if (percentage === 100) return "bg-green-500";
+    if (percentage >= 50) return "bg-yellow-500";
+    return "bg-orange-500";
+  };
 
   if (loading) {
     return (
@@ -255,11 +317,11 @@ export default function ConsultantRequirements() {
         <div>
           <h1 className="text-3xl font-bold">Requisitos de Clientes</h1>
           <p className="text-muted-foreground mt-1">
-            Sube evidencias y solicita acreditación para cumplir con los requisitos de los clientes
+            Cumple con los requisitos de cada cliente para poder ver y aplicar a sus proyectos
           </p>
         </div>
 
-        {requirements.length === 0 ? (
+        {clientsData.length === 0 ? (
           <Card>
             <CardContent className="flex flex-col items-center justify-center py-12">
               <FileText className="w-12 h-12 text-muted-foreground mb-4" />
@@ -270,93 +332,165 @@ export default function ConsultantRequirements() {
             </CardContent>
           </Card>
         ) : (
-          <Accordion type="multiple" className="space-y-4">
-            {Object.entries(requirementsByClient).map(([clientName, clientReqs]) => (
-              <AccordionItem key={clientName} value={clientName} className="border rounded-lg px-4">
-                <AccordionTrigger className="hover:no-underline">
-                  <div className="flex items-center gap-2">
-                    <User className="w-5 h-5 text-muted-foreground" />
-                    <span className="font-semibold">{clientName}</span>
-                    <Badge variant="outline">{clientReqs.length} requisitos</Badge>
+          <div className="space-y-4">
+            {clientsData.map((client) => (
+              <Card key={client.client_id} className={client.isCompliant ? "border-green-500/50" : ""}>
+                <CardHeader className="pb-3">
+                  <div className="flex items-start justify-between">
+                    <div className="flex items-center gap-3">
+                      <div className={`p-2 rounded-full ${client.isCompliant ? "bg-green-500/10" : "bg-muted"}`}>
+                        {client.isCompliant ? (
+                          <Unlock className="w-5 h-5 text-green-500" />
+                        ) : (
+                          <Lock className="w-5 h-5 text-muted-foreground" />
+                        )}
+                      </div>
+                      <div>
+                        <CardTitle className="text-lg flex items-center gap-2">
+                          {client.company_name ? (
+                            <>
+                              <Building2 className="w-4 h-4" />
+                              {client.company_name}
+                            </>
+                          ) : (
+                            client.client_name
+                          )}
+                        </CardTitle>
+                        {client.company_name && (
+                          <CardDescription>{client.client_name}</CardDescription>
+                        )}
+                      </div>
+                    </div>
+                    <div className="flex items-center gap-4">
+                      {client.projectCount > 0 && (
+                        <Badge variant="outline" className="gap-1">
+                          <Briefcase className="w-3 h-3" />
+                          {client.projectCount} proyecto{client.projectCount !== 1 ? "s" : ""} abierto{client.projectCount !== 1 ? "s" : ""}
+                        </Badge>
+                      )}
+                      <Badge 
+                        variant={client.isCompliant ? "default" : "secondary"}
+                        className={client.isCompliant ? "bg-green-500" : ""}
+                      >
+                        {client.isCompliant ? (
+                          <>
+                            <CheckCircle className="w-3 h-3 mr-1" />
+                            Acceso completo
+                          </>
+                        ) : (
+                          `${client.approvedCount}/${client.totalCount} aprobados`
+                        )}
+                      </Badge>
+                    </div>
                   </div>
-                </AccordionTrigger>
-                <AccordionContent>
-                  <div className="space-y-4 pt-2">
-                    {clientReqs.map((req) => {
-                      const evidence = getEvidenceForRequirement(req.id);
-                      const status = evidence?.status || "none";
-                      const canSubmit = evidence && status === "pending";
-                      const canUpload = !evidence || status === "pending" || status === "rejected";
-
-                      return (
-                        <Card key={req.id}>
-                          <CardHeader className="pb-3">
-                            <div className="flex items-start justify-between">
-                              <div>
-                                <CardTitle className="text-base">{req.name}</CardTitle>
-                                {req.description && (
-                                  <CardDescription className="mt-1">{req.description}</CardDescription>
-                                )}
-                              </div>
-                              {getStatusBadge(status)}
-                            </div>
-                          </CardHeader>
-                          <CardContent>
-                            {evidence?.reviewer_notes && status === "rejected" && (
-                              <div className="mb-4 p-3 bg-destructive/10 rounded-md">
-                                <p className="text-sm text-destructive">
-                                  <strong>Motivo del rechazo:</strong> {evidence.reviewer_notes}
-                                </p>
-                              </div>
-                            )}
-
-                            {evidence?.evidence_file_url && (
-                              <div className="mb-4">
-                                <Label className="text-sm text-muted-foreground">Archivo actual:</Label>
-                                <a
-                                  href={evidence.evidence_file_url}
-                                  target="_blank"
-                                  rel="noopener noreferrer"
-                                  className="text-primary hover:underline flex items-center mt-1"
-                                >
-                                  <FileText className="w-4 h-4 mr-1" />
-                                  {evidence.evidence_file_name || "Ver archivo"}
-                                </a>
-                              </div>
-                            )}
-
-                            <div className="flex gap-2">
-                              {canUpload && (
-                                <Button
-                                  variant="outline"
-                                  size="sm"
-                                  onClick={() => {
-                                    setCurrentRequirementId(req.id);
-                                    setIsUploadDialogOpen(true);
-                                  }}
-                                >
-                                  <Upload className="w-4 h-4 mr-1" />
-                                  {evidence ? "Cambiar archivo" : "Subir evidencia"}
-                                </Button>
-                              )}
-                              {canSubmit && (
-                                <Button
-                                  size="sm"
-                                  onClick={() => handleSubmitForReview(req.id)}
-                                >
-                                  <Send className="w-4 h-4 mr-1" /> Acreditar
-                                </Button>
-                              )}
-                            </div>
-                          </CardContent>
-                        </Card>
-                      );
-                    })}
+                  
+                  {/* Progress bar */}
+                  <div className="mt-4">
+                    <Progress 
+                      value={client.totalCount > 0 ? (client.approvedCount / client.totalCount) * 100 : 0} 
+                      className="h-2"
+                    />
                   </div>
-                </AccordionContent>
-              </AccordionItem>
+
+                  {client.isCompliant && client.projectCount > 0 && (
+                    <div className="mt-4">
+                      <Button variant="gold" asChild size="sm">
+                        <Link to="/projects">
+                          Ver proyectos de este cliente
+                          <ChevronRight className="w-4 h-4 ml-1" />
+                        </Link>
+                      </Button>
+                    </div>
+                  )}
+                </CardHeader>
+
+                <CardContent>
+                  <Accordion type="single" collapsible className="w-full">
+                    <AccordionItem value="requirements" className="border-none">
+                      <AccordionTrigger className="hover:no-underline py-2">
+                        <span className="text-sm text-muted-foreground">
+                          Ver {client.totalCount} requisito{client.totalCount !== 1 ? "s" : ""}
+                        </span>
+                      </AccordionTrigger>
+                      <AccordionContent>
+                        <div className="space-y-3 pt-2">
+                          {client.requirements.map((req) => {
+                            const evidence = getEvidenceForRequirement(req.id);
+                            const status = evidence?.status || "none";
+                            const canSubmit = evidence && status === "pending";
+                            const canUpload = !evidence || status === "pending" || status === "rejected";
+
+                            return (
+                              <Card key={req.id} className="bg-muted/30">
+                                <CardHeader className="pb-2 pt-4 px-4">
+                                  <div className="flex items-start justify-between gap-4">
+                                    <div className="flex-1">
+                                      <CardTitle className="text-sm font-medium">{req.name}</CardTitle>
+                                      {req.description && (
+                                        <CardDescription className="mt-1 text-xs">{req.description}</CardDescription>
+                                      )}
+                                    </div>
+                                    {getStatusBadge(status)}
+                                  </div>
+                                </CardHeader>
+                                <CardContent className="pt-0 pb-4 px-4">
+                                  {evidence?.reviewer_notes && status === "rejected" && (
+                                    <div className="mb-3 p-2 bg-destructive/10 rounded-md">
+                                      <p className="text-xs text-destructive">
+                                        <strong>Motivo del rechazo:</strong> {evidence.reviewer_notes}
+                                      </p>
+                                    </div>
+                                  )}
+
+                                  {evidence?.evidence_file_url && (
+                                    <div className="mb-3">
+                                      <a
+                                        href={evidence.evidence_file_url}
+                                        target="_blank"
+                                        rel="noopener noreferrer"
+                                        className="text-primary hover:underline flex items-center text-sm"
+                                      >
+                                        <FileText className="w-3 h-3 mr-1" />
+                                        {evidence.evidence_file_name || "Ver archivo"}
+                                      </a>
+                                    </div>
+                                  )}
+
+                                  <div className="flex gap-2">
+                                    {canUpload && (
+                                      <Button
+                                        variant="outline"
+                                        size="sm"
+                                        onClick={() => {
+                                          setCurrentRequirementId(req.id);
+                                          setIsUploadDialogOpen(true);
+                                        }}
+                                      >
+                                        <Upload className="w-3 h-3 mr-1" />
+                                        {evidence ? "Cambiar" : "Subir"}
+                                      </Button>
+                                    )}
+                                    {canSubmit && (
+                                      <Button
+                                        size="sm"
+                                        onClick={() => handleSubmitForReview(req.id)}
+                                      >
+                                        <Send className="w-3 h-3 mr-1" /> Acreditar
+                                      </Button>
+                                    )}
+                                  </div>
+                                </CardContent>
+                              </Card>
+                            );
+                          })}
+                        </div>
+                      </AccordionContent>
+                    </AccordionItem>
+                  </Accordion>
+                </CardContent>
+              </Card>
             ))}
-          </Accordion>
+          </div>
         )}
 
         {/* Upload Dialog */}
