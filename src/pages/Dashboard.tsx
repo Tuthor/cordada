@@ -38,9 +38,6 @@ const Dashboard = () => {
             <h1 className="text-2xl font-bold text-foreground">
               Bienvenido, {user?.user_metadata?.full_name || 'Usuario'}
             </h1>
-            <p className="text-muted-foreground">
-              {userRole && roleLabels[userRole] ? roleLabels[userRole] : 'Cargando rol...'}
-            </p>
           </div>
           <div className="flex gap-3">
             {userRole === 'client' && (
