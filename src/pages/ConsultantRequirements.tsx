@@ -198,10 +198,13 @@ export default function ConsultantRequirements() {
 
       if (uploadError) throw uploadError;
 
-      // Get public URL
-      const { data: urlData } = supabase.storage
+      // Get signed URL (more secure than public URL for private bucket)
+      // Use createSignedUrl with 1 year expiration for persistent access
+      const { data: urlData, error: urlError } = await supabase.storage
         .from("requirement-evidence")
-        .getPublicUrl(fileName);
+        .createSignedUrl(fileName, 31536000); // 1 year in seconds
+
+      if (urlError) throw urlError;
 
       // Check if evidence already exists
       const existingEvidence = myEvidences.find(e => e.requirement_id === currentRequirementId);
@@ -211,7 +214,7 @@ export default function ConsultantRequirements() {
         const { error: updateError } = await supabase
           .from("consultant_requirement_evidence")
           .update({
-            evidence_file_url: urlData.publicUrl,
+            evidence_file_url: urlData.signedUrl,
             evidence_file_name: selectedFile.name,
             status: "pending",
             submitted_at: null,
@@ -226,7 +229,7 @@ export default function ConsultantRequirements() {
           .insert({
             requirement_id: currentRequirementId,
             consultant_id: user.id,
-            evidence_file_url: urlData.publicUrl,
+            evidence_file_url: urlData.signedUrl,
             evidence_file_name: selectedFile.name,
             status: "pending",
           });
