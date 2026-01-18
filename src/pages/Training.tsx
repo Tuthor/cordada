@@ -138,30 +138,6 @@ const Training = () => {
           </Card>
         </div>
 
-        {/* Maturity Assessment CTA */}
-        <Card className="bg-gradient-hero text-primary-foreground">
-          <CardContent className="flex flex-col md:flex-row items-center justify-between gap-6 py-6">
-            <div className="flex items-center gap-4">
-              <div className="w-12 h-12 rounded-full bg-gold/20 flex items-center justify-center">
-                <GraduationCap className="w-6 h-6 text-gold" />
-              </div>
-              <div>
-                <h3 className="font-bold mb-1">
-                  Evaluación de Madurez en Consultoría
-                </h3>
-                <p className="text-primary-foreground/80 text-sm">
-                  Descubre tu nivel y recibe recomendaciones personalizadas
-                </p>
-              </div>
-            </div>
-            <Button variant="gold" asChild>
-              <Link to="/" className="group">
-                Realizar Evaluación
-                <ArrowRight className="w-4 h-4 ml-2 group-hover:translate-x-1 transition-transform" />
-              </Link>
-            </Button>
-          </CardContent>
-        </Card>
 
         {/* Courses Grid */}
         <div>
