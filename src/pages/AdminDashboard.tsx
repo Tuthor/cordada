@@ -372,7 +372,7 @@ const AdminDashboard = () => {
             </div>
             <div>
               <h1 className="text-xl font-bold">Panel de Administración</h1>
-              <p className="text-sm text-primary-foreground/70">Gestión de Usuarios e Inscripciones</p>
+              <p className="text-sm text-primary-foreground/70">Gestión de Usuarios y Postulantes</p>
             </div>
           </div>
           <Button
@@ -392,7 +392,7 @@ const AdminDashboard = () => {
           <TabsList className="grid w-full max-w-md grid-cols-2">
             <TabsTrigger value="enrollments" className="gap-2">
               <ClipboardList className="w-4 h-4" />
-              Inscripciones
+              Postulantes
             </TabsTrigger>
             <TabsTrigger value="users" className="gap-2">
               <UserCheck className="w-4 h-4" />
@@ -405,7 +405,7 @@ const AdminDashboard = () => {
             <Card>
               <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-4">
                 <div>
-                  <CardTitle className="text-xl">Inscripciones</CardTitle>
+                  <CardTitle className="text-xl">Postulantes</CardTitle>
                   <CardDescription>
                     {enrollments.length} registro{enrollments.length !== 1 ? "s" : ""} en total
                   </CardDescription>
@@ -439,7 +439,7 @@ const AdminDashboard = () => {
                 ) : enrollments.length === 0 ? (
                   <div className="text-center py-12 text-muted-foreground">
                     <ClipboardList className="w-12 h-12 mx-auto mb-4 opacity-50" />
-                    <p>No hay inscripciones registradas</p>
+                    <p>No hay postulantes registrados</p>
                   </div>
                 ) : (
                   <div className="overflow-x-auto">
