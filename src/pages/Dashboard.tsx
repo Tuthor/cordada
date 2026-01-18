@@ -27,6 +27,7 @@ const Dashboard = () => {
     client: 'Cliente (Empresa)',
     consultant: 'Consultor',
     consulting_firm: 'Empresa de Consultoría',
+    partner: 'Partner',
   };
 
   return (
@@ -38,6 +39,9 @@ const Dashboard = () => {
             <h1 className="text-2xl font-bold text-foreground">
               Bienvenido, {user?.user_metadata?.full_name || 'Usuario'}
             </h1>
+            {userRole && roleLabels[userRole] && (
+              <p className="text-muted-foreground">{roleLabels[userRole]}</p>
+            )}
           </div>
           <div className="flex gap-3">
             {userRole === 'client' && (
