@@ -313,11 +313,20 @@ const Inbox = () => {
   const handleSendMessage = async () => {
     if (!user || !selectedConversation || !newMessage.trim()) return;
 
+    const trimmedMessage = newMessage.trim();
+    
+    // Validate message length (max 10,000 characters to match database constraint)
+    if (trimmedMessage.length > 10000) {
+      // Import toast if not already available, using console for now
+      alert('El mensaje es demasiado largo (máximo 10,000 caracteres)');
+      return;
+    }
+
     await supabase.from('project_messages').insert({
       project_id: selectedConversation.project_id,
       sender_id: user.id,
       recipient_id: selectedConversation.other_user_id,
-      message: newMessage.trim(),
+      message: trimmedMessage,
     });
 
     setNewMessage('');
@@ -615,6 +624,7 @@ const Inbox = () => {
                       placeholder="Escribe tu mensaje..."
                       value={newMessage}
                       onChange={(e) => setNewMessage(e.target.value)}
+                      maxLength={10000}
                       className="min-h-[60px] resize-none"
                       onKeyDown={(e) => {
                         if (e.key === 'Enter' && !e.shiftKey) {
