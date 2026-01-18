@@ -142,28 +142,6 @@ const Dashboard = () => {
           </Card>
         </div>
 
-        {/* Maturity Assessment CTA - Only for consultants and consulting firms */}
-        {(userRole === 'consultant' || userRole === 'consulting_firm') && (
-          <Card className="bg-gradient-hero text-primary-foreground">
-            <CardContent className="flex flex-col md:flex-row items-center justify-between gap-6 py-8">
-              <div className="text-center md:text-left">
-                <h3 className="text-xl font-bold mb-2">
-                  ¿Conoces tu nivel de madurez en consultoría?
-                </h3>
-                <p className="text-primary-foreground/80 max-w-md">
-                  Realiza nuestra evaluación diagnóstica y descubre tu nivel profesional 
-                  en 5 competencias clave.
-                </p>
-              </div>
-              <Button variant="gold" size="lg" asChild>
-                <Link to="/" className="group">
-                  Realizar Evaluación
-                  <ArrowRight className="w-5 h-5 ml-2 group-hover:translate-x-1 transition-transform" />
-                </Link>
-              </Button>
-            </CardContent>
-          </Card>
-        )}
       </div>
     </DashboardLayout>
   );
