@@ -3,7 +3,7 @@ import { useNavigate } from 'react-router-dom';
 import { useForm } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
 import { z } from 'zod';
-import { Briefcase, Mail, Lock, User, Building2, Users, ArrowLeft, Loader2 } from 'lucide-react';
+import { Briefcase, Mail, Lock, User, Building2, Users, ArrowLeft, Loader2, Handshake } from 'lucide-react';
 import { useAuth } from '@/contexts/AuthContext';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
@@ -23,7 +23,7 @@ const signUpSchema = z.object({
   fullName: z.string().min(2, 'El nombre debe tener al menos 2 caracteres'),
   email: z.string().email('Email inválido'),
   password: z.string().min(6, 'La contraseña debe tener al menos 6 caracteres'),
-  role: z.enum(['client', 'consultant', 'consulting_firm'], {
+  role: z.enum(['client', 'consultant', 'consulting_firm', 'partner'], {
     required_error: 'Selecciona un tipo de cuenta',
   }),
 });
@@ -49,6 +49,12 @@ const roleOptions = [
     label: 'Empresa de Consultoría',
     description: 'Gestiono un equipo de consultores',
     icon: Users,
+  },
+  {
+    value: 'partner' as const,
+    label: 'Partner',
+    description: 'Aliado estratégico del ecosistema',
+    icon: Handshake,
   },
 ];
 
