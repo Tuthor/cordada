@@ -287,10 +287,10 @@ const Auth = () => {
                 </form>
               </div>
             ) : (
-            <Tabs defaultValue="signin" className="w-full">
+            <Tabs defaultValue="signup" className="w-full">
               <TabsList className="grid w-full grid-cols-2 mb-6">
-                <TabsTrigger value="signin">Iniciar Sesión</TabsTrigger>
                 <TabsTrigger value="signup">Registrarse</TabsTrigger>
+                <TabsTrigger value="signin">Tengo Cuenta</TabsTrigger>
               </TabsList>
 
               <TabsContent value="signin">
