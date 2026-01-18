@@ -2,14 +2,14 @@ import { createContext, useContext, useEffect, useState, ReactNode } from 'react
 import { User, Session } from '@supabase/supabase-js';
 import { supabase } from '@/integrations/supabase/client';
 
-type UserRole = 'client' | 'consultant' | 'consulting_firm' | 'admin' | null;
+type UserRole = 'client' | 'consultant' | 'consulting_firm' | 'partner' | 'admin' | null;
 
 interface AuthContextType {
   user: User | null;
   session: Session | null;
   userRole: UserRole;
   loading: boolean;
-  signUp: (email: string, password: string, fullName: string, role: 'client' | 'consultant' | 'consulting_firm') => Promise<{ error: Error | null }>;
+  signUp: (email: string, password: string, fullName: string, role: 'client' | 'consultant' | 'consulting_firm' | 'partner') => Promise<{ error: Error | null }>;
   signIn: (email: string, password: string) => Promise<{ error: Error | null }>;
   signOut: () => Promise<void>;
 }
@@ -68,7 +68,7 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
     return () => subscription.unsubscribe();
   }, []);
 
-  const signUp = async (email: string, password: string, fullName: string, role: 'client' | 'consultant' | 'consulting_firm') => {
+  const signUp = async (email: string, password: string, fullName: string, role: 'client' | 'consultant' | 'consulting_firm' | 'partner') => {
     const redirectUrl = `${window.location.origin}/`;
     
     const { error } = await supabase.auth.signUp({
