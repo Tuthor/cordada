@@ -2,7 +2,7 @@ import { useAuth } from '@/contexts/AuthContext';
 import { DashboardLayout } from '@/components/layout/DashboardLayout';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
-import { Link } from 'react-router-dom';
+import { Link, Navigate } from 'react-router-dom';
 import { 
   Briefcase, 
   Users, 
@@ -15,6 +15,11 @@ import {
 
 const Dashboard = () => {
   const { user, userRole } = useAuth();
+
+  // Redirect partners to their dedicated dashboard
+  if (userRole === 'partner') {
+    return <Navigate to="/partner" replace />;
+  }
 
   const stats = [
     { label: 'Proyectos Activos', value: '12', icon: Briefcase, color: 'text-primary' },
