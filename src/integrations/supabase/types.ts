@@ -401,6 +401,92 @@ export type Database = {
           },
         ]
       }
+      partner_course_enrollments: {
+        Row: {
+          completed_at: string | null
+          course_id: string
+          enrolled_at: string
+          id: string
+          payment_amount: number | null
+          payment_status: string
+          user_id: string
+        }
+        Insert: {
+          completed_at?: string | null
+          course_id: string
+          enrolled_at?: string
+          id?: string
+          payment_amount?: number | null
+          payment_status?: string
+          user_id: string
+        }
+        Update: {
+          completed_at?: string | null
+          course_id?: string
+          enrolled_at?: string
+          id?: string
+          payment_amount?: number | null
+          payment_status?: string
+          user_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "partner_course_enrollments_course_id_fkey"
+            columns: ["course_id"]
+            isOneToOne: false
+            referencedRelation: "partner_courses"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      partner_courses: {
+        Row: {
+          course_type: Database["public"]["Enums"]["course_type"]
+          created_at: string
+          currency: string
+          description: string | null
+          duration_hours: number | null
+          id: string
+          is_published: boolean
+          max_participants: number | null
+          partner_id: string
+          price: number
+          thumbnail_url: string | null
+          title: string
+          updated_at: string
+        }
+        Insert: {
+          course_type?: Database["public"]["Enums"]["course_type"]
+          created_at?: string
+          currency?: string
+          description?: string | null
+          duration_hours?: number | null
+          id?: string
+          is_published?: boolean
+          max_participants?: number | null
+          partner_id: string
+          price?: number
+          thumbnail_url?: string | null
+          title: string
+          updated_at?: string
+        }
+        Update: {
+          course_type?: Database["public"]["Enums"]["course_type"]
+          created_at?: string
+          currency?: string
+          description?: string | null
+          duration_hours?: number | null
+          id?: string
+          is_published?: boolean
+          max_participants?: number | null
+          partner_id?: string
+          price?: number
+          thumbnail_url?: string | null
+          title?: string
+          updated_at?: string
+        }
+        Relationships: []
+      }
       profiles: {
         Row: {
           avatar_url: string | null
@@ -629,6 +715,7 @@ export type Database = {
         | "consultant"
         | "consulting_firm"
         | "partner"
+      course_type: "course" | "workshop"
     }
     CompositeTypes: {
       [_ in never]: never
@@ -764,6 +851,7 @@ export const Constants = {
         "consulting_firm",
         "partner",
       ],
+      course_type: ["course", "workshop"],
     },
   },
 } as const
