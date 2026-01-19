@@ -12,7 +12,8 @@ import {
   ArrowRight,
   Building2,
   CheckCircle,
-  Star
+  Star,
+  Handshake
 } from 'lucide-react';
 
 const Home = () => {
@@ -174,7 +175,7 @@ const Home = () => {
                 ¿Cómo funciona?
               </h2>
             </div>
-            <div className="grid md:grid-cols-2 gap-12 max-w-5xl mx-auto">
+            <div className="grid md:grid-cols-3 gap-8 max-w-6xl mx-auto">
               {/* For Clients */}
               <Card>
                 <CardHeader>
@@ -212,6 +213,29 @@ const Home = () => {
                     'Explora proyectos que coincidan con tu expertise',
                     'Envía propuestas personalizadas',
                     'Crece profesionalmente con nuestra capacitación',
+                  ].map((step, i) => (
+                    <div key={i} className="flex items-start gap-3">
+                      <CheckCircle className="w-5 h-5 text-success flex-shrink-0 mt-0.5" />
+                      <span className="text-muted-foreground">{step}</span>
+                    </div>
+                  ))}
+                </CardContent>
+              </Card>
+
+              {/* For Partners */}
+              <Card>
+                <CardHeader>
+                  <div className="w-12 h-12 rounded-lg bg-secondary flex items-center justify-center mb-4">
+                    <Handshake className="w-6 h-6 text-foreground" />
+                  </div>
+                  <CardTitle>Para Partners</CardTitle>
+                </CardHeader>
+                <CardContent className="space-y-3">
+                  {[
+                    'Ofrece cursos y talleres a la comunidad',
+                    'Define precios y duración de tu contenido',
+                    'Gestiona inscripciones y pagos',
+                    'Visualiza estadísticas de tus cursos en tiempo real',
                   ].map((step, i) => (
                     <div key={i} className="flex items-start gap-3">
                       <CheckCircle className="w-5 h-5 text-success flex-shrink-0 mt-0.5" />
