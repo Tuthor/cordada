@@ -94,6 +94,15 @@ export function AppSidebar() {
   };
 
   const getNavItems = () => {
+    // Partner-specific menu
+    if (userRole === 'partner') {
+      return [
+        { title: "Panel Partner", url: "/partner", icon: Home, badge: 0 },
+        { title: "Mis Cursos", url: "/partner", icon: GraduationCap, badge: 0 },
+        { title: "Inbox", url: "/inbox", icon: Inbox, badge: unreadCount },
+      ];
+    }
+
     const baseItems = [
       { title: "Inicio", url: "/dashboard", icon: Home, badge: 0 },
       { title: "Directorio", url: "/directory", icon: Users, badge: 0 },
