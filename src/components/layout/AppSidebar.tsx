@@ -12,7 +12,8 @@ import {
   Building2,
   User,
   Building,
-  ClipboardCheck
+  ClipboardCheck,
+  Handshake
 } from "lucide-react";
 import { NavLink } from "@/components/NavLink";
 import { useAuth } from "@/contexts/AuthContext";
@@ -37,6 +38,7 @@ const roleLabels: Record<string, { label: string; icon: typeof User; variant: 'd
   client: { label: 'Cliente', icon: Building2, variant: 'default' },
   consultant: { label: 'Consultor', icon: User, variant: 'secondary' },
   consulting_firm: { label: 'Empresa Consultora', icon: Building, variant: 'outline' },
+  partner: { label: 'Partner', icon: Handshake, variant: 'secondary' },
 };
 
 const settingsNavItems = [
