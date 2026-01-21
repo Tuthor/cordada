@@ -1,18 +1,21 @@
 import { useState, useMemo } from 'react';
 import { Answer, AssessmentResult, CategoryScore } from '@/types/assessment';
+import { RoleAssessmentResult } from '@/types/roleAssessment';
 import { questions, categories, getMaturityLevel, maturityLevels } from '@/data/assessmentData';
 import WelcomeScreen from './WelcomeScreen';
 import QuestionCard from './QuestionCard';
 import ProgressBar from './ProgressBar';
 import ResultsScreen from './ResultsScreen';
 import EnrollmentForm from './EnrollmentForm';
+import RoleAssessment from './RoleAssessment';
 
-type AssessmentState = 'welcome' | 'questions' | 'results' | 'enrollment';
+type AssessmentState = 'welcome' | 'questions' | 'results' | 'role_assessment' | 'enrollment';
 
 const Assessment = () => {
   const [state, setState] = useState<AssessmentState>('welcome');
   const [currentQuestionIndex, setCurrentQuestionIndex] = useState(0);
   const [answers, setAnswers] = useState<Map<string, number>>(new Map());
+  const [roleResult, setRoleResult] = useState<RoleAssessmentResult | null>(null);
 
   const currentQuestion = questions[currentQuestionIndex];
 
@@ -48,7 +51,16 @@ const Assessment = () => {
     setAnswers(new Map());
   };
 
-  const handleEnroll = () => {
+  const handleContinueToRoleAssessment = () => {
+    setState('role_assessment');
+  };
+
+  const handleSkipRoleAssessment = () => {
+    setState('enrollment');
+  };
+
+  const handleRoleAssessmentComplete = (result: RoleAssessmentResult) => {
+    setRoleResult(result);
     setState('enrollment');
   };
 
@@ -111,12 +123,35 @@ const Assessment = () => {
     return <WelcomeScreen onStart={handleStart} />;
   }
 
+  if (state === 'role_assessment') {
+    return (
+      <RoleAssessment
+        onComplete={handleRoleAssessmentComplete}
+        onSkip={handleSkipRoleAssessment}
+      />
+    );
+  }
+
   if (state === 'enrollment' && result) {
-    return <EnrollmentForm result={result} levelInfo={result.dominantLevel} onBack={handleBackToResults} />;
+    return (
+      <EnrollmentForm 
+        result={result} 
+        levelInfo={result.dominantLevel} 
+        roleResult={roleResult}
+        onBack={handleBackToResults} 
+      />
+    );
   }
 
   if (state === 'results' && result) {
-    return <ResultsScreen result={result} levelInfo={result.dominantLevel} onRestart={handleRestart} onEnroll={handleEnroll} />;
+    return (
+      <ResultsScreen 
+        result={result} 
+        levelInfo={result.dominantLevel} 
+        onRestart={handleRestart} 
+        onContinue={handleContinueToRoleAssessment} 
+      />
+    );
   }
 
   return (

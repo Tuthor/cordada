@@ -2,6 +2,7 @@ import { useEffect, useRef, useState } from 'react';
 import ReCAPTCHA from 'react-google-recaptcha';
 import { Button } from '@/components/ui/button';
 import { AssessmentResult, MaturityLevelInfo } from '@/types/assessment';
+import { RoleAssessmentResult } from '@/types/roleAssessment';
 import { 
   Users, 
   Briefcase, 
@@ -13,7 +14,8 @@ import {
   User,
   Phone,
   Linkedin,
-  ShieldCheck
+  ShieldCheck,
+  Compass
 } from 'lucide-react';
 import { toast } from '@/hooks/use-toast';
 import { supabase } from '@/integrations/supabase/client';
@@ -21,10 +23,11 @@ import { supabase } from '@/integrations/supabase/client';
 interface EnrollmentFormProps {
   result: AssessmentResult;
   levelInfo: MaturityLevelInfo;
+  roleResult?: RoleAssessmentResult | null;
   onBack: () => void;
 }
 
-const EnrollmentForm = ({ result, levelInfo, onBack }: EnrollmentFormProps) => {
+const EnrollmentForm = ({ result, levelInfo, roleResult, onBack }: EnrollmentFormProps) => {
   const [formData, setFormData] = useState({
     fullName: '',
     email: '',
@@ -210,9 +213,10 @@ const EnrollmentForm = ({ result, levelInfo, onBack }: EnrollmentFormProps) => {
           </div>
         </div>
 
-        {/* Insignia de Puntuación */}
-        <div className="bg-gradient-hero rounded-xl p-4 mb-8 flex items-center justify-between animate-slide-up" style={{ animationDelay: '100ms' }}>
-          <div className="flex items-center gap-4">
+        {/* Insignias de Puntuación */}
+        <div className="grid md:grid-cols-2 gap-4 mb-8 animate-slide-up" style={{ animationDelay: '100ms' }}>
+          {/* Nivel de Madurez */}
+          <div className="bg-gradient-hero rounded-xl p-4 flex items-center gap-4">
             <div className="w-12 h-12 bg-white/20 rounded-full flex items-center justify-center">
               <span className="text-xl font-bold text-primary-foreground">{Math.round(result.overallPercentage)}%</span>
             </div>
@@ -221,6 +225,19 @@ const EnrollmentForm = ({ result, levelInfo, onBack }: EnrollmentFormProps) => {
               <p className="text-primary-foreground font-semibold">{levelInfo.name}</p>
             </div>
           </div>
+
+          {/* Arquetipo (si existe) */}
+          {roleResult && (
+            <div className="bg-secondary rounded-xl p-4 flex items-center gap-4 border border-border">
+              <div className="w-12 h-12 bg-primary/10 rounded-full flex items-center justify-center">
+                <Compass className="w-6 h-6 text-primary" />
+              </div>
+              <div>
+                <p className="text-muted-foreground text-sm">Tu Arquetipo</p>
+                <p className="text-foreground font-semibold">{roleResult.dominantArchetype.name}</p>
+              </div>
+            </div>
+          )}
         </div>
 
         {/* Formulario */}
