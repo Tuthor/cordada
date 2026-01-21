@@ -99,6 +99,7 @@ const enrollmentSchema = z.object({
   yearsExperience: z.string().max(20, "Years experience too long").optional().nullable(),
   motivation: z.string().max(2000, "Motivation text too long").optional().nullable(),
   maturityLevel: z.string().max(100, "Maturity level too long").optional().nullable(),
+  archetype: z.string().max(100, "Archetype too long").optional().nullable(),
   overallScore: z.number().min(0, "Score cannot be negative").max(100, "Score cannot exceed 100"),
   captchaToken: z.string().min(1, "CAPTCHA token is required")
 });
@@ -264,6 +265,7 @@ const handler = async (req: Request): Promise<Response> => {
         <h2>Resultados de la Evaluación</h2>
         <ul>
           <li><strong>Nivel de Madurez:</strong> ${escapeHtml(data.maturityLevel)}</li>
+          <li><strong>Arquetipo:</strong> ${escapeHtml(data.archetype) || 'No evaluado'}</li>
           <li><strong>Puntuación General:</strong> ${data.overallScore}%</li>
         </ul>
         

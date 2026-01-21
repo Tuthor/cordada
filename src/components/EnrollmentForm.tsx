@@ -105,6 +105,7 @@ const EnrollmentForm = ({ result, levelInfo, roleResult, onBack }: EnrollmentFor
         body: {
           ...formData,
           maturityLevel: levelInfo.name,
+          archetype: roleResult?.dominantArchetype?.name || null,
           overallScore: Math.round(result.overallPercentage),
           captchaToken: captchaToken,
         },
