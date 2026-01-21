@@ -15,10 +15,10 @@ interface ResultsScreenProps {
   result: AssessmentResult;
   levelInfo: MaturityLevelInfo;
   onRestart: () => void;
-  onEnroll: () => void;
+  onContinue: () => void;
 }
 
-const ResultsScreen = ({ result, levelInfo, onRestart, onEnroll }: ResultsScreenProps) => {
+const ResultsScreen = ({ result, levelInfo, onRestart, onContinue }: ResultsScreenProps) => {
   const radarData = result.categoryScores.map((score) => ({
     category: score.categoryName,
     score: score.percentage,
@@ -263,26 +263,26 @@ const ResultsScreen = ({ result, levelInfo, onRestart, onEnroll }: ResultsScreen
           </div>
         </div>
 
-        {/* CTA de Inscripción */}
+        {/* CTA de Siguiente Paso */}
         <div className="mt-8 bg-gradient-hero rounded-2xl p-8 text-center animate-slide-up" style={{ animationDelay: '300ms' }}>
           <div className="inline-flex items-center gap-2 px-4 py-2 rounded-full bg-white/20 text-primary-foreground mb-4">
             <Users className="w-4 h-4" />
-            <span className="text-sm font-medium">Únete a La Cordada</span>
+            <span className="text-sm font-medium">Siguiente Paso</span>
           </div>
           <h2 className="text-2xl font-bold text-primary-foreground mb-3">
-            ¿Listo para Escalar con Respaldo?
+            Descubre Tu Rol en La Cordada
           </h2>
           <p className="text-primary-foreground/80 mb-6 max-w-xl mx-auto">
-            Inscríbete en La Cordada para acceder a herramientas, acompañamiento y una red de consultores 
-            que te ayudarán a consolidar tu práctica independiente.
+            Ahora que conoces tu nivel de madurez, descubre qué rol natural ocupas en un equipo de consultoría 
+            con nuestro Test de Arquetipo.
           </p>
           <div className="flex flex-col sm:flex-row gap-4 justify-center">
             <Button variant="outline" onClick={onRestart} className="gap-2 bg-white/10 border-white/30 text-primary-foreground hover:bg-white/20">
               <RefreshCw className="w-4 h-4" />
               Repetir Evaluación
             </Button>
-            <Button onClick={onEnroll} variant="gold" size="xl" className="gap-2">
-              Inscribirse Ahora
+            <Button onClick={onContinue} variant="gold" size="xl" className="gap-2">
+              Continuar al Test de Rol
               <ArrowRight className="w-5 h-5" />
             </Button>
           </div>
