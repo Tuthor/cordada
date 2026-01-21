@@ -1,251 +1,273 @@
 import { Category, Question, MaturityLevelInfo } from '@/types/assessment';
 
+// 4 Bloques correspondientes a los niveles de madurez
 export const categories: Category[] = [
   {
-    id: 'expertise',
-    name: 'Experiencia Técnica',
-    icon: 'Lightbulb',
-    description: 'Conocimiento del dominio y habilidades especializadas',
+    id: 'bloque_a',
+    name: 'Campamento Base',
+    icon: 'Mountain',
+    description: 'Identidad profesional y oferta de servicios',
+    blockCode: 'A',
   },
   {
-    id: 'client',
-    name: 'Gestión de Clientes',
+    id: 'bloque_b',
+    name: 'Tramo de Ascenso',
+    icon: 'TrendingUp',
+    description: 'Experiencia comercial y gestión de proyectos',
+    blockCode: 'B',
+  },
+  {
+    id: 'bloque_c',
+    name: 'Alta Montaña',
+    icon: 'Flag',
+    description: 'Método, autonomía y sostenibilidad',
+    blockCode: 'C',
+  },
+  {
+    id: 'bloque_d',
+    name: 'Guía',
     icon: 'Users',
-    description: 'Construcción de relaciones y gestión de stakeholders',
-  },
-  {
-    id: 'communication',
-    name: 'Comunicación',
-    icon: 'MessageSquare',
-    description: 'Habilidades de comunicación escrita y verbal',
-  },
-  {
-    id: 'problem-solving',
-    name: 'Resolución de Problemas',
-    icon: 'Target',
-    description: 'Pensamiento analítico y diseño de soluciones',
-  },
-  {
-    id: 'professionalism',
-    name: 'Profesionalismo',
-    icon: 'Award',
-    description: 'Ética laboral, confiabilidad y estándares profesionales',
+    description: 'Liderazgo colectivo y construcción de sistema',
+    blockCode: 'D',
   },
 ];
 
+// 20 preguntas del Test de Madurez de La Cordada
 export const questions: Question[] = [
-  // Experiencia Técnica
+  // Bloque A - Campamento Base (Preguntas 1-5)
   {
-    id: 'exp-1',
-    text: '¿Cómo calificarías tu nivel de experiencia en tu área principal de consultoría?',
+    id: 'q1',
+    text: 'Mi valor profesional se explica principalmente por mi experiencia previa o cargos anteriores.',
     category: categories[0],
-    options: [
-      { value: 1, label: 'Principiante', description: 'Aún aprendiendo los fundamentos' },
-      { value: 2, label: 'Intermedio', description: 'Base sólida con algo de experiencia práctica' },
-      { value: 3, label: 'Avanzado', description: 'Experiencia profunda con trayectoria comprobada' },
-      { value: 4, label: 'Experto', description: 'Líder de pensamiento reconocido en el campo' },
-    ],
+    blockCode: 'A',
   },
   {
-    id: 'exp-2',
-    text: '¿Cuántos años de experiencia relevante en la industria tienes?',
+    id: 'q2',
+    text: 'Me incomoda definir una oferta clara con alcance y precio.',
     category: categories[0],
-    options: [
-      { value: 1, label: '0-2 años', description: 'Profesional en etapa temprana de carrera' },
-      { value: 2, label: '3-5 años', description: 'Profesional establecido' },
-      { value: 3, label: '6-10 años', description: 'Profesional senior' },
-      { value: 4, label: '10+ años', description: 'Experto veterano' },
-    ],
+    blockCode: 'A',
   },
   {
-    id: 'exp-3',
-    text: '¿Tienes certificaciones o credenciales profesionales relevantes?',
+    id: 'q3',
+    text: 'Prefiero que otros definan el problema y yo encargarme de resolverlo.',
     category: categories[0],
-    options: [
-      { value: 1, label: 'Ninguna', description: 'Sin certificaciones formales' },
-      { value: 2, label: 'En proceso', description: 'Actualmente buscando certificación' },
-      { value: 3, label: 'Una certificación', description: 'Posee una credencial relevante' },
-      { value: 4, label: 'Múltiples', description: 'Múltiples certificaciones reconocidas' },
-    ],
+    blockCode: 'A',
   },
-  // Gestión de Clientes
   {
-    id: 'cli-1',
-    text: '¿Cuánta experiencia tienes en gestionar relaciones con clientes empresariales?',
+    id: 'q4',
+    text: 'Cada proyecto que hago es bastante distinto al anterior.',
+    category: categories[0],
+    blockCode: 'A',
+  },
+  {
+    id: 'q5',
+    text: 'No tengo una forma estándar de iniciar, ejecutar y cerrar proyectos.',
+    category: categories[0],
+    blockCode: 'A',
+  },
+  // Bloque B - Tramo de Ascenso (Preguntas 6-10)
+  {
+    id: 'q6',
+    text: 'He vendido proyectos propios y los he ejecutado solo frente al cliente.',
     category: categories[1],
-    options: [
-      { value: 1, label: 'Limitada', description: 'Mínima interacción directa con clientes' },
-      { value: 2, label: 'Algo de experiencia', description: 'Trabajé con clientes bajo supervisión' },
-      { value: 3, label: 'Experimentado', description: 'Gestioné múltiples clientes de forma independiente' },
-      { value: 4, label: 'Extensa', description: 'Lideré alianzas estratégicas con clientes' },
-    ],
+    blockCode: 'B',
   },
   {
-    id: 'cli-2',
-    text: '¿Cómo manejas típicamente situaciones difíciles con clientes?',
+    id: 'q7',
+    text: 'Me cuesta decir que no cuando el cliente pide algo fuera de alcance.',
     category: categories[1],
-    options: [
-      { value: 1, label: 'Escalo', description: 'Prefiero escalar a superiores' },
-      { value: 2, label: 'Con orientación', description: 'Puedo manejar con algo de apoyo' },
-      { value: 3, label: 'Independientemente', description: 'Resuelvo la mayoría de problemas de forma independiente' },
-      { value: 4, label: 'Proactivamente', description: 'Anticipo y prevengo problemas' },
-    ],
+    blockCode: 'B',
   },
   {
-    id: 'cli-3',
-    text: '¿Cuál es tu experiencia con el compromiso de stakeholders de nivel ejecutivo (C-suite)?',
+    id: 'q8',
+    text: 'Ajusto precios o alcance para asegurar el cierre.',
     category: categories[1],
-    options: [
-      { value: 1, label: 'Ninguna', description: 'Sin interacción directa con ejecutivos' },
-      { value: 2, label: 'Ocasional', description: 'Presentaciones o reuniones limitadas' },
-      { value: 3, label: 'Regular', description: 'Compromiso frecuente con ejecutivos' },
-      { value: 4, label: 'Estratégica', description: 'Asesor de confianza para ejecutivos' },
-    ],
+    blockCode: 'B',
   },
-  // Comunicación
   {
-    id: 'com-1',
-    text: '¿Cómo calificarías tus habilidades de presentación y narración?',
+    id: 'q9',
+    text: 'Cumplo los proyectos, pero con alto desgaste personal.',
+    category: categories[1],
+    blockCode: 'B',
+  },
+  {
+    id: 'q10',
+    text: 'Mi efectividad depende mucho de mi energía y dedicación personal.',
+    category: categories[1],
+    blockCode: 'B',
+  },
+  // Bloque C - Alta Montaña (Preguntas 11-15)
+  {
+    id: 'q11',
+    text: 'Tengo una forma clara y repetible de abordar mis proyectos.',
     category: categories[2],
-    options: [
-      { value: 1, label: 'En desarrollo', description: 'Aún construyendo confianza' },
-      { value: 2, label: 'Competente', description: 'Puedo dar presentaciones claras' },
-      { value: 3, label: 'Fuerte', description: 'Presentador atractivo y persuasivo' },
-      { value: 4, label: 'Excepcional', description: 'Narrador cautivador' },
-    ],
+    blockCode: 'C',
   },
   {
-    id: 'com-2',
-    text: '¿Qué tan competente eres en crear documentación de nivel ejecutivo?',
+    id: 'q12',
+    text: 'Puedo explicar en simple qué ofrezco y qué resultado entrego.',
     category: categories[2],
-    options: [
-      { value: 1, label: 'Básico', description: 'Necesito apoyo significativo de edición' },
-      { value: 2, label: 'Bueno', description: 'Puedo producir borradores de calidad' },
-      { value: 3, label: 'Muy bueno', description: 'Documentos pulidos y profesionales' },
-      { value: 4, label: 'Excelente', description: 'Materiales listos para publicación' },
-    ],
+    blockCode: 'C',
   },
   {
-    id: 'com-3',
-    text: '¿Qué tan cómodo te sientes facilitando talleres y reuniones?',
+    id: 'q13',
+    text: 'Defiendo precios y alcance sin sentir culpa.',
     category: categories[2],
-    options: [
-      { value: 1, label: 'Incómodo', description: 'Prefiero no facilitar' },
-      { value: 2, label: 'Adecuado', description: 'Puedo facilitar con preparación' },
-      { value: 3, label: 'Cómodo', description: 'Facilitador confiado' },
-      { value: 4, label: 'Experto', description: 'Hábil para impulsar resultados' },
-    ],
+    blockCode: 'C',
   },
-  // Resolución de Problemas
   {
-    id: 'ps-1',
-    text: '¿Cómo abordas problemas complejos y ambiguos?',
+    id: 'q14',
+    text: 'Identifico riesgos temprano y los gestiono explícitamente.',
+    category: categories[2],
+    blockCode: 'C',
+  },
+  {
+    id: 'q15',
+    text: 'Mis clientes repiten o me recomiendan.',
+    category: categories[2],
+    blockCode: 'C',
+  },
+  // Bloque D - Guía (Preguntas 16-20)
+  {
+    id: 'q16',
+    text: 'Pienso más en prácticas sostenibles que en proyectos individuales.',
     category: categories[3],
-    options: [
-      { value: 1, label: 'Necesito estructura', description: 'Requiero marcos claros' },
-      { value: 2, label: 'Metódico', description: 'Aplico metodologías estándar' },
-      { value: 3, label: 'Adaptable', description: 'Personalizo enfoques según sea necesario' },
-      { value: 4, label: 'Innovador', description: 'Creo soluciones novedosas' },
-    ],
+    blockCode: 'D',
   },
   {
-    id: 'ps-2',
-    text: '¿Cuál es tu experiencia con la toma de decisiones basada en datos?',
+    id: 'q17',
+    text: 'Me preocupo activamente de la reputación colectiva, no solo de la mía.',
     category: categories[3],
-    options: [
-      { value: 1, label: 'Limitada', description: 'Interpretación básica de datos' },
-      { value: 2, label: 'Moderada', description: 'Puedo analizar y presentar datos' },
-      { value: 3, label: 'Fuerte', description: 'Capacidad analítica avanzada' },
-      { value: 4, label: 'Experto', description: 'Liderazgo estratégico de datos' },
-    ],
+    blockCode: 'D',
   },
   {
-    id: 'ps-3',
-    text: '¿Cómo manejas plazos ajustados y situaciones de alta presión?',
+    id: 'q18',
+    text: 'Ayudo a otros consultores a mejorar su forma de trabajar.',
     category: categories[3],
-    options: [
-      { value: 1, label: 'Con dificultad', description: 'Encuentro la presión difícil' },
-      { value: 2, label: 'Manejo', description: 'Puedo lidiar con apoyo' },
-      { value: 3, label: 'Prospero', description: 'Rindo bien bajo presión' },
-      { value: 4, label: 'Destaco', description: 'Mi mejor trabajo es bajo presión' },
-    ],
-  },
-  // Profesionalismo
-  {
-    id: 'pro-1',
-    text: '¿Cómo describirías tu disponibilidad y capacidad de respuesta?',
-    category: categories[4],
-    options: [
-      { value: 1, label: 'Estándar', description: 'Solo horario laboral regular' },
-      { value: 2, label: 'Flexible', description: 'Acomodaticio cuando es necesario' },
-      { value: 3, label: 'Altamente disponible', description: 'Respuesta rápida, horario extendido' },
-      { value: 4, label: 'Siempre disponible', description: 'Disponibilidad orientada al cliente' },
-    ],
+    blockCode: 'D',
   },
   {
-    id: 'pro-2',
-    text: '¿Cuál es tu historial con la entrega de proyectos?',
-    category: categories[4],
-    options: [
-      { value: 1, label: 'En desarrollo', description: 'Aún construyendo historial' },
-      { value: 2, label: 'Bueno', description: 'Generalmente cumplo expectativas' },
-      { value: 3, label: 'Fuerte', description: 'Entrego calidad consistentemente' },
-      { value: 4, label: 'Excepcional', description: 'Supero expectativas regularmente' },
-    ],
+    id: 'q19',
+    text: 'Diseño marcos, reglas o estándares para que otros los usen.',
+    category: categories[3],
+    blockCode: 'D',
   },
   {
-    id: 'pro-3',
-    text: '¿Cómo manejas la confidencialidad y la ética profesional?',
-    category: categories[4],
-    options: [
-      { value: 1, label: 'Consciente', description: 'Entiendo la importancia' },
-      { value: 2, label: 'Cumplidor', description: 'Sigo las directrices establecidas' },
-      { value: 3, label: 'Riguroso', description: 'Adherencia estricta a estándares' },
-      { value: 4, label: 'Ejemplar', description: 'Modelo a seguir en ética' },
-    ],
+    id: 'q20',
+    text: 'Prefiero que la cordada llegue, aunque yo no lidere todo.',
+    category: categories[3],
+    blockCode: 'D',
   },
 ];
 
+// Opciones de respuesta estándar (1-5)
+export const answerOptions = [
+  { value: 1, label: 'Muy en desacuerdo' },
+  { value: 2, label: 'En desacuerdo' },
+  { value: 3, label: 'Neutral' },
+  { value: 4, label: 'De acuerdo' },
+  { value: 5, label: 'Muy de acuerdo' },
+];
+
+// Niveles de madurez basados en los datos de La Cordada
 export const maturityLevels: MaturityLevelInfo[] = [
   {
-    level: 'emerging',
-    name: 'Consultor Emergente',
-    description: 'Estás al inicio de tu camino en consultoría con habilidades fundamentales sobre las cuales construir.',
+    level: 'campamento_base',
+    name: 'Campamento Base',
+    blockCode: 'A',
+    characteristic: 'Aprendiz consciente',
+    phrase: 'Nunca lo he ofrecido así, pero sé hacerlo',
+    description: 'Mucho conocimiento pero sin experiencia sosteniendo una práctica independiente. Se define por su expertise o cargo previo; mentalidad aún organizacional.',
+    strengths: [
+      'Profundidad técnica',
+      'Criterio de contenido',
+      'Energía inicial',
+    ],
+    weaknesses: [
+      'Invisibilidad comercial',
+      'Subvaloración',
+      'Riesgo si lidera',
+    ],
+    mainRisk: 'Confundir capacidad técnica con capacidad consultiva',
+    enabledRoles: 'Sherpa (con guía); Explorador (acotado)',
+    supportNeeded: 'Guía muy presente; Asegurador firme; nunca ir solo',
+    keyTools: 'Oferta en 1 página; propuestas tipo; playbook de discovery; checklists de alcance',
     minPercentage: 0,
-    maxPercentage: 40,
-    recommendation: 'Recomendamos ganar más experiencia práctica y obtener certificaciones relevantes antes de unirte a nuestro ecosistema. Considera nuestro programa de mentoría para acelerar tu crecimiento.',
+    maxPercentage: 25,
+    recommendation: 'Te recomendamos comenzar con proyectos acompañados y desarrollar tu propuesta de valor clara. La Cordada puede ayudarte a estructurar tu oferta y ganar experiencia con respaldo.',
   },
   {
-    level: 'developing',
-    name: 'Consultor en Desarrollo',
-    description: 'Tienes fundamentos sólidos y estás desarrollando las habilidades necesarias para consultoría empresarial.',
-    minPercentage: 41,
-    maxPercentage: 55,
-    recommendation: 'Muestras potencial y podrías ser un buen candidato para tipos específicos de proyectos. Sugerimos aplicar a nuestro track de consultor asociado con mentoría guiada.',
+    level: 'tramo_ascenso',
+    name: 'Tramo de Ascenso',
+    blockCode: 'B',
+    characteristic: 'Ejecutor confiable',
+    phrase: 'Lo puedo sacar, pero mejor lo conversemos antes',
+    description: 'Ya vende y ejecuta pero depende del esfuerzo personal y del sistema. Empieza a verse como consultor pero aún duda de su foco y precio.',
+    strengths: [
+      'Capacidad de ejecución',
+      'Aprendizaje rápido',
+      'Responsabilidad personal',
+    ],
+    weaknesses: [
+      'Scope creep',
+      'Desgaste',
+      'Dificultad para decir no',
+    ],
+    mainRisk: 'Escalar más rápido que su criterio',
+    enabledRoles: 'Primer de Cuerda (acotado); Sherpa senior; Cronista funcional',
+    supportNeeded: 'Guía liviano; Asegurador en momentos críticos',
+    keyTools: 'Frameworks de decisión; pricing de referencia; change control; dashboard simple',
+    minPercentage: 26,
+    maxPercentage: 50,
+    recommendation: 'Estás en un buen momento para consolidar tu método y aprender a defender tu alcance. La Cordada te ofrece herramientas y acompañamiento para profesionalizar tu práctica.',
   },
   {
-    level: 'proficient',
-    name: 'Consultor Competente',
-    description: 'Demuestras capacidades sólidas en las competencias clave de consultoría.',
-    minPercentage: 56,
-    maxPercentage: 70,
-    recommendation: 'Estás bien calificado para nuestra red de consultores. Aplica ahora para ser emparejado con compromisos empresariales apropiados.',
+    level: 'alta_montana',
+    name: 'Alta Montaña',
+    blockCode: 'C',
+    characteristic: 'Profesional maduro',
+    phrase: 'Esto lo ofrezco así, con este alcance y resultado',
+    description: 'Práctica independiente sostenible con método y control. Se define por su propuesta de valor; claridad de límites. Ha liderado proyectos de punta a punta y repetido resultados.',
+    strengths: [
+      'Resultados repetibles',
+      'Autonomía',
+      'Clientes que recomiendan',
+    ],
+    weaknesses: [
+      'Riesgo de aislamiento',
+      'Posible desalineación',
+    ],
+    mainRisk: 'Optimizar su éxito personal por sobre el sistema',
+    enabledRoles: 'Primer de Cuerda pleno; Asegurador; Explorador estratégico',
+    supportNeeded: 'Pares; coordinación; alineamiento',
+    keyTools: 'Insights estratégicos; reglas de marca; gobierno liviano',
+    minPercentage: 51,
+    maxPercentage: 75,
+    recommendation: 'Tu madurez te permite operar con autonomía. La Cordada te ofrece un ecosistema de pares y oportunidades para expandir tu impacto sin perder tu esencia.',
   },
   {
-    level: 'advanced',
-    name: 'Consultor Avanzado',
-    description: 'Muestras dominio avanzado con capacidad comprobada para entregar compromisos empresariales complejos.',
-    minPercentage: 71,
-    maxPercentage: 85,
-    recommendation: 'Eres un excelente candidato para roles de consultoría senior. Aplica para colocación prioritaria en compromisos estratégicos de alto impacto.',
-  },
-  {
-    level: 'expert',
-    name: 'Consultor Experto',
-    description: 'Representas el nivel más alto de excelencia en consultoría con capacidades excepcionales en todas las dimensiones.',
-    minPercentage: 86,
+    level: 'guia',
+    name: 'Guía',
+    blockCode: 'D',
+    characteristic: 'Orquestador',
+    phrase: 'Mi rol no es escalar más, es que la cordada no se caiga',
+    description: 'Lidera prácticas y personas más que proyectos. Se ve como constructor de sistema y reputación colectiva. Ha sostenido su práctica y habilitado la de otros.',
+    strengths: [
+      'Orquestación',
+      'Reducción de riesgo',
+      'Aceleración de madurez',
+    ],
+    weaknesses: [
+      'Cuello de botella',
+      'Sobrecarga',
+    ],
+    mainRisk: 'Centralizar decisiones y no soltar la cuerda',
+    enabledRoles: 'Guía; Diseñador de cordadas; Mentor',
+    supportNeeded: 'Confianza explícita; respaldo institucional; red de guías',
+    keyTools: 'Modelos de gobierno; reglas de promesa y pricing; sistemas de mentoring',
+    minPercentage: 76,
     maxPercentage: 100,
-    recommendation: 'Eres un candidato principal para nuestro nivel élite de consultores. Aplica para consideración inmediata para roles de liderazgo y posiciones de asesoría estratégica.',
+    recommendation: 'Tu experiencia te posiciona como líder natural del ecosistema. La Cordada te invita a ser parte del núcleo que habilita a otros consultores a crecer.',
   },
 ];
 
@@ -253,4 +275,8 @@ export const getMaturityLevel = (percentage: number): MaturityLevelInfo => {
   return maturityLevels.find(
     (level) => percentage >= level.minPercentage && percentage <= level.maxPercentage
   ) || maturityLevels[0];
+};
+
+export const getMaturityLevelByBlock = (blockCode: 'A' | 'B' | 'C' | 'D'): MaturityLevelInfo => {
+  return maturityLevels.find(level => level.blockCode === blockCode) || maturityLevels[0];
 };

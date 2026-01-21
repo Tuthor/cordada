@@ -1,6 +1,6 @@
 import { useState, useMemo } from 'react';
 import { Answer, AssessmentResult, CategoryScore } from '@/types/assessment';
-import { questions, categories, getMaturityLevel } from '@/data/assessmentData';
+import { questions, categories, getMaturityLevel, maturityLevels } from '@/data/assessmentData';
 import WelcomeScreen from './WelcomeScreen';
 import QuestionCard from './QuestionCard';
 import ProgressBar from './ProgressBar';
@@ -59,12 +59,13 @@ const Assessment = () => {
   const result = useMemo((): AssessmentResult | null => {
     if (state !== 'results' && state !== 'enrollment') return null;
 
+    // Calcular puntuación por bloque
     const categoryScores: CategoryScore[] = categories.map((category) => {
       const categoryQuestions = questions.filter((q) => q.category.id === category.id);
       const totalScore = categoryQuestions.reduce((sum, q) => {
         return sum + (answers.get(q.id) || 0);
       }, 0);
-      const maxScore = categoryQuestions.length * 4;
+      const maxScore = categoryQuestions.length * 5; // Escala 1-5
 
       return {
         categoryId: category.id,
@@ -75,17 +76,34 @@ const Assessment = () => {
       };
     });
 
+    // Encontrar el bloque dominante (mayor porcentaje)
+    const sortedScores = [...categoryScores].sort((a, b) => b.percentage - a.percentage);
+    const dominantCategory = sortedScores[0];
+    const secondaryCategory = sortedScores[1];
+
+    // Determinar si está en transición (diferencia de ±3 puntos = ±12% en escala de 25 puntos max)
+    const isInTransition = Math.abs(dominantCategory.percentage - secondaryCategory.percentage) <= 12;
+
+    // Obtener nivel de madurez basado en el bloque dominante
+    const dominantBlockCode = categories.find(c => c.id === dominantCategory.categoryId)?.blockCode || 'A';
+    const secondaryBlockCode = categories.find(c => c.id === secondaryCategory.categoryId)?.blockCode || 'A';
+    
+    const dominantLevel = maturityLevels.find(l => l.blockCode === dominantBlockCode) || maturityLevels[0];
+    const secondaryLevel = maturityLevels.find(l => l.blockCode === secondaryBlockCode);
+
     const totalScore = categoryScores.reduce((sum, cs) => sum + cs.score, 0);
     const maxTotalScore = categoryScores.reduce((sum, cs) => sum + cs.maxScore, 0);
     const overallPercentage = (totalScore / maxTotalScore) * 100;
-    const levelInfo = getMaturityLevel(overallPercentage);
 
     return {
       totalScore,
       maxTotalScore,
       overallPercentage,
       categoryScores,
-      maturityLevel: levelInfo.level,
+      maturityLevel: dominantLevel.level,
+      dominantLevel,
+      secondaryLevel,
+      isInTransition,
     };
   }, [state, answers]);
 
@@ -94,13 +112,11 @@ const Assessment = () => {
   }
 
   if (state === 'enrollment' && result) {
-    const levelInfo = getMaturityLevel(result.overallPercentage);
-    return <EnrollmentForm result={result} levelInfo={levelInfo} onBack={handleBackToResults} />;
+    return <EnrollmentForm result={result} levelInfo={result.dominantLevel} onBack={handleBackToResults} />;
   }
 
   if (state === 'results' && result) {
-    const levelInfo = getMaturityLevel(result.overallPercentage);
-    return <ResultsScreen result={result} levelInfo={levelInfo} onRestart={handleRestart} onEnroll={handleEnroll} />;
+    return <ResultsScreen result={result} levelInfo={result.dominantLevel} onRestart={handleRestart} onEnroll={handleEnroll} />;
   }
 
   return (
@@ -108,7 +124,8 @@ const Assessment = () => {
       <div className="container mx-auto px-4 max-w-3xl">
         {/* Encabezado */}
         <div className="mb-8">
-          <h1 className="text-2xl font-bold text-foreground mb-2">Evaluación de Madurez del Consultor</h1>
+          <h1 className="text-2xl font-bold text-foreground mb-2">Test de Madurez del Consultor</h1>
+          <p className="text-muted-foreground mb-4">La Cordada</p>
           <ProgressBar
             current={currentQuestionIndex + 1}
             total={questions.length}

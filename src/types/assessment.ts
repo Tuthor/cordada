@@ -2,13 +2,7 @@ export interface Question {
   id: string;
   text: string;
   category: Category;
-  options: Option[];
-}
-
-export interface Option {
-  value: number;
-  label: string;
-  description?: string;
+  blockCode: 'A' | 'B' | 'C' | 'D';
 }
 
 export interface Category {
@@ -16,6 +10,7 @@ export interface Category {
   name: string;
   icon: string;
   description: string;
+  blockCode: 'A' | 'B' | 'C' | 'D';
 }
 
 export interface Answer {
@@ -37,14 +32,26 @@ export interface AssessmentResult {
   overallPercentage: number;
   categoryScores: CategoryScore[];
   maturityLevel: MaturityLevel;
+  dominantLevel: MaturityLevelInfo;
+  secondaryLevel?: MaturityLevelInfo;
+  isInTransition: boolean;
 }
 
-export type MaturityLevel = 'emerging' | 'developing' | 'proficient' | 'advanced' | 'expert';
+export type MaturityLevel = 'campamento_base' | 'tramo_ascenso' | 'alta_montana' | 'guia';
 
 export interface MaturityLevelInfo {
   level: MaturityLevel;
   name: string;
+  blockCode: 'A' | 'B' | 'C' | 'D';
   description: string;
+  characteristic: string;
+  phrase: string;
+  strengths: string[];
+  weaknesses: string[];
+  mainRisk: string;
+  enabledRoles: string;
+  supportNeeded: string;
+  keyTools: string;
   minPercentage: number;
   maxPercentage: number;
   recommendation: string;
