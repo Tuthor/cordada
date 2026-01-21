@@ -1,5 +1,6 @@
 import { useState } from 'react';
-import { Question, Option } from '@/types/assessment';
+import { Question } from '@/types/assessment';
+import { answerOptions } from '@/data/assessmentData';
 import { Button } from '@/components/ui/button';
 import { ArrowLeft, ArrowRight } from 'lucide-react';
 import { cn } from '@/lib/utils';
@@ -30,9 +31,14 @@ const QuestionCard = ({
       <div className="bg-card rounded-2xl shadow-xl border border-border/50 overflow-hidden">
         {/* Encabezado de Categoría */}
         <div className="bg-secondary/50 px-6 py-4 border-b border-border">
-          <span className="text-sm font-medium text-muted-foreground">
-            {question.category.name}
-          </span>
+          <div className="flex items-center justify-between">
+            <span className="text-sm font-medium text-muted-foreground">
+              {question.category.name}
+            </span>
+            <span className="text-xs px-2 py-1 rounded-full bg-primary/10 text-primary font-medium">
+              Bloque {question.blockCode}
+            </span>
+          </div>
         </div>
 
         {/* Pregunta */}
@@ -41,9 +47,9 @@ const QuestionCard = ({
             {question.text}
           </h2>
 
-          {/* Opciones */}
+          {/* Opciones de respuesta (1-5) */}
           <div className="space-y-3">
-            {question.options.map((option) => (
+            {answerOptions.map((option) => (
               <button
                 key={option.value}
                 onClick={() => onAnswer(option.value)}
@@ -58,27 +64,18 @@ const QuestionCard = ({
                     : 'border-border bg-background hover:border-primary/20'
                 )}
               >
-                <div className="flex items-start gap-4">
+                <div className="flex items-center gap-4">
                   <div
                     className={cn(
-                      'w-6 h-6 rounded-full border-2 flex items-center justify-center flex-shrink-0 mt-0.5 transition-all duration-200',
+                      'w-8 h-8 rounded-full border-2 flex items-center justify-center flex-shrink-0 transition-all duration-200 font-semibold text-sm',
                       selectedValue === option.value
-                        ? 'border-gold bg-gold'
-                        : 'border-muted-foreground/30'
+                        ? 'border-gold bg-gold text-accent-foreground'
+                        : 'border-muted-foreground/30 text-muted-foreground'
                     )}
                   >
-                    {selectedValue === option.value && (
-                      <div className="w-2 h-2 rounded-full bg-accent-foreground" />
-                    )}
+                    {option.value}
                   </div>
-                  <div>
-                    <span className="font-semibold text-foreground block">{option.label}</span>
-                    {option.description && (
-                      <span className="text-sm text-muted-foreground mt-1 block">
-                        {option.description}
-                      </span>
-                    )}
-                  </div>
+                  <span className="font-medium text-foreground">{option.label}</span>
                 </div>
               </button>
             ))}

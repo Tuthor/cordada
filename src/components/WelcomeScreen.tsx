@@ -1,5 +1,5 @@
 import { Button } from '@/components/ui/button';
-import { ArrowRight, Clock, Shield, Target, CheckCircle } from 'lucide-react';
+import { ArrowRight, Clock, Shield, Target, CheckCircle, Mountain, TrendingUp, Flag, Users } from 'lucide-react';
 
 interface WelcomeScreenProps {
   onStart: () => void;
@@ -9,19 +9,26 @@ const WelcomeScreen = ({ onStart }: WelcomeScreenProps) => {
   const features = [
     {
       icon: Target,
-      title: '5 Competencias Clave',
-      description: 'Evaluación integral en dimensiones críticas de consultoría',
+      title: '4 Niveles de Madurez',
+      description: 'Descubre tu posición actual como consultor independiente',
     },
     {
       icon: Clock,
-      title: '10-15 Minutos',
-      description: 'Evaluación rápida diseñada para profesionales ocupados',
+      title: '5-10 Minutos',
+      description: '20 preguntas diseñadas para profesionales ocupados',
     },
     {
       icon: Shield,
       title: 'Confidencial',
       description: 'Tus respuestas son seguras y privadas',
     },
+  ];
+
+  const levels = [
+    { icon: Mountain, name: 'Campamento Base', description: 'Aprendiz consciente' },
+    { icon: TrendingUp, name: 'Tramo de Ascenso', description: 'Ejecutor confiable' },
+    { icon: Flag, name: 'Alta Montaña', description: 'Profesional maduro' },
+    { icon: Users, name: 'Guía', description: 'Orquestador' },
   ];
 
   return (
@@ -31,16 +38,16 @@ const WelcomeScreen = ({ onStart }: WelcomeScreenProps) => {
         <div className="container mx-auto px-4 py-16 lg:py-24">
           <div className="max-w-3xl mx-auto text-center animate-fade-in">
             <div className="inline-flex items-center gap-2 px-4 py-2 rounded-full bg-gold/20 text-gold mb-6">
-              <Shield className="w-4 h-4" />
-              <span className="text-sm font-medium">Evaluación de Consultores Empresariales</span>
+              <Mountain className="w-4 h-4" />
+              <span className="text-sm font-medium">Test de Madurez - La Cordada</span>
             </div>
             <h1 className="text-4xl lg:text-5xl font-bold mb-6 leading-tight">
-              Descubre Tu Nivel de{' '}
-              <span className="text-gradient-gold">Madurez en Consultoría</span>
+              ¿En Qué Nivel de la{' '}
+              <span className="text-gradient-gold">Montaña Estás?</span>
             </h1>
             <p className="text-lg lg:text-xl text-primary-foreground/80 mb-8 leading-relaxed">
-              Nuestra herramienta de diagnóstico evalúa tu preparación para unirte a un ecosistema 
-              de consultoría élite que sirve a clientes empresariales Fortune 500.
+              Evalúa tu madurez como consultor independiente. Descubre tus fortalezas, 
+              áreas de desarrollo y el nivel de acompañamiento que necesitas para escalar con respaldo.
             </p>
             <Button variant="gold" size="xl" onClick={onStart} className="group">
               Iniciar Evaluación
@@ -68,27 +75,48 @@ const WelcomeScreen = ({ onStart }: WelcomeScreenProps) => {
           ))}
         </div>
 
-        {/* Qué Evaluamos */}
-        <div className="max-w-3xl mx-auto mt-16">
+        {/* Los 4 Niveles */}
+        <div className="max-w-4xl mx-auto mt-16">
           <h2 className="text-2xl font-bold text-center text-foreground mb-8">
-            Qué Evaluamos
+            Los 4 Niveles de Madurez
           </h2>
-          <div className="grid sm:grid-cols-2 gap-4">
-            {[
-              'Experiencia técnica y conocimiento del dominio',
-              'Gestión de relaciones con clientes',
-              'Habilidades de comunicación y presentación',
-              'Capacidades de resolución de problemas',
-              'Estándares profesionales y ética',
-            ].map((item, index) => (
+          <div className="grid sm:grid-cols-2 lg:grid-cols-4 gap-4">
+            {levels.map((level, index) => (
               <div
-                key={index}
-                className="flex items-center gap-3 p-4 bg-secondary/50 rounded-lg"
+                key={level.name}
+                className="flex flex-col items-center p-6 bg-secondary/50 rounded-xl text-center"
               >
-                <CheckCircle className="w-5 h-5 text-success flex-shrink-0" />
-                <span className="text-foreground">{item}</span>
+                <div className="w-12 h-12 rounded-full bg-primary/10 flex items-center justify-center mb-3">
+                  <level.icon className="w-6 h-6 text-primary" />
+                </div>
+                <h3 className="font-semibold text-foreground mb-1">{level.name}</h3>
+                <p className="text-sm text-muted-foreground">{level.description}</p>
               </div>
             ))}
+          </div>
+
+          {/* Qué Evaluamos */}
+          <div className="mt-12">
+            <h2 className="text-2xl font-bold text-center text-foreground mb-8">
+              ¿Qué Evaluamos?
+            </h2>
+            <div className="grid sm:grid-cols-2 gap-4">
+              {[
+                'Identidad profesional y propuesta de valor',
+                'Experiencia comercial y gestión de proyectos',
+                'Método, autonomía y sostenibilidad',
+                'Liderazgo colectivo y mentoría',
+                'Gestión de alcance, precios y riesgos',
+              ].map((item, index) => (
+                <div
+                  key={index}
+                  className="flex items-center gap-3 p-4 bg-secondary/50 rounded-lg"
+                >
+                  <CheckCircle className="w-5 h-5 text-success flex-shrink-0" />
+                  <span className="text-foreground">{item}</span>
+                </div>
+              ))}
+            </div>
           </div>
           
           {/* Botón duplicado al final */}
