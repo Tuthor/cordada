@@ -220,6 +220,7 @@ const handler = async (req: Request): Promise<Response> => {
         years_experience: data.yearsExperience || null,
         motivation: data.motivation || null,
         maturity_level: data.maturityLevel || null,
+        archetype: data.archetype || null,
         overall_score: data.overallScore,
         status: "pending",
       })

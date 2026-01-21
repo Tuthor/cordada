@@ -323,6 +323,7 @@ export type Database = {
       }
       enrollments: {
         Row: {
+          archetype: string | null
           company: string | null
           created_at: string
           email: string
@@ -338,6 +339,7 @@ export type Database = {
           years_experience: string | null
         }
         Insert: {
+          archetype?: string | null
           company?: string | null
           created_at?: string
           email: string
@@ -353,6 +355,7 @@ export type Database = {
           years_experience?: string | null
         }
         Update: {
+          archetype?: string | null
           company?: string | null
           created_at?: string
           email?: string
