@@ -3,6 +3,7 @@ import ReCAPTCHA from 'react-google-recaptcha';
 import { Button } from '@/components/ui/button';
 import { AssessmentResult, MaturityLevelInfo } from '@/types/assessment';
 import { RoleAssessmentResult } from '@/types/roleAssessment';
+import { generateResultsPDF } from '@/utils/generateResultsPDF';
 import { 
   Users, 
   Briefcase, 
@@ -15,7 +16,8 @@ import {
   Phone,
   Linkedin,
   ShieldCheck,
-  Compass
+  Compass,
+  FileDown
 } from 'lucide-react';
 import { toast } from '@/hooks/use-toast';
 import { supabase } from '@/integrations/supabase/client';
@@ -415,9 +417,25 @@ const EnrollmentForm = ({ result, levelInfo, roleResult, onBack }: EnrollmentFor
 
           {/* Enviar */}
           <div className="mt-8 flex flex-col sm:flex-row gap-4 justify-between items-center">
-            <Button type="button" variant="outline" onClick={onBack}>
-              Volver a Resultados
-            </Button>
+            <div className="flex gap-3">
+              <Button type="button" variant="outline" onClick={onBack}>
+                Volver a Resultados
+              </Button>
+              <Button 
+                type="button" 
+                variant="secondary" 
+                onClick={() => generateResultsPDF({
+                  maturityResult: result,
+                  maturityLevelInfo: levelInfo,
+                  roleResult,
+                  userName: formData.fullName || 'Consultor',
+                })}
+                className="gap-2"
+              >
+                <FileDown className="w-4 h-4" />
+                Descargar PDF
+              </Button>
+            </div>
             <Button 
               type="submit" 
               variant="gold" 
