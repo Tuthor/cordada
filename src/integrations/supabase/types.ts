@@ -321,6 +321,35 @@ export type Database = {
         }
         Relationships: []
       }
+      discarded_projects: {
+        Row: {
+          discarded_at: string
+          id: string
+          project_id: string
+          user_id: string
+        }
+        Insert: {
+          discarded_at?: string
+          id?: string
+          project_id: string
+          user_id: string
+        }
+        Update: {
+          discarded_at?: string
+          id?: string
+          project_id?: string
+          user_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "discarded_projects_project_id_fkey"
+            columns: ["project_id"]
+            isOneToOne: false
+            referencedRelation: "projects"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       enrollments: {
         Row: {
           archetype: string | null

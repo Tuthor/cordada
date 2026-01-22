@@ -9,6 +9,18 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { supabase } from '@/integrations/supabase/client';
 import { useAuth } from '@/contexts/AuthContext';
 import { useClientCompliance } from '@/hooks/useClientCompliance';
+import { useToast } from '@/hooks/use-toast';
+import {
+  AlertDialog,
+  AlertDialogAction,
+  AlertDialogCancel,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle,
+  AlertDialogTrigger,
+} from '@/components/ui/alert-dialog';
 import { 
   Search, 
   Briefcase, 
@@ -18,7 +30,9 @@ import {
   Clock,
   Eye,
   Lock,
-  AlertCircle
+  AlertCircle,
+  X,
+  RotateCcw
 } from 'lucide-react';
 
 interface Project {
@@ -46,15 +60,34 @@ const statusLabels: Record<string, { label: string; variant: 'default' | 'second
 
 const Projects = () => {
   const { user, userRole } = useAuth();
+  const { toast } = useToast();
   const { isCompliantWithClient, hasAnyRequirements, loading: complianceLoading } = useClientCompliance();
   const [projects, setProjects] = useState<Project[]>([]);
+  const [discardedProjectIds, setDiscardedProjectIds] = useState<Set<string>>(new Set());
   const [loading, setLoading] = useState(true);
   const [searchTerm, setSearchTerm] = useState('');
   const [activeTab, setActiveTab] = useState('all');
+  const [showDiscarded, setShowDiscarded] = useState(false);
 
   useEffect(() => {
     fetchProjects();
+    if (userRole !== 'client') {
+      fetchDiscardedProjects();
+    }
   }, [user, userRole]);
+
+  const fetchDiscardedProjects = async () => {
+    if (!user) return;
+    
+    const { data } = await supabase
+      .from('discarded_projects')
+      .select('project_id')
+      .eq('user_id', user.id);
+    
+    if (data) {
+      setDiscardedProjectIds(new Set(data.map(d => d.project_id)));
+    }
+  };
 
   const fetchProjects = async () => {
     let query = supabase
@@ -78,6 +111,58 @@ const Projects = () => {
     setLoading(false);
   };
 
+  const handleDiscardProject = async (projectId: string) => {
+    if (!user) return;
+
+    const { error } = await supabase
+      .from('discarded_projects')
+      .insert({ user_id: user.id, project_id: projectId });
+
+    if (error) {
+      toast({
+        title: 'Error',
+        description: 'No se pudo descartar el proyecto',
+        variant: 'destructive',
+      });
+      return;
+    }
+
+    setDiscardedProjectIds(prev => new Set([...prev, projectId]));
+    toast({
+      title: 'Proyecto descartado',
+      description: 'El proyecto ha sido movido a descartados',
+    });
+  };
+
+  const handleRestoreProject = async (projectId: string) => {
+    if (!user) return;
+
+    const { error } = await supabase
+      .from('discarded_projects')
+      .delete()
+      .eq('user_id', user.id)
+      .eq('project_id', projectId);
+
+    if (error) {
+      toast({
+        title: 'Error',
+        description: 'No se pudo restaurar el proyecto',
+        variant: 'destructive',
+      });
+      return;
+    }
+
+    setDiscardedProjectIds(prev => {
+      const newSet = new Set(prev);
+      newSet.delete(projectId);
+      return newSet;
+    });
+    toast({
+      title: 'Proyecto restaurado',
+      description: 'El proyecto ha sido restaurado a la lista principal',
+    });
+  };
+
   const filteredProjects = projects.filter((project) => {
     const title = project.title.toLowerCase();
     const description = project.description.toLowerCase();
@@ -86,9 +171,18 @@ const Projects = () => {
     
     const matchesSearch = title.includes(search) || description.includes(search) || expertise.includes(search);
     
+    // For consultants: filter by discarded status
+    if (userRole !== 'client') {
+      const isDiscarded = discardedProjectIds.has(project.id);
+      if (showDiscarded && !isDiscarded) return false;
+      if (!showDiscarded && isDiscarded) return false;
+    }
+    
     if (activeTab === 'all') return matchesSearch;
     return matchesSearch && project.status === activeTab;
   });
+
+  const discardedCount = projects.filter(p => discardedProjectIds.has(p.id)).length;
 
   const getProjectCountByStatus = (status: string | null) => {
     if (!status) return projects.length;
@@ -181,16 +275,41 @@ const Projects = () => {
             </TabsContent>
           </Tabs>
         ) : (
-          <ProjectList 
-            projects={filteredProjects} 
-            loading={loading || complianceLoading} 
-            userRole={userRole}
-            searchTerm={searchTerm}
-            formatBudget={formatBudget}
-            formatDate={formatDate}
-            isCompliantWithClient={isCompliantWithClient}
-            hasAnyRequirements={hasAnyRequirements}
-          />
+          <div className="space-y-4">
+            {/* Toggle for discarded projects */}
+            <div className="flex gap-2">
+              <Button
+                variant={!showDiscarded ? 'default' : 'outline'}
+                size="sm"
+                onClick={() => setShowDiscarded(false)}
+              >
+                <Briefcase className="w-4 h-4 mr-2" />
+                Disponibles ({projects.length - discardedCount})
+              </Button>
+              <Button
+                variant={showDiscarded ? 'default' : 'outline'}
+                size="sm"
+                onClick={() => setShowDiscarded(true)}
+              >
+                <X className="w-4 h-4 mr-2" />
+                Descartados ({discardedCount})
+              </Button>
+            </div>
+
+            <ProjectList 
+              projects={filteredProjects} 
+              loading={loading || complianceLoading} 
+              userRole={userRole}
+              searchTerm={searchTerm}
+              formatBudget={formatBudget}
+              formatDate={formatDate}
+              isCompliantWithClient={isCompliantWithClient}
+              hasAnyRequirements={hasAnyRequirements}
+              showDiscarded={showDiscarded}
+              onDiscardProject={handleDiscardProject}
+              onRestoreProject={handleRestoreProject}
+            />
+          </div>
         )}
       </div>
     </DashboardLayout>
@@ -206,6 +325,9 @@ interface ProjectListProps {
   formatDate: (dateString: string) => string;
   isCompliantWithClient?: (clientId: string) => boolean;
   hasAnyRequirements?: (clientId: string) => boolean;
+  showDiscarded?: boolean;
+  onDiscardProject?: (projectId: string) => Promise<void>;
+  onRestoreProject?: (projectId: string) => Promise<void>;
 }
 
 const ProjectList = ({ 
@@ -216,7 +338,10 @@ const ProjectList = ({
   formatBudget, 
   formatDate,
   isCompliantWithClient,
-  hasAnyRequirements
+  hasAnyRequirements,
+  showDiscarded,
+  onDiscardProject,
+  onRestoreProject
 }: ProjectListProps) => {
   if (loading) {
     return (
@@ -348,12 +473,51 @@ const ProjectList = ({
                       </Link>
                     </Button>
                   ) : (
-                    <Button variant="gold" asChild>
-                      <Link to={`/projects/${project.id}`}>
-                        <Eye className="w-4 h-4 mr-2" />
-                        {userRole === 'client' ? 'Ver Detalles' : 'Ver Proyecto'}
-                      </Link>
-                    </Button>
+                    <>
+                      <Button variant="gold" asChild>
+                        <Link to={`/projects/${project.id}`}>
+                          <Eye className="w-4 h-4 mr-2" />
+                          {userRole === 'client' ? 'Ver Detalles' : 'Ver Proyecto'}
+                        </Link>
+                      </Button>
+                      
+                      {/* Discard/Restore button for consultants */}
+                      {userRole !== 'client' && (
+                        showDiscarded ? (
+                          <Button 
+                            variant="outline" 
+                            size="sm"
+                            onClick={() => onRestoreProject?.(project.id)}
+                          >
+                            <RotateCcw className="w-4 h-4 mr-2" />
+                            Restaurar
+                          </Button>
+                        ) : (
+                          <AlertDialog>
+                            <AlertDialogTrigger asChild>
+                              <Button variant="ghost" size="sm" className="text-muted-foreground hover:text-destructive">
+                                <X className="w-4 h-4 mr-2" />
+                                Descartar
+                              </Button>
+                            </AlertDialogTrigger>
+                            <AlertDialogContent>
+                              <AlertDialogHeader>
+                                <AlertDialogTitle>¿Descartar este proyecto?</AlertDialogTitle>
+                                <AlertDialogDescription>
+                                  El proyecto será movido a tu lista de descartados. Podrás restaurarlo en cualquier momento.
+                                </AlertDialogDescription>
+                              </AlertDialogHeader>
+                              <AlertDialogFooter>
+                                <AlertDialogCancel>Cancelar</AlertDialogCancel>
+                                <AlertDialogAction onClick={() => onDiscardProject?.(project.id)}>
+                                  Descartar
+                                </AlertDialogAction>
+                              </AlertDialogFooter>
+                            </AlertDialogContent>
+                          </AlertDialog>
+                        )
+                      )}
+                    </>
                   )}
                 </div>
               </div>
