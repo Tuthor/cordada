@@ -60,6 +60,21 @@ const Directory = () => {
   }, []);
 
   const fetchConsultants = async () => {
+    // First get all user_ids that have the consultant role
+    const { data: consultantRoles } = await supabase
+      .from('user_roles')
+      .select('user_id')
+      .eq('role', 'consultant');
+
+    if (!consultantRoles || consultantRoles.length === 0) {
+      setConsultants([]);
+      setLoading(false);
+      return;
+    }
+
+    const consultantUserIds = consultantRoles.map(r => r.user_id);
+
+    // Then fetch consultant profiles only for verified consultants
     const { data, error } = await supabase
       .from('consultant_profiles')
       .select(`
@@ -77,7 +92,8 @@ const Directory = () => {
           bio
         )
       `)
-      .eq('is_available', true);
+      .eq('is_available', true)
+      .in('user_id', consultantUserIds);
 
     if (!error && data) {
       setConsultants(data as unknown as ConsultantProfile[]);
