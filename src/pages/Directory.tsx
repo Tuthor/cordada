@@ -75,29 +75,33 @@ const Directory = () => {
     const consultantUserIds = consultantRoles.map(r => r.user_id);
 
     // Then fetch consultant profiles only for verified consultants
-    const { data, error } = await supabase
+    const { data: profilesData, error: profilesError } = await supabase
       .from('consultant_profiles')
-      .select(`
-        id,
-        user_id,
-        headline,
-        expertise,
-        hourly_rate,
-        years_experience,
-        is_available,
-        maturity_level,
-        profiles!consultant_profiles_user_id_fkey (
-          full_name,
-          avatar_url,
-          bio
-        )
-      `)
+      .select('*')
       .eq('is_available', true)
       .in('user_id', consultantUserIds);
 
-    if (!error && data) {
-      setConsultants(data as unknown as ConsultantProfile[]);
+    if (profilesError || !profilesData) {
+      console.error('Error fetching consultant profiles:', profilesError);
+      setConsultants([]);
+      setLoading(false);
+      return;
     }
+
+    // Fetch profile data for each consultant
+    const userIds = profilesData.map(p => p.user_id);
+    const { data: profileInfoData } = await supabase
+      .from('profiles')
+      .select('user_id, full_name, avatar_url, bio')
+      .in('user_id', userIds);
+
+    // Merge the data
+    const mergedData = profilesData.map(consultant => ({
+      ...consultant,
+      profiles: profileInfoData?.find(p => p.user_id === consultant.user_id) || null
+    }));
+
+    setConsultants(mergedData as unknown as ConsultantProfile[]);
     setLoading(false);
   };
 
