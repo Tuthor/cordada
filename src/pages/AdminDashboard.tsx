@@ -16,8 +16,10 @@ import {
   RefreshCw,
   AlertTriangle,
   UserCheck,
-  ClipboardList
+  ClipboardList,
+  Shield
 } from "lucide-react";
+import { Avatar, AvatarFallback } from "@/components/ui/avatar";
 import {
   AlertDialog,
   AlertDialogAction,
@@ -73,6 +75,7 @@ const AdminDashboard = () => {
   const [isCheckingAuth, setIsCheckingAuth] = useState(true);
   const [activeTab, setActiveTab] = useState("enrollments");
   const [currentAdminId, setCurrentAdminId] = useState<string | null>(null);
+  const [adminName, setAdminName] = useState<string>("");
   const navigate = useNavigate();
   const { toast } = useToast();
 
@@ -141,6 +144,17 @@ const AdminDashboard = () => {
       await supabase.auth.signOut();
       navigate("/admin/login");
       return;
+    }
+
+    // Fetch admin profile name
+    const { data: profile } = await supabase
+      .from("profiles")
+      .select("full_name")
+      .eq("user_id", userId)
+      .maybeSingle();
+    
+    if (profile?.full_name) {
+      setAdminName(profile.full_name);
     }
 
     setCurrentAdminId(userId);
@@ -375,14 +389,30 @@ const AdminDashboard = () => {
               <p className="text-sm text-primary-foreground/70">Gestión de Usuarios y Postulantes</p>
             </div>
           </div>
-          <Button
-            variant="ghost"
-            onClick={handleLogout}
-            className="text-primary-foreground/80 hover:text-primary-foreground hover:bg-primary-foreground/10"
-          >
-            <LogOut className="w-4 h-4 mr-2" />
-            Cerrar Sesión
-          </Button>
+          <div className="flex items-center gap-4">
+            <div className="flex items-center gap-3">
+              <Avatar className="h-9 w-9 border-2 border-primary-foreground/20">
+                <AvatarFallback className="bg-primary-foreground/20 text-primary-foreground text-sm">
+                  {adminName ? adminName.split(' ').map(n => n[0]).join('').toUpperCase().slice(0, 2) : 'AD'}
+                </AvatarFallback>
+              </Avatar>
+              <div className="text-right">
+                <p className="text-sm font-medium">{adminName || 'Administrador'}</p>
+                <Badge variant="secondary" className="text-xs gap-1 bg-primary-foreground/20 text-primary-foreground hover:bg-primary-foreground/30">
+                  <Shield className="h-3 w-3" />
+                  Administrador
+                </Badge>
+              </div>
+            </div>
+            <Button
+              variant="ghost"
+              onClick={handleLogout}
+              className="text-primary-foreground/80 hover:text-primary-foreground hover:bg-primary-foreground/10"
+            >
+              <LogOut className="w-4 h-4 mr-2" />
+              Cerrar Sesión
+            </Button>
+          </div>
         </div>
       </header>
 
