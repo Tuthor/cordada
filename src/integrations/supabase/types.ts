@@ -74,6 +74,134 @@ export type Database = {
         }
         Relationships: []
       }
+      consultant_applications: {
+        Row: {
+          active_risk_alerts:
+            | Database["public"]["Enums"]["risk_alert_type"][]
+            | null
+          admin_notes: string | null
+          archetype: Database["public"]["Enums"]["consultant_archetype"] | null
+          archetype_score: Json | null
+          code_of_conduct_accepted: boolean | null
+          code_of_conduct_accepted_at: string | null
+          company: string | null
+          created_at: string
+          email: string
+          enrollment_id: string | null
+          full_name: string
+          id: string
+          interview_date: string | null
+          interview_notes: string | null
+          interviewer_id: string | null
+          linkedin: string | null
+          maturity_block_scores: Json | null
+          maturity_level: string | null
+          maturity_score: number | null
+          phone: string | null
+          role_archetype: string | null
+          role_archetype_secondary: string | null
+          status: Database["public"]["Enums"]["application_status"]
+          updated_at: string
+        }
+        Insert: {
+          active_risk_alerts?:
+            | Database["public"]["Enums"]["risk_alert_type"][]
+            | null
+          admin_notes?: string | null
+          archetype?: Database["public"]["Enums"]["consultant_archetype"] | null
+          archetype_score?: Json | null
+          code_of_conduct_accepted?: boolean | null
+          code_of_conduct_accepted_at?: string | null
+          company?: string | null
+          created_at?: string
+          email: string
+          enrollment_id?: string | null
+          full_name: string
+          id?: string
+          interview_date?: string | null
+          interview_notes?: string | null
+          interviewer_id?: string | null
+          linkedin?: string | null
+          maturity_block_scores?: Json | null
+          maturity_level?: string | null
+          maturity_score?: number | null
+          phone?: string | null
+          role_archetype?: string | null
+          role_archetype_secondary?: string | null
+          status?: Database["public"]["Enums"]["application_status"]
+          updated_at?: string
+        }
+        Update: {
+          active_risk_alerts?:
+            | Database["public"]["Enums"]["risk_alert_type"][]
+            | null
+          admin_notes?: string | null
+          archetype?: Database["public"]["Enums"]["consultant_archetype"] | null
+          archetype_score?: Json | null
+          code_of_conduct_accepted?: boolean | null
+          code_of_conduct_accepted_at?: string | null
+          company?: string | null
+          created_at?: string
+          email?: string
+          enrollment_id?: string | null
+          full_name?: string
+          id?: string
+          interview_date?: string | null
+          interview_notes?: string | null
+          interviewer_id?: string | null
+          linkedin?: string | null
+          maturity_block_scores?: Json | null
+          maturity_level?: string | null
+          maturity_score?: number | null
+          phone?: string | null
+          role_archetype?: string | null
+          role_archetype_secondary?: string | null
+          status?: Database["public"]["Enums"]["application_status"]
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "consultant_applications_enrollment_id_fkey"
+            columns: ["enrollment_id"]
+            isOneToOne: false
+            referencedRelation: "enrollments"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      consultant_evolution_history: {
+        Row: {
+          admin_id: string | null
+          change_type: string
+          consultant_id: string
+          created_at: string
+          id: string
+          new_value: string | null
+          previous_value: string | null
+          reason: string | null
+        }
+        Insert: {
+          admin_id?: string | null
+          change_type: string
+          consultant_id: string
+          created_at?: string
+          id?: string
+          new_value?: string | null
+          previous_value?: string | null
+          reason?: string | null
+        }
+        Update: {
+          admin_id?: string | null
+          change_type?: string
+          consultant_id?: string
+          created_at?: string
+          id?: string
+          new_value?: string | null
+          previous_value?: string | null
+          reason?: string | null
+        }
+        Relationships: []
+      }
       consultant_profiles: {
         Row: {
           created_at: string
@@ -747,7 +875,24 @@ export type Database = {
         | "consultant"
         | "consulting_firm"
         | "partner"
+      application_status:
+        | "postulacion"
+        | "entrevista_pendiente"
+        | "entrevista_realizada"
+        | "codigo_conducta_pendiente"
+        | "aceptado"
+        | "rechazado"
+      consultant_archetype:
+        | "experto_silencioso"
+        | "ex_ejecutivo"
+        | "tecnico_alto_nivel"
+        | "consultor_incompleto"
+        | "independiente_quemado"
       course_type: "course" | "workshop"
+      risk_alert_type:
+        | "riesgo_comercial"
+        | "desgaste_cautela"
+        | "sobreconfianza"
     }
     CompositeTypes: {
       [_ in never]: never
@@ -883,7 +1028,27 @@ export const Constants = {
         "consulting_firm",
         "partner",
       ],
+      application_status: [
+        "postulacion",
+        "entrevista_pendiente",
+        "entrevista_realizada",
+        "codigo_conducta_pendiente",
+        "aceptado",
+        "rechazado",
+      ],
+      consultant_archetype: [
+        "experto_silencioso",
+        "ex_ejecutivo",
+        "tecnico_alto_nivel",
+        "consultor_incompleto",
+        "independiente_quemado",
+      ],
       course_type: ["course", "workshop"],
+      risk_alert_type: [
+        "riesgo_comercial",
+        "desgaste_cautela",
+        "sobreconfianza",
+      ],
     },
   },
 } as const

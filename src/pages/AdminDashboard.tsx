@@ -17,7 +17,8 @@ import {
   AlertTriangle,
   UserCheck,
   ClipboardList,
-  Shield
+  Shield,
+  Mountain
 } from "lucide-react";
 import { Avatar, AvatarFallback } from "@/components/ui/avatar";
 import {
@@ -31,6 +32,7 @@ import {
   AlertDialogTitle,
   AlertDialogTrigger,
 } from "@/components/ui/alert-dialog";
+import { OrchestrationTabs } from "@/components/admin/OrchestrationTabs";
 
 interface Enrollment {
   id: string;
@@ -419,7 +421,11 @@ const AdminDashboard = () => {
       {/* Main Content */}
       <main className="max-w-7xl mx-auto p-6">
         <Tabs value={activeTab} onValueChange={setActiveTab} className="space-y-4">
-          <TabsList className="grid w-full max-w-md grid-cols-2">
+          <TabsList className="grid w-full max-w-2xl grid-cols-3">
+            <TabsTrigger value="orchestration" className="gap-2">
+              <Mountain className="w-4 h-4" />
+              Orquestación
+            </TabsTrigger>
             <TabsTrigger value="enrollments" className="gap-2">
               <ClipboardList className="w-4 h-4" />
               Postulantes
@@ -429,6 +435,14 @@ const AdminDashboard = () => {
               Usuarios
             </TabsTrigger>
           </TabsList>
+
+          {/* Orchestration Tab */}
+          <TabsContent value="orchestration">
+            <OrchestrationTabs 
+              activeTab={activeTab === "orchestration" ? "applications" : activeTab} 
+              onTabChange={() => {}} 
+            />
+          </TabsContent>
 
           {/* Enrollments Tab */}
           <TabsContent value="enrollments">
