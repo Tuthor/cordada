@@ -87,7 +87,7 @@ const archetypeLabels: Record<string, string> = {
 };
 
 const ConsultantProfilePopover = ({ consultant }: { consultant: ConsultantProfile }) => (
-  <PopoverContent className="w-80" align="start">
+  <PopoverContent className="w-72" align="start">
     <div className="space-y-3">
       <div className="flex items-center gap-2">
         <User className="w-5 h-5 text-primary" />
@@ -98,26 +98,6 @@ const ConsultantProfilePopover = ({ consultant }: { consultant: ConsultantProfil
         <div className="flex items-center gap-2 text-sm text-muted-foreground">
           <Building2 className="w-4 h-4" />
           <span>{consultant.company}</span>
-        </div>
-      )}
-      
-      <div className="flex flex-wrap gap-2">
-        {consultant.archetype && (
-          <Badge variant="outline">
-            {archetypeLabels[consultant.archetype] || consultant.archetype}
-          </Badge>
-        )}
-        {consultant.maturity_level && (
-          <Badge variant="secondary">
-            {consultant.maturity_level}
-          </Badge>
-        )}
-      </div>
-      
-      {consultant.maturity_score && (
-        <div className="text-sm">
-          <span className="text-muted-foreground">Score de Madurez: </span>
-          <span className="font-medium">{consultant.maturity_score}%</span>
         </div>
       )}
       
