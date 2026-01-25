@@ -330,6 +330,170 @@ export type Database = {
         }
         Relationships: []
       }
+      cordada_members: {
+        Row: {
+          assigned_at: string
+          confirmed_at: string | null
+          consultant_id: string
+          cordada_id: string
+          id: string
+          is_confirmed: boolean | null
+          notes: string | null
+          role: Database["public"]["Enums"]["cordada_role"]
+        }
+        Insert: {
+          assigned_at?: string
+          confirmed_at?: string | null
+          consultant_id: string
+          cordada_id: string
+          id?: string
+          is_confirmed?: boolean | null
+          notes?: string | null
+          role: Database["public"]["Enums"]["cordada_role"]
+        }
+        Update: {
+          assigned_at?: string
+          confirmed_at?: string | null
+          consultant_id?: string
+          cordada_id?: string
+          id?: string
+          is_confirmed?: boolean | null
+          notes?: string | null
+          role?: Database["public"]["Enums"]["cordada_role"]
+        }
+        Relationships: [
+          {
+            foreignKeyName: "cordada_members_consultant_id_fkey"
+            columns: ["consultant_id"]
+            isOneToOne: false
+            referencedRelation: "consultant_applications"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "cordada_members_cordada_id_fkey"
+            columns: ["cordada_id"]
+            isOneToOne: false
+            referencedRelation: "cordadas"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      cordada_rituals: {
+        Row: {
+          attachments: string[] | null
+          completed_date: string | null
+          cordada_id: string
+          created_at: string
+          created_by: string | null
+          description: string | null
+          id: string
+          is_completed: boolean | null
+          outcomes: string | null
+          ritual_type: Database["public"]["Enums"]["ritual_type"]
+          scheduled_date: string | null
+          title: string
+          updated_at: string
+        }
+        Insert: {
+          attachments?: string[] | null
+          completed_date?: string | null
+          cordada_id: string
+          created_at?: string
+          created_by?: string | null
+          description?: string | null
+          id?: string
+          is_completed?: boolean | null
+          outcomes?: string | null
+          ritual_type: Database["public"]["Enums"]["ritual_type"]
+          scheduled_date?: string | null
+          title: string
+          updated_at?: string
+        }
+        Update: {
+          attachments?: string[] | null
+          completed_date?: string | null
+          cordada_id?: string
+          created_at?: string
+          created_by?: string | null
+          description?: string | null
+          id?: string
+          is_completed?: boolean | null
+          outcomes?: string | null
+          ritual_type?: Database["public"]["Enums"]["ritual_type"]
+          scheduled_date?: string | null
+          title?: string
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "cordada_rituals_cordada_id_fkey"
+            columns: ["cordada_id"]
+            isOneToOne: false
+            referencedRelation: "cordadas"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      cordadas: {
+        Row: {
+          budget_range: string | null
+          client_company: string | null
+          client_name: string | null
+          created_at: string
+          created_by: string | null
+          description: string | null
+          end_date: string | null
+          estimated_duration_weeks: number | null
+          id: string
+          objectives: string[] | null
+          required_expertise: string[] | null
+          risks: string | null
+          start_date: string | null
+          status: Database["public"]["Enums"]["cordada_status"]
+          terrain: string | null
+          title: string
+          updated_at: string
+        }
+        Insert: {
+          budget_range?: string | null
+          client_company?: string | null
+          client_name?: string | null
+          created_at?: string
+          created_by?: string | null
+          description?: string | null
+          end_date?: string | null
+          estimated_duration_weeks?: number | null
+          id?: string
+          objectives?: string[] | null
+          required_expertise?: string[] | null
+          risks?: string | null
+          start_date?: string | null
+          status?: Database["public"]["Enums"]["cordada_status"]
+          terrain?: string | null
+          title: string
+          updated_at?: string
+        }
+        Update: {
+          budget_range?: string | null
+          client_company?: string | null
+          client_name?: string | null
+          created_at?: string
+          created_by?: string | null
+          description?: string | null
+          end_date?: string | null
+          estimated_duration_weeks?: number | null
+          id?: string
+          objectives?: string[] | null
+          required_expertise?: string[] | null
+          risks?: string | null
+          start_date?: string | null
+          status?: Database["public"]["Enums"]["cordada_status"]
+          terrain?: string | null
+          title?: string
+          updated_at?: string
+        }
+        Relationships: []
+      }
       course_lessons: {
         Row: {
           content: string | null
@@ -888,11 +1052,25 @@ export type Database = {
         | "tecnico_alto_nivel"
         | "consultor_incompleto"
         | "independiente_quemado"
+      cordada_role:
+        | "guia_alta_montana"
+        | "primer_de_cuerda"
+        | "asegurador"
+        | "explorador"
+        | "sherpa"
+        | "cronista"
+      cordada_status:
+        | "draft"
+        | "convocatoria"
+        | "en_curso"
+        | "cumbre_alcanzada"
+        | "cerrada"
       course_type: "course" | "workshop"
       risk_alert_type:
         | "riesgo_comercial"
         | "desgaste_cautela"
         | "sobreconfianza"
+      ritual_type: "brief_cordada" | "chequeo_tramo" | "cierre_cumbre"
     }
     CompositeTypes: {
       [_ in never]: never
@@ -1043,12 +1221,28 @@ export const Constants = {
         "consultor_incompleto",
         "independiente_quemado",
       ],
+      cordada_role: [
+        "guia_alta_montana",
+        "primer_de_cuerda",
+        "asegurador",
+        "explorador",
+        "sherpa",
+        "cronista",
+      ],
+      cordada_status: [
+        "draft",
+        "convocatoria",
+        "en_curso",
+        "cumbre_alcanzada",
+        "cerrada",
+      ],
       course_type: ["course", "workshop"],
       risk_alert_type: [
         "riesgo_comercial",
         "desgaste_cautela",
         "sobreconfianza",
       ],
+      ritual_type: ["brief_cordada", "chequeo_tramo", "cierre_cumbre"],
     },
   },
 } as const
