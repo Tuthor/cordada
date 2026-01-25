@@ -74,22 +74,29 @@ export const ClientChallengeDetailDialog = ({ cordada, open, onOpenChange }: Pro
     queryKey: ['cordada-members-client', cordada?.id],
     queryFn: async () => {
       if (!cordada?.id) return [];
-      const { data, error } = await supabase
+      
+      // Get the members without the join (client can access cordada_members via RLS)
+      const { data: membersData, error: membersError } = await supabase
         .from('cordada_members')
-        .select(`
-          id,
-          role,
-          client_status,
-          client_feedback,
-          consultant:consultant_id (
-            id,
-            full_name
-          )
-        `)
+        .select('id, role, client_status, client_feedback, consultant_id')
         .eq('cordada_id', cordada.id);
 
-      if (error) throw error;
-      return data as CordadaMember[];
+      if (membersError) throw membersError;
+      if (!membersData || membersData.length === 0) return [];
+
+      // Fetch consultant names - client may not have access to consultant_applications
+      // so we try and gracefully handle if empty
+      const consultantIds = membersData.map(m => m.consultant_id);
+      const { data: consultants } = await supabase
+        .from('consultant_applications')
+        .select('id, full_name')
+        .in('id', consultantIds);
+
+      // Map consultants to members (will show "Consultor asignado" if name not available)
+      return membersData.map(member => ({
+        ...member,
+        consultant: consultants?.find(c => c.id === member.consultant_id) || { id: member.consultant_id, full_name: null },
+      })) as CordadaMember[];
     },
     enabled: !!cordada?.id && cordada.status !== 'draft',
   });
@@ -241,7 +248,7 @@ export const ClientChallengeDetailDialog = ({ cordada, open, onOpenChange }: Pro
                       <div className="flex items-start justify-between gap-4">
                         <div className="flex-1">
                           <div className="flex items-center gap-2 mb-1">
-                            <span className="font-medium">{member.consultant?.full_name || 'Sin asignar'}</span>
+                            <span className="font-medium">{member.consultant?.full_name || 'Consultor asignado'}</span>
                             <Badge variant="outline" className="text-xs">
                               {roleLabels[member.role]}
                             </Badge>
