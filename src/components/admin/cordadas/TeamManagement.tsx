@@ -450,7 +450,7 @@ export function TeamManagement({
 
       {/* Matchmaking Dialog */}
       <Dialog open={showMatchmaking} onOpenChange={setShowMatchmaking}>
-        <DialogContent className="max-w-2xl">
+        <DialogContent className="max-w-2xl max-h-[85vh] overflow-y-auto">
           <DialogHeader>
             <DialogTitle className="flex items-center gap-2">
               <Sparkles className="w-5 h-5" />
@@ -459,7 +459,7 @@ export function TeamManagement({
           </DialogHeader>
           <div className="space-y-4">
             <p className="text-sm text-muted-foreground">
-              Basado en los arquetipos recomendados para cada rol, estos son los consultores sugeridos:
+              Basado en los arquetipos recomendados para cada rol, estos son los consultores sugeridos. Haz clic en un consultor para asignarlo.
             </p>
             {cordadaRoles.map(role => {
               const rankedConsultants = getRankedConsultantsForRole(role.id);
