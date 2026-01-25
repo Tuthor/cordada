@@ -32,8 +32,17 @@ import {
   ShieldCheck,
   Binoculars,
   Backpack,
-  BookOpen
+  BookOpen,
+  MessageSquare,
+  ThumbsUp,
+  ThumbsDown,
+  Clock
 } from "lucide-react";
+import {
+  Tooltip,
+  TooltipContent,
+  TooltipTrigger,
+} from "@/components/ui/tooltip";
 import { ConsultantArchetype } from "@/types/orchestration";
 import { 
   calculateCompatibility, 
@@ -268,6 +277,47 @@ export function TeamManagement({
                         </Button>
                       )}
                     </div>
+
+                    {/* Client Feedback Section */}
+                    {member.client_status && (
+                      <div className="mt-2 p-2 rounded-md bg-muted/50 border">
+                        <div className="flex items-center gap-2 mb-1">
+                          <span className="text-xs font-medium text-muted-foreground">Feedback Cliente:</span>
+                          {member.client_status === 'aprobado' && (
+                            <Badge variant="default" className="text-xs gap-1">
+                              <ThumbsUp className="w-3 h-3" />
+                              Aprobado
+                            </Badge>
+                          )}
+                          {member.client_status === 'rechazado' && (
+                            <Badge variant="destructive" className="text-xs gap-1">
+                              <ThumbsDown className="w-3 h-3" />
+                              Rechazado
+                            </Badge>
+                          )}
+                          {member.client_status === 'pendiente' && (
+                            <Badge variant="secondary" className="text-xs gap-1">
+                              <Clock className="w-3 h-3" />
+                              Pendiente
+                            </Badge>
+                          )}
+                        </div>
+                        {member.client_feedback && (
+                          <Tooltip>
+                            <TooltipTrigger asChild>
+                              <p className="text-xs text-muted-foreground line-clamp-2 cursor-help flex items-start gap-1">
+                                <MessageSquare className="w-3 h-3 mt-0.5 shrink-0" />
+                                {member.client_feedback}
+                              </p>
+                            </TooltipTrigger>
+                            <TooltipContent className="max-w-xs">
+                              <p className="text-xs">{member.client_feedback}</p>
+                            </TooltipContent>
+                          </Tooltip>
+                        )}
+                      </div>
+                    )}
+
                     <Button 
                       size="sm" 
                       variant="ghost" 
