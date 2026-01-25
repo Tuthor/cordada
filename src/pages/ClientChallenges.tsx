@@ -174,11 +174,10 @@ const ClientChallenges = () => {
                     )}
                   </div>
 
-                  <div className="flex gap-2 pt-2">
+                  <div className="flex flex-wrap gap-2 pt-2">
                     <Button
                       size="sm"
                       variant="outline"
-                      className="flex-1"
                       onClick={() => setSelectedCordada(cordada)}
                     >
                       <Eye className="w-4 h-4 mr-1" />
@@ -213,17 +212,14 @@ const ClientChallenges = () => {
                             </AlertDialogFooter>
                           </AlertDialogContent>
                         </AlertDialog>
+                        <Button
+                          size="sm"
+                          variant="gold"
+                          onClick={() => updateStatusMutation.mutate({ id: cordada.id, status: 'convocatoria' })}
+                        >
+                          Publicar
+                        </Button>
                       </>
-                    )}
-
-                    {cordada.status === 'draft' && (
-                      <Button
-                        size="sm"
-                        variant="gold"
-                        onClick={() => updateStatusMutation.mutate({ id: cordada.id, status: 'convocatoria' })}
-                      >
-                        Publicar
-                      </Button>
                     )}
 
                     {cordada.status === 'convocatoria' && (
