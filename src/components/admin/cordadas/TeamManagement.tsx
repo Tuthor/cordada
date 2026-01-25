@@ -93,7 +93,15 @@ export function TeamManagement({
 
   // Get ranked consultants for a specific role
   const getRankedConsultantsForRole = (role: CordadaRole) => {
-    return rankConsultantsForRole(filteredConsultants as ConsultantForMatching[], role);
+    const consultantsForMatching: ConsultantForMatching[] = filteredConsultants.map(c => ({
+      id: c.id,
+      full_name: c.full_name,
+      email: c.email,
+      archetype: c.archetype,
+      maturity_level: c.maturity_level,
+      maturity_score: null, // Not fetched in the query
+    }));
+    return rankConsultantsForRole(consultantsForMatching, role);
   };
 
   const addMember = async () => {
