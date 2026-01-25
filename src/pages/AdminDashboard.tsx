@@ -76,6 +76,7 @@ const AdminDashboard = () => {
   const [isDeletingUser, setIsDeletingUser] = useState<string | null>(null);
   const [isCheckingAuth, setIsCheckingAuth] = useState(true);
   const [activeTab, setActiveTab] = useState("enrollments");
+  const [orchestrationTab, setOrchestrationTab] = useState("applications");
   const [currentAdminId, setCurrentAdminId] = useState<string | null>(null);
   const [adminName, setAdminName] = useState<string>("");
   const navigate = useNavigate();
@@ -439,8 +440,8 @@ const AdminDashboard = () => {
           {/* Orchestration Tab */}
           <TabsContent value="orchestration">
             <OrchestrationTabs 
-              activeTab={activeTab === "orchestration" ? "applications" : activeTab} 
-              onTabChange={() => {}} 
+              activeTab={orchestrationTab} 
+              onTabChange={setOrchestrationTab} 
             />
           </TabsContent>
 
