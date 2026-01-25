@@ -5,14 +5,19 @@ import {
   DialogHeader,
   DialogTitle,
 } from '@/components/ui/dialog';
+import {
+  Popover,
+  PopoverContent,
+  PopoverTrigger,
+} from '@/components/ui/popover';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
 import { Textarea } from '@/components/ui/textarea';
-import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
+import { Card, CardContent } from '@/components/ui/card';
 import { Separator } from '@/components/ui/separator';
 import { supabase } from '@/integrations/supabase/client';
 import { useToast } from '@/hooks/use-toast';
-import { Mountain, Calendar, DollarSign, Target, AlertTriangle, Users, Check, X, Clock } from 'lucide-react';
+import { Mountain, Calendar, DollarSign, Target, AlertTriangle, Users, Check, X, Clock, Linkedin, Building2, User, ExternalLink } from 'lucide-react';
 import { useState } from 'react';
 
 type CordadaStatus = 'draft' | 'convocatoria' | 'en_curso' | 'cumbre_alcanzada' | 'cerrada';
@@ -33,15 +38,23 @@ interface Cordada {
   start_date: string | null;
 }
 
+interface ConsultantProfile {
+  id: string;
+  full_name: string;
+  email?: string;
+  company?: string | null;
+  linkedin?: string | null;
+  archetype?: string | null;
+  maturity_level?: string | null;
+  maturity_score?: number | null;
+}
+
 interface CordadaMember {
   id: string;
   role: CordadaRole;
   client_status: string | null;
   client_feedback: string | null;
-  consultant: {
-    id: string;
-    full_name: string;
-  } | null;
+  consultant: ConsultantProfile | null;
 }
 
 interface Props {
@@ -65,6 +78,62 @@ const statusBadge: Record<string, { label: string; variant: 'default' | 'seconda
   rechazado: { label: 'Rechazado', variant: 'destructive' },
 };
 
+const archetypeLabels: Record<string, string> = {
+  experto_silencioso: 'Experto Silencioso',
+  ex_ejecutivo: 'Ex-Ejecutivo',
+  tecnico_alto_nivel: 'Técnico de Alto Nivel',
+  consultor_incompleto: 'Consultor en Desarrollo',
+  independiente_quemado: 'Independiente Experimentado',
+};
+
+const ConsultantProfilePopover = ({ consultant }: { consultant: ConsultantProfile }) => (
+  <PopoverContent className="w-80" align="start">
+    <div className="space-y-3">
+      <div className="flex items-center gap-2">
+        <User className="w-5 h-5 text-primary" />
+        <span className="font-semibold">{consultant.full_name}</span>
+      </div>
+      
+      {consultant.company && (
+        <div className="flex items-center gap-2 text-sm text-muted-foreground">
+          <Building2 className="w-4 h-4" />
+          <span>{consultant.company}</span>
+        </div>
+      )}
+      
+      <div className="flex flex-wrap gap-2">
+        {consultant.archetype && (
+          <Badge variant="outline">
+            {archetypeLabels[consultant.archetype] || consultant.archetype}
+          </Badge>
+        )}
+        {consultant.maturity_level && (
+          <Badge variant="secondary">
+            {consultant.maturity_level}
+          </Badge>
+        )}
+      </div>
+      
+      {consultant.maturity_score && (
+        <div className="text-sm">
+          <span className="text-muted-foreground">Score de Madurez: </span>
+          <span className="font-medium">{consultant.maturity_score}%</span>
+        </div>
+      )}
+      
+      {consultant.linkedin && (
+        <Button variant="outline" size="sm" className="w-full gap-2" asChild>
+          <a href={consultant.linkedin} target="_blank" rel="noopener noreferrer">
+            <Linkedin className="w-4 h-4" />
+            Ver LinkedIn
+            <ExternalLink className="w-3 h-3" />
+          </a>
+        </Button>
+      )}
+    </div>
+  </PopoverContent>
+);
+
 export const ClientChallengeDetailDialog = ({ cordada, open, onOpenChange }: Props) => {
   const { toast } = useToast();
   const queryClient = useQueryClient();
@@ -84,18 +153,17 @@ export const ClientChallengeDetailDialog = ({ cordada, open, onOpenChange }: Pro
       if (membersError) throw membersError;
       if (!membersData || membersData.length === 0) return [];
 
-      // Fetch consultant names - client may not have access to consultant_applications
-      // so we try and gracefully handle if empty
+      // Fetch consultant details - now client has RLS access to consultants in their cordadas
       const consultantIds = membersData.map(m => m.consultant_id);
       const { data: consultants } = await supabase
         .from('consultant_applications')
-        .select('id, full_name')
+        .select('id, full_name, email, company, linkedin, archetype, maturity_level, maturity_score')
         .in('id', consultantIds);
 
-      // Map consultants to members (will show "Consultor asignado" if name not available)
+      // Map consultants to members
       return membersData.map(member => ({
         ...member,
-        consultant: consultants?.find(c => c.id === member.consultant_id) || { id: member.consultant_id, full_name: null },
+        consultant: consultants?.find(c => c.id === member.consultant_id) || { id: member.consultant_id, full_name: 'Consultor asignado' },
       })) as CordadaMember[];
     },
     enabled: !!cordada?.id && cordada.status !== 'draft',
@@ -247,8 +315,19 @@ export const ClientChallengeDetailDialog = ({ cordada, open, onOpenChange }: Pro
                     <CardContent className="p-4">
                       <div className="flex items-start justify-between gap-4">
                         <div className="flex-1">
-                          <div className="flex items-center gap-2 mb-1">
-                            <span className="font-medium">{member.consultant?.full_name || 'Consultor asignado'}</span>
+                          <div className="flex items-center gap-2 mb-1 flex-wrap">
+                            {member.consultant ? (
+                              <Popover>
+                                <PopoverTrigger asChild>
+                                  <button className="font-medium text-primary hover:underline cursor-pointer">
+                                    {member.consultant.full_name}
+                                  </button>
+                                </PopoverTrigger>
+                                <ConsultantProfilePopover consultant={member.consultant} />
+                              </Popover>
+                            ) : (
+                              <span className="font-medium">Consultor asignado</span>
+                            )}
                             <Badge variant="outline" className="text-xs">
                               {roleLabels[member.role]}
                             </Badge>
