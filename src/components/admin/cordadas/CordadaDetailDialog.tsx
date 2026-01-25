@@ -278,7 +278,11 @@ export function CordadaDetailDialog({
                   <CardTitle className="text-sm font-medium">Presupuesto</CardTitle>
                 </CardHeader>
                 <CardContent>
-                  <p className="text-sm">{cordada.budget_range || 'No especificado'}</p>
+                  <p className="text-sm">
+                    {cordada.budget_amount 
+                      ? `${cordada.budget_currency || 'CLP'} ${cordada.budget_amount.toLocaleString('es-CL')}`
+                      : 'No especificado'}
+                  </p>
                 </CardContent>
               </Card>
             </div>
