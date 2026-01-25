@@ -14,10 +14,11 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Cordada, CordadaMember, CordadaRitual, CordadaStatus } from "@/types/cordada";
 import { getCordadaStatusInfo, cordadaStatuses } from "@/data/cordadaData";
 import { useToast } from "@/hooks/use-toast";
-import { Info, Users, Target, Calendar, Megaphone, Paperclip } from "lucide-react";
+import { Info, Users, Target, Calendar, Megaphone, Paperclip, Pencil } from "lucide-react";
 import { TeamManagement } from "./TeamManagement";
 import { RitualsTimeline } from "./RitualsTimeline";
 import { AttachmentsSection } from "./AttachmentsSection";
+import { EditCordadaDialog } from "./EditCordadaDialog";
 import type { AttachmentFile } from "./FileUploadField";
 import {
   Select,
@@ -42,6 +43,7 @@ export function CordadaDetailDialog({
 }: CordadaDetailDialogProps) {
   const { toast } = useToast();
   const [activeTab, setActiveTab] = useState("info");
+  const [showEditDialog, setShowEditDialog] = useState(false);
   const statusInfo = getCordadaStatusInfo(cordada.status);
 
   const { data: members, refetch: refetchMembers } = useQuery({
@@ -163,17 +165,23 @@ export function CordadaDetailDialog({
             {cordada.status === 'draft' && (
               <Card className="border-primary/30 bg-primary/5">
                 <CardContent className="pt-4">
-                  <div className="flex items-center justify-between">
+                  <div className="flex items-center justify-between gap-4">
                     <div>
                       <h4 className="font-medium">Este desafío está en borrador</h4>
                       <p className="text-sm text-muted-foreground">
-                        Publícalo para comenzar a formar el equipo
+                        Puedes editarlo antes de publicar la convocatoria
                       </p>
                     </div>
-                    <Button onClick={publishCordada} className="gap-2">
-                      <Megaphone className="w-4 h-4" />
-                      Publicar Convocatoria
-                    </Button>
+                    <div className="flex gap-2">
+                      <Button variant="outline" onClick={() => setShowEditDialog(true)} className="gap-2">
+                        <Pencil className="w-4 h-4" />
+                        Editar
+                      </Button>
+                      <Button onClick={publishCordada} className="gap-2">
+                        <Megaphone className="w-4 h-4" />
+                        Publicar
+                      </Button>
+                    </div>
                   </div>
                 </CardContent>
               </Card>
@@ -305,6 +313,14 @@ export function CordadaDetailDialog({
             />
           </TabsContent>
         </Tabs>
+
+        {/* Edit Dialog for Draft Cordadas */}
+        <EditCordadaDialog
+          cordada={cordada}
+          open={showEditDialog}
+          onOpenChange={setShowEditDialog}
+          onSuccess={onUpdate}
+        />
       </DialogContent>
     </Dialog>
   );
