@@ -347,18 +347,33 @@ export function TeamManagement({
                   {selectedRole && getRankedConsultantsForRole(selectedRole).map(consultant => (
                     <SelectItem key={consultant.id} value={consultant.id}>
                       <div className="flex items-center gap-2 w-full">
-                        <span className="flex-1">{consultant.full_name}</span>
+                        <span className="flex-1 truncate">{consultant.full_name}</span>
+                        {consultant.archetype && (
+                          <Badge variant="outline" className="text-xs shrink-0">
+                            {getArchetypeInfo(consultant.archetype as ConsultantArchetype).name}
+                          </Badge>
+                        )}
+                        {consultant.maturity_level && (
+                          <Badge variant="secondary" className="text-xs shrink-0">
+                            {consultant.maturity_level}
+                          </Badge>
+                        )}
                         <CompatibilityBadge compatibility={consultant.compatibility} size="sm" />
                       </div>
                     </SelectItem>
                   ))}
                   {!selectedRole && filteredConsultants?.map(consultant => (
                     <SelectItem key={consultant.id} value={consultant.id}>
-                      <div className="flex items-center gap-2">
-                        <span>{consultant.full_name}</span>
+                      <div className="flex items-center gap-2 w-full">
+                        <span className="flex-1 truncate">{consultant.full_name}</span>
                         {consultant.archetype && (
-                          <Badge variant="secondary" className="text-xs">
+                          <Badge variant="outline" className="text-xs shrink-0">
                             {getArchetypeInfo(consultant.archetype as ConsultantArchetype).name}
+                          </Badge>
+                        )}
+                        {consultant.maturity_level && (
+                          <Badge variant="secondary" className="text-xs shrink-0">
+                            {consultant.maturity_level}
                           </Badge>
                         )}
                       </div>
