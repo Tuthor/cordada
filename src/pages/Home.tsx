@@ -293,9 +293,17 @@ const Home = () => {
                 </div>
                 <span className="font-bold text-foreground">ConsultHub</span>
               </div>
-              <p className="text-sm text-muted-foreground">
-                © 2024 ConsultHub. Todos los derechos reservados.
-              </p>
+              <div className="flex items-center gap-4">
+                <p className="text-sm text-muted-foreground">
+                  © 2024 ConsultHub. Todos los derechos reservados.
+                </p>
+                <Link 
+                  to="/admin/login" 
+                  className="text-xs text-muted-foreground/50 hover:text-muted-foreground transition-colors"
+                >
+                  •
+                </Link>
+              </div>
             </div>
           </div>
         </footer>
