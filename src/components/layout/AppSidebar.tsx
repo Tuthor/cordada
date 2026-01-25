@@ -103,6 +103,18 @@ export function AppSidebar() {
       ];
     }
 
+    // Client-specific menu with Challenges instead of Projects
+    if (userRole === 'client') {
+      return [
+        { title: "Inicio", url: "/dashboard", icon: Home, badge: 0 },
+        { title: "Mis Desafíos", url: "/challenges", icon: Briefcase, badge: 0 },
+        { title: "Directorio", url: "/directory", icon: Users, badge: 0 },
+        { title: "Inbox", url: "/inbox", icon: Inbox, badge: unreadCount },
+        { title: "Requisitos", url: "/requirements", icon: ClipboardCheck, badge: 0 },
+        { title: "Capacitación", url: "/training", icon: GraduationCap, badge: 0 },
+      ];
+    }
+
     const baseItems = [
       { title: "Inicio", url: "/dashboard", icon: Home, badge: 0 },
       { title: "Directorio", url: "/directory", icon: Users, badge: 0 },
@@ -112,10 +124,8 @@ export function AppSidebar() {
       { title: "Capacitación", url: "/training", icon: GraduationCap, badge: 0 },
     ];
 
-    // Add requirements link based on role
-    if (userRole === "client") {
-      baseItems.push({ title: "Requisitos", url: "/requirements", icon: ClipboardCheck, badge: 0 });
-    } else if (userRole === "consultant") {
+    // Add requirements link for consultant
+    if (userRole === "consultant") {
       baseItems.push({ title: "Requisitos", url: "/consultant-requirements", icon: ClipboardCheck, badge: 0 });
     }
 

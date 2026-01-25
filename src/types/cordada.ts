@@ -51,6 +51,8 @@ export interface CordadaMember {
   assigned_at: string;
   confirmed_at: string | null;
   notes: string | null;
+  client_status: 'pendiente' | 'aprobado' | 'rechazado' | null;
+  client_feedback: string | null;
   // Joined data
   consultant?: {
     full_name: string;

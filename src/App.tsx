@@ -14,6 +14,9 @@ import ProjectNew from "./pages/ProjectNew";
 import ProjectDetail from "./pages/ProjectDetail";
 import ProjectEdit from "./pages/ProjectEdit";
 import ProjectApply from "./pages/ProjectApply";
+import ClientChallenges from "./pages/ClientChallenges";
+import ClientChallengeNew from "./pages/ClientChallengeNew";
+import ClientChallengeEdit from "./pages/ClientChallengeEdit";
 import Inbox from "./pages/Inbox";
 import Proposals from "./pages/Proposals";
 import Training from "./pages/Training";
@@ -45,6 +48,9 @@ const App = () => (
             <Route path="/projects/:id" element={<ProjectDetail />} />
             <Route path="/projects/:id/edit" element={<ProjectEdit />} />
             <Route path="/projects/:id/apply" element={<ProjectApply />} />
+            <Route path="/challenges" element={<ClientChallenges />} />
+            <Route path="/challenges/new" element={<ClientChallengeNew />} />
+            <Route path="/challenges/:id/edit" element={<ClientChallengeEdit />} />
             <Route path="/inbox" element={<Inbox />} />
             <Route path="/proposals" element={<Proposals />} />
             <Route path="/training" element={<Training />} />

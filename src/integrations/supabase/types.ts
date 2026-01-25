@@ -333,6 +333,8 @@ export type Database = {
       cordada_members: {
         Row: {
           assigned_at: string
+          client_feedback: string | null
+          client_status: string | null
           confirmed_at: string | null
           consultant_id: string
           cordada_id: string
@@ -343,6 +345,8 @@ export type Database = {
         }
         Insert: {
           assigned_at?: string
+          client_feedback?: string | null
+          client_status?: string | null
           confirmed_at?: string | null
           consultant_id: string
           cordada_id: string
@@ -353,6 +357,8 @@ export type Database = {
         }
         Update: {
           assigned_at?: string
+          client_feedback?: string | null
+          client_status?: string | null
           confirmed_at?: string | null
           consultant_id?: string
           cordada_id?: string
@@ -472,6 +478,7 @@ export type Database = {
           budget_currency: string | null
           budget_range: string | null
           client_company: string | null
+          client_id: string | null
           client_name: string | null
           created_at: string
           created_by: string | null
@@ -496,6 +503,7 @@ export type Database = {
           budget_currency?: string | null
           budget_range?: string | null
           client_company?: string | null
+          client_id?: string | null
           client_name?: string | null
           created_at?: string
           created_by?: string | null
@@ -520,6 +528,7 @@ export type Database = {
           budget_currency?: string | null
           budget_range?: string | null
           client_company?: string | null
+          client_id?: string | null
           client_name?: string | null
           created_at?: string
           created_by?: string | null
