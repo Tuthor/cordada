@@ -14,9 +14,11 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Cordada, CordadaMember, CordadaRitual, CordadaStatus } from "@/types/cordada";
 import { getCordadaStatusInfo, cordadaStatuses } from "@/data/cordadaData";
 import { useToast } from "@/hooks/use-toast";
-import { Info, Users, Target, Calendar, Megaphone } from "lucide-react";
+import { Info, Users, Target, Calendar, Megaphone, Paperclip } from "lucide-react";
 import { TeamManagement } from "./TeamManagement";
 import { RitualsTimeline } from "./RitualsTimeline";
+import { AttachmentsSection } from "./AttachmentsSection";
+import type { AttachmentFile } from "./FileUploadField";
 import {
   Select,
   SelectContent,
@@ -138,10 +140,14 @@ export function CordadaDetailDialog({
         </DialogHeader>
 
         <Tabs value={activeTab} onValueChange={setActiveTab}>
-          <TabsList className="grid w-full grid-cols-3">
+          <TabsList className="grid w-full grid-cols-4">
             <TabsTrigger value="info" className="gap-2">
               <Info className="w-4 h-4" />
-              Información
+              Info
+            </TabsTrigger>
+            <TabsTrigger value="attachments" className="gap-2">
+              <Paperclip className="w-4 h-4" />
+              Docs
             </TabsTrigger>
             <TabsTrigger value="team" className="gap-2">
               <Users className="w-4 h-4" />
@@ -268,6 +274,17 @@ export function CordadaDetailDialog({
                 </CardContent>
               </Card>
             </div>
+          </TabsContent>
+
+          <TabsContent value="attachments" className="mt-4">
+            <AttachmentsSection
+              cordadaId={cordada.id}
+              terrainAttachments={(cordada as any).terrain_attachments as AttachmentFile[] || []}
+              risksAttachments={(cordada as any).risks_attachments as AttachmentFile[] || []}
+              descriptionAttachment={(cordada as any).description_attachment as AttachmentFile | null}
+              isAdmin={true}
+              onUpdate={onUpdate}
+            />
           </TabsContent>
 
           <TabsContent value="team" className="mt-4">

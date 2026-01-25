@@ -434,6 +434,38 @@ export type Database = {
           },
         ]
       }
+      cordada_sensitive_documents: {
+        Row: {
+          cordada_id: string
+          file_path: string
+          id: string
+          marked_at: string
+          marked_by: string | null
+        }
+        Insert: {
+          cordada_id: string
+          file_path: string
+          id?: string
+          marked_at?: string
+          marked_by?: string | null
+        }
+        Update: {
+          cordada_id?: string
+          file_path?: string
+          id?: string
+          marked_at?: string
+          marked_by?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "cordada_sensitive_documents_cordada_id_fkey"
+            columns: ["cordada_id"]
+            isOneToOne: false
+            referencedRelation: "cordadas"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       cordadas: {
         Row: {
           budget_range: string | null
@@ -442,15 +474,18 @@ export type Database = {
           created_at: string
           created_by: string | null
           description: string | null
+          description_attachment: Json | null
           end_date: string | null
           estimated_duration_weeks: number | null
           id: string
           objectives: string[] | null
           required_expertise: string[] | null
           risks: string | null
+          risks_attachments: Json | null
           start_date: string | null
           status: Database["public"]["Enums"]["cordada_status"]
           terrain: string | null
+          terrain_attachments: Json | null
           title: string
           updated_at: string
         }
@@ -461,15 +496,18 @@ export type Database = {
           created_at?: string
           created_by?: string | null
           description?: string | null
+          description_attachment?: Json | null
           end_date?: string | null
           estimated_duration_weeks?: number | null
           id?: string
           objectives?: string[] | null
           required_expertise?: string[] | null
           risks?: string | null
+          risks_attachments?: Json | null
           start_date?: string | null
           status?: Database["public"]["Enums"]["cordada_status"]
           terrain?: string | null
+          terrain_attachments?: Json | null
           title: string
           updated_at?: string
         }
@@ -480,15 +518,18 @@ export type Database = {
           created_at?: string
           created_by?: string | null
           description?: string | null
+          description_attachment?: Json | null
           end_date?: string | null
           estimated_duration_weeks?: number | null
           id?: string
           objectives?: string[] | null
           required_expertise?: string[] | null
           risks?: string | null
+          risks_attachments?: Json | null
           start_date?: string | null
           status?: Database["public"]["Enums"]["cordada_status"]
           terrain?: string | null
+          terrain_attachments?: Json | null
           title?: string
           updated_at?: string
         }
