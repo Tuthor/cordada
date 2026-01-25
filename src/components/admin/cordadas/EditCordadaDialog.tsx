@@ -17,6 +17,13 @@ import {
   FormLabel,
   FormMessage,
 } from "@/components/ui/form";
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@/components/ui/select";
 import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
 import { Button } from "@/components/ui/button";
@@ -38,6 +45,12 @@ interface ExistingFile extends AttachmentFile {
   markedForDeletion?: boolean;
 }
 
+const CURRENCY_OPTIONS = [
+  { value: 'CLP', label: 'CLP (Peso Chileno)' },
+  { value: 'UF', label: 'UF (Unidad de Fomento)' },
+  { value: 'USD', label: 'USD (Dólar)' },
+] as const;
+
 const formSchema = z.object({
   title: z.string().min(3, "El título debe tener al menos 3 caracteres"),
   description: z.string().optional(),
@@ -46,7 +59,8 @@ const formSchema = z.object({
   terrain: z.string().optional(),
   risks: z.string().optional(),
   estimated_duration_weeks: z.coerce.number().optional(),
-  budget_range: z.string().optional(),
+  budget_currency: z.enum(['CLP', 'UF', 'USD']).optional(),
+  budget_amount: z.coerce.number().optional(),
 });
 
 type FormData = z.infer<typeof formSchema>;
@@ -91,7 +105,8 @@ export function EditCordadaDialog({ cordada, open, onOpenChange, onSuccess }: Ed
       client_company: "",
       terrain: "",
       risks: "",
-      budget_range: "",
+      budget_currency: "CLP",
+      budget_amount: undefined,
     },
   });
 
@@ -106,7 +121,8 @@ export function EditCordadaDialog({ cordada, open, onOpenChange, onSuccess }: Ed
         terrain: cordada.terrain || "",
         risks: cordada.risks || "",
         estimated_duration_weeks: cordada.estimated_duration_weeks || undefined,
-        budget_range: cordada.budget_range || "",
+        budget_currency: ((cordada as any).budget_currency as 'CLP' | 'UF' | 'USD') || "CLP",
+        budget_amount: (cordada as any).budget_amount || undefined,
       });
       
       setSelectedObjectives(cordada.objectives || []);
@@ -381,7 +397,8 @@ export function EditCordadaDialog({ cordada, open, onOpenChange, onSuccess }: Ed
           terrain: data.terrain || null,
           risks: data.risks || null,
           estimated_duration_weeks: data.estimated_duration_weeks || null,
-          budget_range: data.budget_range || null,
+          budget_currency: data.budget_currency || 'CLP',
+          budget_amount: data.budget_amount || null,
           objectives: selectedObjectives.length > 0 ? selectedObjectives : null,
           required_expertise: selectedExpertise.length > 0 ? selectedExpertise : null,
           terrain_attachments: terrainAttachments as unknown as any,
@@ -749,34 +766,66 @@ export function EditCordadaDialog({ cordada, open, onOpenChange, onSuccess }: Ed
               </div>
             </div>
 
-            <div className="grid grid-cols-2 gap-4">
-              <FormField
-                control={form.control}
-                name="estimated_duration_weeks"
-                render={({ field }) => (
-                  <FormItem>
-                    <FormLabel>Duración Estimada (semanas)</FormLabel>
-                    <FormControl>
-                      <Input type="number" placeholder="Ej: 12" {...field} />
-                    </FormControl>
-                    <FormMessage />
-                  </FormItem>
-                )}
-              />
+            <FormField
+              control={form.control}
+              name="estimated_duration_weeks"
+              render={({ field }) => (
+                <FormItem>
+                  <FormLabel>Duración Estimada (semanas)</FormLabel>
+                  <FormControl>
+                    <Input type="number" placeholder="Ej: 12" {...field} />
+                  </FormControl>
+                  <FormMessage />
+                </FormItem>
+              )}
+            />
 
-              <FormField
-                control={form.control}
-                name="budget_range"
-                render={({ field }) => (
-                  <FormItem>
-                    <FormLabel>Rango de Presupuesto</FormLabel>
-                    <FormControl>
-                      <Input placeholder="Ej: $10M - $20M CLP" {...field} />
-                    </FormControl>
-                    <FormMessage />
-                  </FormItem>
-                )}
-              />
+            <div className="space-y-2">
+              <FormLabel>Presupuesto</FormLabel>
+              <div className="grid grid-cols-3 gap-2">
+                <FormField
+                  control={form.control}
+                  name="budget_currency"
+                  render={({ field }) => (
+                    <FormItem>
+                      <Select onValueChange={field.onChange} value={field.value}>
+                        <FormControl>
+                          <SelectTrigger>
+                            <SelectValue placeholder="Moneda" />
+                          </SelectTrigger>
+                        </FormControl>
+                        <SelectContent>
+                          {CURRENCY_OPTIONS.map(opt => (
+                            <SelectItem key={opt.value} value={opt.value}>
+                              {opt.value}
+                            </SelectItem>
+                          ))}
+                        </SelectContent>
+                      </Select>
+                      <FormMessage />
+                    </FormItem>
+                  )}
+                />
+                <div className="col-span-2">
+                  <FormField
+                    control={form.control}
+                    name="budget_amount"
+                    render={({ field }) => (
+                      <FormItem>
+                        <FormControl>
+                          <Input 
+                            type="number" 
+                            placeholder="Monto" 
+                            {...field}
+                            value={field.value ?? ''}
+                          />
+                        </FormControl>
+                        <FormMessage />
+                      </FormItem>
+                    )}
+                  />
+                </div>
+              </div>
             </div>
 
             <div className="flex justify-end gap-2 pt-4">

@@ -468,6 +468,8 @@ export type Database = {
       }
       cordadas: {
         Row: {
+          budget_amount: number | null
+          budget_currency: string | null
           budget_range: string | null
           client_company: string | null
           client_name: string | null
@@ -490,6 +492,8 @@ export type Database = {
           updated_at: string
         }
         Insert: {
+          budget_amount?: number | null
+          budget_currency?: string | null
           budget_range?: string | null
           client_company?: string | null
           client_name?: string | null
@@ -512,6 +516,8 @@ export type Database = {
           updated_at?: string
         }
         Update: {
+          budget_amount?: number | null
+          budget_currency?: string | null
           budget_range?: string | null
           client_company?: string | null
           client_name?: string | null

@@ -32,6 +32,8 @@ export interface Cordada {
   required_expertise: string[] | null;
   estimated_duration_weeks: number | null;
   budget_range: string | null;
+  budget_currency: 'CLP' | 'UF' | 'USD' | null;
+  budget_amount: number | null;
   status: CordadaStatus;
   start_date: string | null;
   end_date: string | null;
