@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useState, useMemo } from "react";
 import { useQuery } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
@@ -17,7 +17,6 @@ import {
   DialogContent,
   DialogHeader,
   DialogTitle,
-  DialogTrigger,
 } from "@/components/ui/dialog";
 import { CordadaMember, CordadaRole } from "@/types/cordada";
 import { cordadaRoles, getCordadaRoleInfo } from "@/data/cordadaData";
@@ -32,16 +31,23 @@ import {
   Route,
   ShieldCheck,
   Binoculars,
+  Backpack,
   BookOpen
 } from "lucide-react";
 import { ConsultantArchetype } from "@/types/orchestration";
+import { 
+  calculateCompatibility, 
+  rankConsultantsForRole,
+  ConsultantForMatching 
+} from "@/hooks/useMatchmakingScore";
+import { CompatibilityBadge, CompatibilityBar } from "./CompatibilityBadge";
 
 const roleIcons: Record<CordadaRole, typeof Compass> = {
   guia_alta_montana: Compass,
   primer_de_cuerda: Route,
   asegurador: ShieldCheck,
   explorador: Binoculars,
-  sherpa: UserPlus,
+  sherpa: Backpack,
   cronista: BookOpen,
 };
 
@@ -80,9 +86,15 @@ export function TeamManagement({
   });
 
   const memberIds = members.map(m => m.consultant_id);
-  const filteredConsultants = availableConsultants?.filter(
-    c => !memberIds.includes(c.id)
+  const filteredConsultants = useMemo(() => 
+    availableConsultants?.filter(c => !memberIds.includes(c.id)) || [],
+    [availableConsultants, memberIds]
   );
+
+  // Get ranked consultants for a specific role
+  const getRankedConsultantsForRole = (role: CordadaRole) => {
+    return rankConsultantsForRole(filteredConsultants as ConsultantForMatching[], role);
+  };
 
   const addMember = async () => {
     if (!selectedConsultant || !selectedRole) return;
@@ -168,12 +180,22 @@ export function TeamManagement({
     }
   };
 
-  // Matchmaking: suggest best consultants for each role
-  const getSuggestedConsultants = (role: CordadaRole) => {
-    const roleInfo = getCordadaRoleInfo(role);
-    return filteredConsultants?.filter(c => 
-      c.archetype && roleInfo.recommendedArchetypes.includes(c.archetype)
-    ) || [];
+  // Get compatibility for assigned member
+
+  // Get compatibility for assigned member
+  const getMemberCompatibility = (member: CordadaMember) => {
+    if (!member.consultant) return null;
+    return calculateCompatibility(
+      {
+        id: member.consultant_id,
+        full_name: member.consultant.full_name,
+        email: member.consultant.email,
+        archetype: member.consultant.archetype,
+        maturity_level: member.consultant.maturity_level,
+        maturity_score: null,
+      },
+      member.role
+    );
   };
 
   return (
@@ -202,15 +224,22 @@ export function TeamManagement({
                         </AvatarFallback>
                       </Avatar>
                       <div className="flex-1 min-w-0">
-                        <p className="font-medium truncate">
-                          {member.consultant?.full_name}
-                        </p>
+                        <div className="flex items-center gap-2">
+                          <p className="font-medium truncate">
+                            {member.consultant?.full_name}
+                          </p>
+                          {/* Compatibility badge for assigned member */}
+                          {(() => {
+                            const compat = getMemberCompatibility(member);
+                            return compat && <CompatibilityBadge compatibility={compat} size="sm" />;
+                          })()}
+                        </div>
                         <p className="text-xs text-muted-foreground truncate">
                           {member.consultant?.email}
                         </p>
                       </div>
                     </div>
-                    <div className="flex items-center gap-2">
+                    <div className="flex items-center gap-2 flex-wrap">
                       {member.consultant?.archetype && (
                         <Badge variant="secondary" className="text-xs">
                           {getArchetypeInfo(member.consultant.archetype as ConsultantArchetype).name}
@@ -307,7 +336,15 @@ export function TeamManagement({
                   <SelectValue placeholder="Seleccionar consultor" />
                 </SelectTrigger>
                 <SelectContent>
-                  {filteredConsultants?.map(consultant => (
+                  {selectedRole && getRankedConsultantsForRole(selectedRole).map(consultant => (
+                    <SelectItem key={consultant.id} value={consultant.id}>
+                      <div className="flex items-center gap-2 w-full">
+                        <span className="flex-1">{consultant.full_name}</span>
+                        <CompatibilityBadge compatibility={consultant.compatibility} size="sm" />
+                      </div>
+                    </SelectItem>
+                  ))}
+                  {!selectedRole && filteredConsultants?.map(consultant => (
                     <SelectItem key={consultant.id} value={consultant.id}>
                       <div className="flex items-center gap-2">
                         <span>{consultant.full_name}</span>
@@ -352,7 +389,7 @@ export function TeamManagement({
               Basado en los arquetipos recomendados para cada rol, estos son los consultores sugeridos:
             </p>
             {cordadaRoles.map(role => {
-              const suggested = getSuggestedConsultants(role.id);
+              const rankedConsultants = getRankedConsultantsForRole(role.id);
               const isAssigned = members.some(m => m.role === role.id);
               
               return (
@@ -364,13 +401,16 @@ export function TeamManagement({
                     </CardTitle>
                   </CardHeader>
                   <CardContent>
-                    {suggested.length > 0 ? (
-                      <div className="flex flex-wrap gap-2">
-                        {suggested.slice(0, 3).map(c => (
-                          <Badge 
-                            key={c.id} 
-                            variant="outline"
-                            className="cursor-pointer hover:bg-primary hover:text-primary-foreground"
+                    {rankedConsultants.length > 0 ? (
+                      <div className="space-y-2">
+                        {rankedConsultants.slice(0, 4).map(c => (
+                          <div 
+                            key={c.id}
+                            className={`flex items-center gap-3 p-2 rounded-lg border cursor-pointer transition-colors ${
+                              isAssigned 
+                                ? 'opacity-50 cursor-not-allowed' 
+                                : 'hover:bg-accent hover:border-primary'
+                            }`}
                             onClick={() => {
                               if (!isAssigned) {
                                 setSelectedConsultant(c.id);
@@ -380,16 +420,32 @@ export function TeamManagement({
                               }
                             }}
                           >
-                            {c.full_name}
-                          </Badge>
+                            <Avatar className="h-8 w-8">
+                              <AvatarFallback className="text-xs">
+                                {c.full_name.charAt(0)}
+                              </AvatarFallback>
+                            </Avatar>
+                            <div className="flex-1 min-w-0">
+                              <p className="text-sm font-medium truncate">{c.full_name}</p>
+                              <div className="flex items-center gap-2 mt-1">
+                                <CompatibilityBar score={c.compatibility.score} className="flex-1 max-w-[100px]" />
+                                {c.archetype && (
+                                  <Badge variant="outline" className="text-xs">
+                                    {getArchetypeInfo(c.archetype as ConsultantArchetype).name}
+                                  </Badge>
+                                )}
+                              </div>
+                            </div>
+                            <CompatibilityBadge compatibility={c.compatibility} size="md" />
+                          </div>
                         ))}
                       </div>
                     ) : (
                       <p className="text-sm text-muted-foreground">
-                        No hay consultores con arquetipos recomendados disponibles
+                        No hay consultores disponibles
                       </p>
                     )}
-                    <p className="text-xs text-muted-foreground mt-2">
+                    <p className="text-xs text-muted-foreground mt-3">
                       Arquetipos recomendados: {role.recommendedArchetypes.map(a => 
                         getArchetypeInfo(a as ConsultantArchetype).name
                       ).join(', ')}
