@@ -47,7 +47,7 @@ const Home = () => {
   return (
     <HelmetProvider>
       <Helmet>
-        <title>ConsultHub | Marketplace B2B de Consultoría Empresarial</title>
+        <title>CORDADA | Ecosistema de Consultoría Empresarial</title>
         <meta
           name="description"
           content="Conecta con los mejores consultores del mercado. Plataforma líder para empresas que buscan talento consultor de élite."
@@ -63,8 +63,8 @@ const Home = () => {
                 <Briefcase className="w-5 h-5 text-accent-foreground" />
               </div>
               <div>
-                <span className="font-bold text-foreground">ConsultHub</span>
-                <span className="text-xs text-muted-foreground block">Marketplace B2B</span>
+                <span className="font-bold text-foreground">CORDADA</span>
+                <span className="text-xs text-muted-foreground block">Ecosistema de Consultoría</span>
               </div>
             </Link>
             <div className="flex items-center gap-4">
@@ -294,11 +294,11 @@ const Home = () => {
                 <div className="w-8 h-8 rounded-lg bg-gradient-gold flex items-center justify-center">
                   <Briefcase className="w-4 h-4 text-accent-foreground" />
                 </div>
-                <span className="font-bold text-foreground">ConsultHub</span>
+                <span className="font-bold text-foreground">CORDADA</span>
               </div>
               <div className="flex items-center gap-4">
                 <p className="text-sm text-muted-foreground">
-                  © 2024 ConsultHub. Todos los derechos reservados.
+                  © 2024 CORDADA. Todos los derechos reservados.
                 </p>
                 <Link 
                   to="/admin/login" 

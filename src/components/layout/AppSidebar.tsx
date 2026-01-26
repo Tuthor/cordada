@@ -158,8 +158,8 @@ export function AppSidebar() {
             </div>
             {!collapsed && (
               <div>
-                <h1 className="font-bold text-foreground">ConsultHub</h1>
-                <p className="text-xs text-muted-foreground">Marketplace B2B</p>
+                <h1 className="font-bold text-foreground">CORDADA</h1>
+                <p className="text-xs text-muted-foreground">Ecosistema de Consultoría</p>
               </div>
             )}
           </div>
