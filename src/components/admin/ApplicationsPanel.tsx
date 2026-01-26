@@ -38,6 +38,7 @@ export function ApplicationsPanel() {
     const { data, error } = await supabase
       .from("consultant_applications")
       .select("id, full_name, email, status, archetype, maturity_level, maturity_score, created_at")
+      .neq("status", "aceptado")
       .order("created_at", { ascending: false });
 
     if (error) {
