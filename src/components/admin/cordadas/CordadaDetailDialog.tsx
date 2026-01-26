@@ -124,20 +124,7 @@ export function CordadaDetailDialog({
                 <p className="text-sm text-muted-foreground mt-1">{cordada.client_company}</p>
               )}
             </div>
-            <div className="flex items-center gap-2">
-              <Select value={cordada.status} onValueChange={(v) => updateStatus(v as CordadaStatus)}>
-                <SelectTrigger className="w-[180px]">
-                  <SelectValue />
-                </SelectTrigger>
-                <SelectContent>
-                  {cordadaStatuses.map(status => (
-                    <SelectItem key={status.id} value={status.id}>
-                      {status.name}
-                    </SelectItem>
-                  ))}
-                </SelectContent>
-              </Select>
-            </div>
+            <Badge className={statusInfo.color}>{statusInfo.name}</Badge>
           </div>
         </DialogHeader>
 
