@@ -5,10 +5,10 @@ const Index = () => {
   return (
     <HelmetProvider>
       <Helmet>
-        <title>Evaluación de Madurez del Consultor | Ecosistema de Consultoría Empresarial</title>
+        <title>Evaluación de Madurez | CORDADA - Ecosistema de Consultoría</title>
         <meta
           name="description"
-          content="Evalúa tu preparación para unirte a un ecosistema élite de consultoría que sirve a clientes empresariales Fortune 500. Evaluación integral en 5 competencias clave."
+          content="Evalúa tu preparación para unirte a CORDADA, el ecosistema élite de consultoría empresarial. Evaluación integral en 5 competencias clave."
         />
       </Helmet>
       <Assessment />
