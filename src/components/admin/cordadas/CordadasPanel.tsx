@@ -2,26 +2,25 @@ import { useState } from "react";
 import { useQuery } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
-import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
-import { Plus, Mountain, Users, Calendar, ChevronRight } from "lucide-react";
+import { Mountain, Users, Calendar, ChevronRight, Building2 } from "lucide-react";
 import { Cordada } from "@/types/cordada";
 import { getCordadaStatusInfo } from "@/data/cordadaData";
-import { CreateCordadaDialog } from "./CreateCordadaDialog";
 import { CordadaDetailDialog } from "./CordadaDetailDialog";
 import { format } from "date-fns";
 import { es } from "date-fns/locale";
 
 export function CordadasPanel() {
-  const [showCreateDialog, setShowCreateDialog] = useState(false);
   const [selectedCordada, setSelectedCordada] = useState<Cordada | null>(null);
 
   const { data: cordadas, isLoading, refetch } = useQuery({
     queryKey: ['cordadas'],
     queryFn: async () => {
+      // Only fetch cordadas that have been published by clients (not drafts)
       const { data, error } = await supabase
         .from('cordadas')
         .select('*')
+        .neq('status', 'draft')
         .order('created_at', { ascending: false });
       
       if (error) throw error;
@@ -55,9 +54,9 @@ export function CordadasPanel() {
   }
 
   const groupedCordadas = {
-    active: cordadas?.filter(c => ['convocatoria', 'en_curso'].includes(c.status)) || [],
+    pending: cordadas?.filter(c => c.status === 'convocatoria') || [],
+    active: cordadas?.filter(c => c.status === 'en_curso') || [],
     completed: cordadas?.filter(c => c.status === 'cumbre_alcanzada') || [],
-    draft: cordadas?.filter(c => c.status === 'draft') || [],
     closed: cordadas?.filter(c => c.status === 'cerrada') || [],
   };
 
@@ -67,23 +66,27 @@ export function CordadasPanel() {
         <div>
           <h2 className="text-2xl font-bold">Cordadas (Desafíos)</h2>
           <p className="text-muted-foreground">
-            Gestiona los proyectos colaborativos y equipos multidisciplinarios
+            Desafíos publicados por clientes pendientes de orquestación
           </p>
         </div>
-        <Button onClick={() => setShowCreateDialog(true)} className="gap-2">
-          <Plus className="w-4 h-4" />
-          Nuevo Desafío
-        </Button>
       </div>
 
       {/* Stats */}
       <div className="grid gap-4 md:grid-cols-4">
         <Card>
           <CardHeader className="pb-2">
-            <CardTitle className="text-sm font-medium text-muted-foreground">Activas</CardTitle>
+            <CardTitle className="text-sm font-medium text-muted-foreground">En Convocatoria</CardTitle>
           </CardHeader>
           <CardContent>
-            <div className="text-2xl font-bold">{groupedCordadas.active.length}</div>
+            <div className="text-2xl font-bold text-primary">{groupedCordadas.pending.length}</div>
+          </CardContent>
+        </Card>
+        <Card>
+          <CardHeader className="pb-2">
+            <CardTitle className="text-sm font-medium text-muted-foreground">En Curso</CardTitle>
+          </CardHeader>
+          <CardContent>
+            <div className="text-2xl font-bold text-accent-foreground">{groupedCordadas.active.length}</div>
           </CardContent>
         </Card>
         <Card>
@@ -91,15 +94,7 @@ export function CordadasPanel() {
             <CardTitle className="text-sm font-medium text-muted-foreground">Cumbres Alcanzadas</CardTitle>
           </CardHeader>
           <CardContent>
-            <div className="text-2xl font-bold text-green-600">{groupedCordadas.completed.length}</div>
-          </CardContent>
-        </Card>
-        <Card>
-          <CardHeader className="pb-2">
-            <CardTitle className="text-sm font-medium text-muted-foreground">Borradores</CardTitle>
-          </CardHeader>
-          <CardContent>
-            <div className="text-2xl font-bold text-muted-foreground">{groupedCordadas.draft.length}</div>
+            <div className="text-2xl font-bold text-secondary-foreground">{groupedCordadas.completed.length}</div>
           </CardContent>
         </Card>
         <Card>
@@ -112,12 +107,77 @@ export function CordadasPanel() {
         </Card>
       </div>
 
-      {/* Active Cordadas */}
+      {/* Pending Cordadas (Convocatoria) - Need team assignment */}
+      {groupedCordadas.pending.length > 0 && (
+        <div className="space-y-4">
+          <h3 className="text-lg font-semibold flex items-center gap-2 text-primary">
+            <Mountain className="w-5 h-5" />
+            Pendientes de Equipo
+          </h3>
+          <div className="grid gap-4 md:grid-cols-2">
+            {groupedCordadas.pending.map(cordada => {
+              const statusInfo = getCordadaStatusInfo(cordada.status);
+              const teamSize = memberCounts?.[cordada.id] || 0;
+              return (
+                <Card 
+                  key={cordada.id} 
+                  className="cursor-pointer hover:shadow-md transition-shadow border-primary/30"
+                  onClick={() => setSelectedCordada(cordada)}
+                >
+                  <CardHeader className="pb-2">
+                    <div className="flex items-start justify-between">
+                      <div className="space-y-1">
+                        <CardTitle className="text-lg">{cordada.title}</CardTitle>
+                        {cordada.client_company && (
+                          <p className="text-sm text-muted-foreground flex items-center gap-1">
+                            <Building2 className="w-3 h-3" />
+                            {cordada.client_company}
+                          </p>
+                        )}
+                      </div>
+                      <div className="flex flex-col items-end gap-1">
+                        <Badge className={statusInfo.color}>{statusInfo.name}</Badge>
+                        {teamSize === 0 && (
+                          <Badge variant="outline" className="text-primary border-primary/50">
+                            Sin equipo
+                          </Badge>
+                        )}
+                      </div>
+                    </div>
+                  </CardHeader>
+                  <CardContent>
+                    <p className="text-sm text-muted-foreground line-clamp-2 mb-4">
+                      {cordada.description || 'Sin descripción'}
+                    </p>
+                    <div className="flex items-center justify-between text-sm">
+                      <div className="flex items-center gap-4">
+                        <span className="flex items-center gap-1">
+                          <Users className="w-4 h-4" />
+                          {teamSize} miembros
+                        </span>
+                        {cordada.start_date && (
+                          <span className="flex items-center gap-1">
+                            <Calendar className="w-4 h-4" />
+                            {format(new Date(cordada.start_date), 'dd MMM yyyy', { locale: es })}
+                          </span>
+                        )}
+                      </div>
+                      <ChevronRight className="w-4 h-4 text-muted-foreground" />
+                    </div>
+                  </CardContent>
+                </Card>
+              );
+            })}
+          </div>
+        </div>
+      )}
+
+      {/* Active Cordadas (En Curso) */}
       {groupedCordadas.active.length > 0 && (
         <div className="space-y-4">
           <h3 className="text-lg font-semibold flex items-center gap-2">
             <Mountain className="w-5 h-5" />
-            Cordadas Activas
+            Cordadas En Curso
           </h3>
           <div className="grid gap-4 md:grid-cols-2">
             {groupedCordadas.active.map(cordada => {
@@ -133,7 +193,10 @@ export function CordadasPanel() {
                       <div className="space-y-1">
                         <CardTitle className="text-lg">{cordada.title}</CardTitle>
                         {cordada.client_company && (
-                          <p className="text-sm text-muted-foreground">{cordada.client_company}</p>
+                          <p className="text-sm text-muted-foreground flex items-center gap-1">
+                            <Building2 className="w-3 h-3" />
+                            {cordada.client_company}
+                          </p>
                         )}
                       </div>
                       <Badge className={statusInfo.color}>{statusInfo.name}</Badge>
@@ -166,19 +229,22 @@ export function CordadasPanel() {
         </div>
       )}
 
-      {/* Draft Cordadas */}
-      {groupedCordadas.draft.length > 0 && (
+      {/* Completed Cordadas */}
+      {groupedCordadas.completed.length > 0 && (
         <div className="space-y-4">
-          <h3 className="text-lg font-semibold text-muted-foreground">Borradores</h3>
+          <h3 className="text-lg font-semibold text-secondary-foreground">Cumbres Alcanzadas</h3>
           <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-3">
-            {groupedCordadas.draft.map(cordada => (
+            {groupedCordadas.completed.map(cordada => (
               <Card 
                 key={cordada.id} 
-                className="cursor-pointer hover:shadow-md transition-shadow opacity-75"
+                className="cursor-pointer hover:shadow-md transition-shadow"
                 onClick={() => setSelectedCordada(cordada)}
               >
                 <CardHeader className="pb-2">
                   <CardTitle className="text-base">{cordada.title}</CardTitle>
+                  {cordada.client_company && (
+                    <p className="text-sm text-muted-foreground">{cordada.client_company}</p>
+                  )}
                 </CardHeader>
                 <CardContent>
                   <p className="text-sm text-muted-foreground line-clamp-2">
@@ -196,26 +262,13 @@ export function CordadasPanel() {
         <Card className="py-12">
           <CardContent className="text-center">
             <Mountain className="w-12 h-12 mx-auto mb-4 text-muted-foreground opacity-50" />
-            <h3 className="text-lg font-medium mb-2">No hay cordadas aún</h3>
-            <p className="text-muted-foreground mb-4">
-              Crea tu primer desafío para comenzar a orquestar equipos
+            <h3 className="text-lg font-medium mb-2">No hay desafíos publicados</h3>
+            <p className="text-muted-foreground">
+              Los desafíos aparecerán aquí cuando los clientes los publiquen
             </p>
-            <Button onClick={() => setShowCreateDialog(true)} className="gap-2">
-              <Plus className="w-4 h-4" />
-              Crear Desafío
-            </Button>
           </CardContent>
         </Card>
       )}
-
-      <CreateCordadaDialog 
-        open={showCreateDialog} 
-        onOpenChange={setShowCreateDialog}
-        onSuccess={() => {
-          refetch();
-          setShowCreateDialog(false);
-        }}
-      />
 
       {selectedCordada && (
         <CordadaDetailDialog
