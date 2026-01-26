@@ -202,8 +202,8 @@ const Auth = () => {
               <Briefcase className="w-6 h-6 text-accent-foreground" />
             </div>
             <div>
-              <h1 className="text-2xl font-bold">ConsultHub</h1>
-              <p className="text-primary-foreground/70">Marketplace B2B</p>
+              <h1 className="text-2xl font-bold">CORDADA</h1>
+              <p className="text-primary-foreground/70">Ecosistema de Consultoría</p>
             </div>
           </div>
           <h2 className="text-4xl font-bold leading-tight mb-6">
@@ -239,7 +239,7 @@ const Auth = () => {
               <div className="w-10 h-10 rounded-lg bg-gradient-gold flex items-center justify-center">
                 <Briefcase className="w-5 h-5 text-accent-foreground" />
               </div>
-              <span className="text-xl font-bold">ConsultHub</span>
+              <span className="text-xl font-bold">CORDADA</span>
             </div>
             <CardTitle>Accede a tu cuenta</CardTitle>
             <CardDescription>
