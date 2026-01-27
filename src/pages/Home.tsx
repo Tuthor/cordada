@@ -298,7 +298,7 @@ const Home = () => {
               </div>
               <div className="flex items-center gap-4">
                 <p className="text-sm text-muted-foreground">
-                  © 2024 CORDADA. Todos los derechos reservados.
+                  © 2026 CORDADA. Todos los derechos reservados.
                 </p>
                 <Link 
                   to="/admin/login" 
