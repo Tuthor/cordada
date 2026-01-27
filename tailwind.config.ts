@@ -63,6 +63,10 @@ export default {
           DEFAULT: "hsl(var(--warning))",
           foreground: "hsl(var(--warning-foreground))",
         },
+        "mountaineer-red": {
+          DEFAULT: "hsl(var(--mountaineer-red))",
+          foreground: "hsl(var(--mountaineer-red-foreground))",
+        },
         slate: {
           deep: "hsl(var(--slate-deep))",
           medium: "hsl(var(--slate-medium))",

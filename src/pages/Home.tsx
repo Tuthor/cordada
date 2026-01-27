@@ -96,7 +96,7 @@ const Home = () => {
         >
           <div className="container mx-auto px-4">
             <div className="max-w-4xl mx-auto text-center">
-              <div className="inline-flex items-center gap-2 px-4 py-2 rounded-full bg-gold/20 text-gold mb-6">
+              <div className="inline-flex items-center gap-2 px-4 py-2 rounded-full bg-mountaineer-red text-mountaineer-red-foreground mb-6">
                 <Star className="w-4 h-4" />
                 <span className="text-sm font-medium">Plataforma #1 de Consultoría B2B</span>
               </div>
