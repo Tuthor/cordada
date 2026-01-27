@@ -56,7 +56,7 @@ const Home = () => {
 
       <div className="min-h-screen bg-background">
         {/* Navigation */}
-        <nav className="sticky top-0 z-50 bg-background/95 backdrop-blur border-b border-border">
+        <nav className="sticky top-0 z-50 bg-muted backdrop-blur border-b border-border">
           <div className="container mx-auto px-4 h-16 flex items-center justify-between">
             <Link to="/" className="flex items-center gap-3">
               <div className="w-10 h-10 rounded-lg bg-gradient-gold flex items-center justify-center">
