@@ -2,7 +2,6 @@ import { Link } from 'react-router-dom';
 import { Helmet, HelmetProvider } from 'react-helmet-async';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
-import Assessment from '@/components/Assessment';
 import { useAuth } from '@/contexts/AuthContext';
 import { useQuery } from '@tanstack/react-query';
 import { supabase } from '@/integrations/supabase/client';
@@ -16,7 +15,8 @@ import {
   CheckCircle,
   Star,
   Handshake,
-  Quote
+  Quote,
+  ClipboardCheck
 } from 'lucide-react';
 
 const CONSULTANT_THRESHOLD = 20;
@@ -176,7 +176,7 @@ const Home = () => {
                   </Link>
                 </Button>
                 <Button variant="outline-gold" size="xl" asChild>
-                  <Link to="#assessment">
+                  <Link to="/evaluacion-consultor">
                     Evalúa tu Nivel
                   </Link>
                 </Button>
@@ -257,48 +257,70 @@ const Home = () => {
             </div>
             <div className="grid md:grid-cols-3 gap-8 max-w-6xl mx-auto">
               {/* For Clients */}
-              <Card>
+              <Card className="flex flex-col">
                 <CardHeader>
                   <div className="w-12 h-12 rounded-lg bg-primary flex items-center justify-center mb-4">
                     <Building2 className="w-6 h-6 text-primary-foreground" />
                   </div>
                   <CardTitle>Para Empresas</CardTitle>
                 </CardHeader>
-                <CardContent className="space-y-3">
-                  {[
-                    'Publica tu proyecto con requisitos específicos',
-                    'Recibe propuestas de consultores calificados',
-                    'Revisa perfiles y selecciona al mejor candidato',
-                    'Gestiona el proyecto y la comunicación en un solo lugar',
-                  ].map((step, i) => (
-                    <div key={i} className="flex items-start gap-3">
-                      <CheckCircle className="w-5 h-5 text-success flex-shrink-0 mt-0.5" />
-                      <span className="text-muted-foreground">{step}</span>
-                    </div>
-                  ))}
+                <CardContent className="flex-1 flex flex-col">
+                  <div className="space-y-3 flex-1">
+                    {[
+                      'Publica tu proyecto con requisitos específicos',
+                      'Recibe propuestas de consultores calificados',
+                      'Revisa perfiles y selecciona al mejor candidato',
+                      'Gestiona el proyecto y la comunicación en un solo lugar',
+                    ].map((step, i) => (
+                      <div key={i} className="flex items-start gap-3">
+                        <CheckCircle className="w-5 h-5 text-success flex-shrink-0 mt-0.5" />
+                        <span className="text-muted-foreground">{step}</span>
+                      </div>
+                    ))}
+                  </div>
+                  <div className="pt-6 mt-auto">
+                    <Button variant="outline" className="w-full group" asChild>
+                      <Link to="/diagnostico-empresarial">
+                        <ClipboardCheck className="w-4 h-4 mr-2" />
+                        Realizar Diagnóstico Empresarial
+                        <ArrowRight className="w-4 h-4 ml-2 group-hover:translate-x-1 transition-transform" />
+                      </Link>
+                    </Button>
+                  </div>
                 </CardContent>
               </Card>
 
               {/* For Consultants */}
-              <Card>
+              <Card className="flex flex-col">
                 <CardHeader>
                   <div className="w-12 h-12 rounded-lg bg-gold flex items-center justify-center mb-4">
                     <Users className="w-6 h-6 text-accent-foreground" />
                   </div>
                   <CardTitle>Para Consultores</CardTitle>
                 </CardHeader>
-                <CardContent className="space-y-3">
-                  {[
-                    'Crea tu perfil profesional verificado',
-                    'Explora proyectos que coincidan con tu expertise',
-                    'Envía propuestas personalizadas',
-                    'Crece profesionalmente con nuestra capacitación',
-                  ].map((step, i) => (
-                    <div key={i} className="flex items-start gap-3">
-                      <CheckCircle className="w-5 h-5 text-success flex-shrink-0 mt-0.5" />
-                      <span className="text-muted-foreground">{step}</span>
-                    </div>
-                  ))}
+                <CardContent className="flex-1 flex flex-col">
+                  <div className="space-y-3 flex-1">
+                    {[
+                      'Crea tu perfil profesional verificado',
+                      'Explora proyectos que coincidan con tu expertise',
+                      'Envía propuestas personalizadas',
+                      'Crece profesionalmente con nuestra capacitación',
+                    ].map((step, i) => (
+                      <div key={i} className="flex items-start gap-3">
+                        <CheckCircle className="w-5 h-5 text-success flex-shrink-0 mt-0.5" />
+                        <span className="text-muted-foreground">{step}</span>
+                      </div>
+                    ))}
+                  </div>
+                  <div className="pt-6 mt-auto">
+                    <Button variant="gold" className="w-full group" asChild>
+                      <Link to="/evaluacion-consultor">
+                        <ClipboardCheck className="w-4 h-4 mr-2" />
+                        Evaluar mi Nivel de Madurez
+                        <ArrowRight className="w-4 h-4 ml-2 group-hover:translate-x-1 transition-transform" />
+                      </Link>
+                    </Button>
+                  </div>
                 </CardContent>
               </Card>
 
@@ -328,21 +350,6 @@ const Home = () => {
           </div>
         </section>
 
-        {/* Assessment Section */}
-        <section id="assessment" className="py-20">
-          <div className="container mx-auto px-4">
-            <div className="text-center mb-12">
-              <h2 className="text-3xl font-bold text-foreground mb-4">
-                Descubre tu Nivel de Madurez en Consultoría
-              </h2>
-              <p className="text-muted-foreground max-w-2xl mx-auto">
-                Realiza nuestra evaluación diagnóstica y recibe recomendaciones personalizadas 
-                para tu desarrollo profesional.
-              </p>
-            </div>
-          </div>
-          <Assessment />
-        </section>
 
         {/* CTA Section */}
         <section className="py-20 bg-gradient-hero text-primary-foreground">

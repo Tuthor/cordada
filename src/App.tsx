@@ -27,6 +27,8 @@ import AdminDashboard from "./pages/AdminDashboard";
 import ResetPassword from "./pages/ResetPassword";
 import ClientRequirements from "./pages/ClientRequirements";
 import ConsultantRequirements from "./pages/ConsultantRequirements";
+import BusinessDiagnostic from "./pages/BusinessDiagnostic";
+import ConsultantAssessment from "./pages/ConsultantAssessment";
 
 const queryClient = new QueryClient();
 
@@ -39,6 +41,8 @@ const App = () => (
         <AuthProvider>
           <Routes>
             <Route path="/" element={<Home />} />
+            <Route path="/diagnostico-empresarial" element={<BusinessDiagnostic />} />
+            <Route path="/evaluacion-consultor" element={<ConsultantAssessment />} />
             <Route path="/auth" element={<Auth />} />
             <Route path="/dashboard" element={<Dashboard />} />
             <Route path="/partner" element={<PartnerDashboard />} />
