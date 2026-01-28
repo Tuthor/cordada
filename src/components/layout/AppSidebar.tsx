@@ -118,7 +118,7 @@ export function AppSidebar() {
     const baseItems = [
       { title: "Inicio", url: "/dashboard", icon: Home, badge: 0 },
       { title: "Directorio", url: "/directory", icon: Users, badge: 0 },
-      { title: "Proyectos", url: "/projects", icon: Briefcase, badge: 0 },
+      { title: "Desafíos", url: "/projects", icon: Briefcase, badge: 0 },
       { title: "Inbox", url: "/inbox", icon: Inbox, badge: unreadCount },
       { title: "Propuestas", url: "/proposals", icon: FileText, badge: 0 },
       { title: "Capacitación", url: "/training", icon: GraduationCap, badge: 0 },

@@ -60,7 +60,7 @@ const ProjectEdit = () => {
     if (error || !data) {
       toast({
         title: 'Error',
-        description: 'No se pudo cargar el proyecto',
+        description: 'No se pudo cargar el desafío',
         variant: 'destructive',
       });
       navigate('/projects');
@@ -71,7 +71,7 @@ const ProjectEdit = () => {
     if (data.client_id !== user?.id) {
       toast({
         title: 'Acceso denegado',
-        description: 'No tienes permiso para editar este proyecto',
+        description: 'No tienes permiso para editar este desafío',
         variant: 'destructive',
       });
       navigate('/projects');
@@ -123,7 +123,7 @@ const ProjectEdit = () => {
       });
     } else {
       toast({
-        title: 'Proyecto actualizado',
+        title: 'Desafío actualizado',
         description: 'Los cambios han sido guardados exitosamente',
       });
       navigate(`/projects/${id}`);
@@ -156,18 +156,18 @@ const ProjectEdit = () => {
           <Button variant="ghost" asChild className="mb-4">
             <Link to={`/projects/${id}`}>
               <ArrowLeft className="w-4 h-4 mr-2" />
-              Volver al Proyecto
+              Volver al Desafío
             </Link>
           </Button>
-          <h1 className="text-2xl font-bold text-foreground">Editar Proyecto</h1>
+          <h1 className="text-2xl font-bold text-foreground">Editar Desafío</h1>
           <p className="text-muted-foreground">
-            Actualiza la información de tu proyecto
+            Actualiza la información de tu desafío
           </p>
         </div>
 
         <Card>
           <CardHeader>
-            <CardTitle>Detalles del Proyecto</CardTitle>
+            <CardTitle>Detalles del Desafío</CardTitle>
             <CardDescription>
               Modifica los campos que necesites actualizar
             </CardDescription>
@@ -180,7 +180,7 @@ const ProjectEdit = () => {
                   name="title"
                   render={({ field }) => (
                     <FormItem>
-                      <FormLabel>Título del Proyecto *</FormLabel>
+                      <FormLabel>Título del Desafío *</FormLabel>
                       <FormControl>
                         <Input 
                           placeholder="Ej: Consultoría en Transformación Digital" 
@@ -200,7 +200,7 @@ const ProjectEdit = () => {
                       <FormLabel>Descripción *</FormLabel>
                       <FormControl>
                         <Textarea 
-                          placeholder="Describe el proyecto, objetivos y alcance..." 
+                          placeholder="Describe el desafío, objetivos y alcance..." 
                           className="min-h-32"
                           {...field} 
                         />

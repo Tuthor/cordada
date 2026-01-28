@@ -210,10 +210,10 @@ const Projects = () => {
         {/* Header */}
         <div className="flex flex-col gap-4 md:flex-row md:items-center md:justify-between">
           <div>
-            <h1 className="text-2xl font-bold text-foreground">Proyectos</h1>
+            <h1 className="text-2xl font-bold text-foreground">Desafíos</h1>
             <p className="text-muted-foreground">
               {userRole === 'client' 
-                ? 'Gestiona tus proyectos publicados' 
+                ? 'Gestiona tus desafíos publicados' 
                 : 'Encuentra oportunidades de consultoría'}
             </p>
           </div>
@@ -221,7 +221,7 @@ const Projects = () => {
             <Button variant="gold" asChild>
               <Link to="/projects/new">
                 <Plus className="w-4 h-4 mr-2" />
-                Nuevo Proyecto
+                Nuevo Desafío
               </Link>
             </Button>
           )}
@@ -232,7 +232,7 @@ const Projects = () => {
           <div className="relative flex-1 max-w-md">
             <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
             <Input
-              placeholder="Buscar proyectos..."
+              placeholder="Buscar desafíos..."
               className="pl-10"
               value={searchTerm}
               onChange={(e) => setSearchTerm(e.target.value)}
@@ -365,20 +365,20 @@ const ProjectList = ({
         <CardContent className="flex flex-col items-center justify-center py-12">
           <Briefcase className="w-12 h-12 text-muted-foreground mb-4" />
           <h3 className="text-lg font-semibold text-foreground mb-2">
-            No hay proyectos
+            No hay desafíos
           </h3>
           <p className="text-muted-foreground text-center max-w-md">
             {searchTerm
               ? 'Intenta con otros términos de búsqueda'
               : userRole === 'client'
-              ? 'Publica tu primer proyecto para recibir propuestas'
-              : 'Aún no hay proyectos disponibles'}
+              ? 'Publica tu primer desafío para recibir propuestas'
+              : 'Aún no hay desafíos disponibles'}
           </p>
           {userRole === 'client' && !searchTerm && (
             <Button variant="gold" className="mt-4" asChild>
               <Link to="/projects/new">
                 <Plus className="w-4 h-4 mr-2" />
-                Nuevo Proyecto
+                Nuevo Desafío
               </Link>
             </Button>
           )}
@@ -477,7 +477,7 @@ const ProjectList = ({
                       <Button variant="gold" asChild>
                         <Link to={`/projects/${project.id}`}>
                           <Eye className="w-4 h-4 mr-2" />
-                          {userRole === 'client' ? 'Ver Detalles' : 'Ver Proyecto'}
+                          {userRole === 'client' ? 'Ver Detalles' : 'Ver Desafío'}
                         </Link>
                       </Button>
                       
