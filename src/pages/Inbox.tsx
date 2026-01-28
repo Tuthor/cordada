@@ -426,25 +426,25 @@ const Inbox = () => {
                     </DialogHeader>
                     <div className="space-y-4 pt-4">
                       <p className="text-sm text-muted-foreground">
-                        Selecciona un proyecto activo para iniciar una conversación con el cliente o consultor asociado.
+                        Selecciona un desafío activo para iniciar una conversación con el cliente o consultor asociado.
                       </p>
                       {loadingProjects ? (
                         <div className="text-center py-4 text-muted-foreground">
-                          Cargando proyectos...
+                          Cargando desafíos...
                         </div>
                       ) : availableProjects.length === 0 && mutualProjects.length === 0 ? (
                         <div className="text-center py-4 text-muted-foreground">
-                          No tienes proyectos activos con propuestas aceptadas.
+                          No tienes desafíos activos con propuestas aceptadas.
                         </div>
                       ) : availableProjects.length === 0 ? (
                         <div className="text-center py-4 text-muted-foreground">
-                          Ya tienes conversaciones con todos tus contactos de proyectos activos.
+                          Ya tienes conversaciones con todos tus contactos de desafíos activos.
                         </div>
                       ) : (
                         <>
                           <Select value={selectedProject} onValueChange={setSelectedProject}>
                             <SelectTrigger>
-                              <SelectValue placeholder="Selecciona un proyecto" />
+                              <SelectValue placeholder="Selecciona un desafío" />
                             </SelectTrigger>
                             <SelectContent className="bg-background border">
                               {availableProjects.map((project) => (

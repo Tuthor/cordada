@@ -235,7 +235,7 @@ const ProjectDetail = () => {
         <Button variant="ghost" asChild>
           <Link to="/projects">
             <ArrowLeft className="w-4 h-4 mr-2" />
-            Volver a Proyectos
+            Volver a Desafíos
           </Link>
         </Button>
 
@@ -428,7 +428,7 @@ const ProjectDetail = () => {
 
             {/* Description */}
             <div>
-              <h3 className="font-semibold mb-3">Descripción del Proyecto</h3>
+              <h3 className="font-semibold mb-3">Descripción del Desafío</h3>
               {isLocked ? (
                 <div className="p-4 bg-muted rounded-lg text-center">
                   <Lock className="w-6 h-6 mx-auto mb-2 text-muted-foreground" />

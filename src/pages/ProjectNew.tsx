@@ -99,18 +99,18 @@ const ProjectNew = () => {
           <Button variant="ghost" asChild className="mb-4">
             <Link to="/projects">
               <ArrowLeft className="w-4 h-4 mr-2" />
-              Volver a Proyectos
+              Volver a Desafíos
             </Link>
           </Button>
-          <h1 className="text-2xl font-bold text-foreground">Publicar Nuevo Proyecto</h1>
+          <h1 className="text-2xl font-bold text-foreground">Publicar Nuevo Desafío</h1>
           <p className="text-muted-foreground">
-            Describe tu proyecto para atraer a los mejores consultores
+            Describe tu desafío para atraer a los mejores consultores
           </p>
         </div>
 
         <Card>
           <CardHeader>
-            <CardTitle>Detalles del Proyecto</CardTitle>
+            <CardTitle>Detalles del Desafío</CardTitle>
             <CardDescription>
               Proporciona información clara y detallada
             </CardDescription>
@@ -123,7 +123,7 @@ const ProjectNew = () => {
                   name="title"
                   render={({ field }) => (
                     <FormItem>
-                      <FormLabel>Título del Proyecto *</FormLabel>
+                      <FormLabel>Título del Desafío *</FormLabel>
                       <FormControl>
                         <Input 
                           placeholder="Ej: Consultoría en Transformación Digital" 
@@ -143,7 +143,7 @@ const ProjectNew = () => {
                       <FormLabel>Descripción *</FormLabel>
                       <FormControl>
                         <Textarea 
-                          placeholder="Describe el proyecto, objetivos y alcance..." 
+                          placeholder="Describe el desafío, objetivos y alcance..." 
                           className="min-h-32"
                           {...field} 
                         />
@@ -263,7 +263,7 @@ const ProjectNew = () => {
                     disabled={isSubmitting}
                     className="flex-1"
                   >
-                    {isSubmitting ? 'Publicando...' : 'Publicar Proyecto'}
+                    {isSubmitting ? 'Publicando...' : 'Publicar Desafío'}
                   </Button>
                 </div>
               </form>

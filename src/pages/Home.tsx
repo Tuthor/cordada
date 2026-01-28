@@ -64,8 +64,8 @@ const Home = () => {
     },
     {
       icon: FileText,
-      title: 'Proyectos & Propuestas',
-      description: 'Publica proyectos y recibe propuestas de expertos calificados',
+      title: 'Desafíos & Propuestas',
+      description: 'Publica desafíos y recibe propuestas de expertos calificados',
     },
     {
       icon: GraduationCap,
@@ -77,7 +77,7 @@ const Home = () => {
   const stats = [
     { value: `${platformStats?.consultants || 0}+`, label: 'Consultores' },
     { value: `${platformStats?.companies || 0}+`, label: 'Empresas' },
-    { value: `${platformStats?.projects || 0}+`, label: 'Proyectos' },
+    { value: `${platformStats?.projects || 0}+`, label: 'Desafíos' },
     { value: '95%', label: 'Satisfacción' },
   ];
 
@@ -302,7 +302,7 @@ const Home = () => {
                   <div className="space-y-3 flex-1">
                     {[
                       'Crea tu perfil profesional verificado',
-                      'Explora proyectos que coincidan con tu expertise',
+                      'Explora desafíos que coincidan con tu expertise',
                       'Envía propuestas personalizadas',
                       'Crece profesionalmente con nuestra capacitación',
                     ].map((step, i) => (

@@ -78,7 +78,7 @@ const ProjectApply = () => {
     if (error || !data) {
       toast({
         title: 'Error',
-        description: 'No se pudo cargar el proyecto',
+        description: 'No se pudo cargar el desafío',
         variant: 'destructive',
       });
       navigate('/projects');
@@ -87,8 +87,8 @@ const ProjectApply = () => {
 
     if (data.status !== 'open') {
       toast({
-        title: 'Proyecto no disponible',
-        description: 'Este proyecto ya no acepta propuestas',
+        title: 'Desafío no disponible',
+        description: 'Este desafío ya no acepta propuestas',
         variant: 'destructive',
       });
       navigate('/projects');
@@ -110,7 +110,7 @@ const ProjectApply = () => {
         if (existingProposal.status !== 'draft') {
           toast({
             title: 'Ya postulaste',
-            description: 'Ya enviaste una propuesta para este proyecto',
+            description: 'Ya enviaste una propuesta para este desafío',
           });
           navigate(`/projects/${id}`);
           return;
@@ -288,7 +288,7 @@ const ProjectApply = () => {
         <Button variant="ghost" asChild>
           <Link to={`/projects/${id}`}>
             <ArrowLeft className="w-4 h-4 mr-2" />
-            Volver al Proyecto
+            Volver al Desafío
           </Link>
         </Button>
 
@@ -441,7 +441,7 @@ const ProjectApply = () => {
 
                 <Separator />
 
-                <FormField
+                  <FormField
                   control={form.control}
                   name="cover_letter"
                   render={({ field }) => (
@@ -449,7 +449,7 @@ const ProjectApply = () => {
                       <FormLabel>Carta de Presentación *</FormLabel>
                       <FormControl>
                         <Textarea 
-                          placeholder="Preséntate, explica por qué eres el candidato ideal y cómo abordarías este proyecto..."
+                          placeholder="Preséntate, explica por qué eres el candidato ideal y cómo abordarías este desafío..."
                           className="min-h-32"
                           {...field} 
                         />

@@ -35,7 +35,7 @@ const roleOptions = [
   {
     value: 'client' as const,
     label: 'Cliente (Empresa)',
-    description: 'Busco consultores para mis proyectos',
+    description: 'Busco consultores para mis desafíos',
     icon: Building2,
   },
   {

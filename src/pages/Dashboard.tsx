@@ -22,7 +22,7 @@ const Dashboard = () => {
   }
 
   const stats = [
-    { label: 'Proyectos Activos', value: '12', icon: Briefcase, color: 'text-primary' },
+    { label: 'Desafíos Activos', value: '12', icon: Briefcase, color: 'text-primary' },
     { label: 'Propuestas Enviadas', value: '24', icon: FileText, color: 'text-gold' },
     { label: 'Consultores Conectados', value: '8', icon: Users, color: 'text-success' },
     { label: 'Tasa de Éxito', value: '78%', icon: TrendingUp, color: 'text-primary' },
@@ -61,7 +61,7 @@ const Dashboard = () => {
               <Button variant="gold" asChild>
                 <Link to="/projects">
                   <Eye className="w-4 h-4 mr-2" />
-                  Ver Proyectos
+                  Ver Desafíos
                 </Link>
               </Button>
             )}
@@ -111,7 +111,7 @@ const Dashboard = () => {
             <CardHeader>
               <CardTitle className="flex items-center gap-2">
                 <Briefcase className="w-5 h-5 text-gold" />
-                Proyectos Abiertos
+                Desafíos Abiertos
               </CardTitle>
               <CardDescription>
                 Encuentra oportunidades de consultoría
@@ -120,7 +120,7 @@ const Dashboard = () => {
             <CardContent>
               <Button variant="outline" className="w-full group" asChild>
                 <Link to="/projects">
-                  Ver Proyectos
+                  Ver Desafíos
                   <ArrowRight className="w-4 h-4 ml-2 group-hover:translate-x-1 transition-transform" />
                 </Link>
               </Button>
