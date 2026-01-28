@@ -1,4 +1,4 @@
-import { useLocation } from "react-router-dom";
+import { useLocation, Link } from "react-router-dom";
 import { useState, useEffect } from "react";
 import { 
   Home, 
@@ -152,7 +152,7 @@ export function AppSidebar() {
       <SidebarContent>
         {/* Logo */}
         <div className={`p-4 border-b border-border ${collapsed ? 'px-2' : ''}`}>
-          <div className="flex items-center gap-3">
+          <Link to="/" className="flex items-center gap-3 hover:opacity-80 transition-opacity">
             <div className="w-10 h-10 rounded-lg bg-gradient-gold flex items-center justify-center">
               <Briefcase className="w-5 h-5 text-accent-foreground" />
             </div>
@@ -162,7 +162,7 @@ export function AppSidebar() {
                 <p className="text-xs text-muted-foreground">Ecosistema de Consultoría</p>
               </div>
             )}
-          </div>
+          </Link>
         </div>
 
         {/* Main Navigation */}
