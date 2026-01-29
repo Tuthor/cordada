@@ -280,11 +280,11 @@ const Home = () => {
                   </div>
                   <div className="pt-6 mt-auto">
                     <Button variant="outline" className="w-full group" asChild>
-                      <Link to="/diagnostico-empresarial">
+                      <a href="https://cordada-insights.lovable.app" target="_blank" rel="noopener noreferrer">
                         <ClipboardCheck className="w-4 h-4 mr-2" />
                         Realizar Diagnóstico Empresarial
                         <ArrowRight className="w-4 h-4 ml-2 group-hover:translate-x-1 transition-transform" />
-                      </Link>
+                      </a>
                     </Button>
                   </div>
                 </CardContent>
