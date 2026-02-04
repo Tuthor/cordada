@@ -5,6 +5,7 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/com
 import { useAuth } from '@/contexts/AuthContext';
 import { useQuery } from '@tanstack/react-query';
 import { supabase } from '@/integrations/supabase/client';
+import heroCordada from '@/assets/hero-cordada.jpeg';
 import { 
   Briefcase, 
   Users, 
@@ -152,7 +153,7 @@ const Home = () => {
         {/* Hero Section */}
         <section 
           className="relative text-primary-foreground py-20 lg:py-32 bg-cover bg-center bg-no-repeat"
-          style={{ backgroundImage: `linear-gradient(to right, hsl(var(--primary)) 0%, hsl(var(--primary) / 0.85) 40%, transparent 100%), url('/src/assets/hero-cordada.jpeg')` }}
+          style={{ backgroundImage: `linear-gradient(to right, hsl(var(--primary)) 0%, hsl(var(--primary) / 0.85) 40%, transparent 100%), url(${heroCordada})` }}
         >
           <div className="container mx-auto px-4">
             <div className="max-w-4xl mx-auto text-center">
