@@ -148,7 +148,7 @@ export default function ConsultantActivate() {
           <div>
             <h1 className="text-2xl font-bold">Activa tu cuenta CORDADA</h1>
             <p className="text-sm text-muted-foreground">
-              Bienvenido, <strong>{state.full_name}</strong> · {state.email}
+              Bienvenido, <strong>{invitation?.full_name}</strong> · {invitation?.email}
             </p>
           </div>
         </div>
@@ -248,10 +248,10 @@ export default function ConsultantActivate() {
           </Button>
           <Button
             variant="gold"
-            disabled={!canSubmit || state.kind === 'activating'}
+            disabled={!canSubmit || phase === 'activating'}
             onClick={handleActivate}
           >
-            {state.kind === 'activating' && <Loader2 className="w-4 h-4 mr-2 animate-spin" />}
+            {phase === 'activating' && <Loader2 className="w-4 h-4 mr-2 animate-spin" />}
             Activar mi cuenta
           </Button>
         </div>
