@@ -248,10 +248,10 @@ export default function ConsultantActivate() {
           </Button>
           <Button
             variant="gold"
-            disabled={!canSubmit || phase === 'activating'}
+            disabled={!canSubmit || (phase as Phase) === 'activating'}
             onClick={handleActivate}
           >
-            {phase === 'activating' && <Loader2 className="w-4 h-4 mr-2 animate-spin" />}
+            {(phase as Phase) === 'activating' && <Loader2 className="w-4 h-4 mr-2 animate-spin" />}
             Activar mi cuenta
           </Button>
         </div>
