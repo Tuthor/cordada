@@ -154,6 +154,66 @@ export function ApplicationDetailDialog({
     setIsSaving(false);
   };
 
+  const activationLink = application?.invitation_token
+    ? `${window.location.origin}/consultor/activar?token=${application.invitation_token}`
+    : null;
+
+  const invitationExpired =
+    application?.invitation_expires_at
+      ? new Date(application.invitation_expires_at) < new Date()
+      : false;
+
+  const handleSendInvitation = async () => {
+    if (!applicationId) return;
+    setIsInviting(true);
+    const { data, error } = await supabase.functions.invoke("send-consultant-invitation", {
+      body: { application_id: applicationId },
+    });
+    if (error || !data?.success) {
+      toast({
+        title: "Error al enviar invitación",
+        description: data?.error || error?.message || "Intenta nuevamente.",
+        variant: "destructive",
+      });
+    } else {
+      toast({
+        title: "Invitación enviada",
+        description: `Enlace enviado a ${application?.email}.`,
+      });
+      await fetchApplication();
+      onUpdate();
+    }
+    setIsInviting(false);
+  };
+
+  const handleCopyLink = async () => {
+    if (!activationLink) return;
+    await navigator.clipboard.writeText(activationLink);
+    toast({ title: "Enlace copiado", description: "Comparte este enlace con el consultor." });
+  };
+
+  const handleDelete = async () => {
+    if (!applicationId) return;
+    setIsDeleting(true);
+    const { data, error } = await supabase.functions.invoke("delete-consultant-application", {
+      body: { application_id: applicationId },
+    });
+    if (error || !data?.success) {
+      toast({
+        title: "Error al eliminar",
+        description: data?.error || error?.message || "Intenta nuevamente.",
+        variant: "destructive",
+      });
+      setIsDeleting(false);
+      return;
+    }
+    toast({ title: "Postulación eliminada" });
+    setIsDeleting(false);
+    setConfirmDeleteOpen(false);
+    onOpenChange(false);
+    onUpdate();
+  };
+
   const getStatusBadgeVariant = (s: ApplicationStatus) => {
     switch (s) {
       case 'aceptado': return 'default';
