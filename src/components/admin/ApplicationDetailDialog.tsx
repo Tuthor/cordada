@@ -18,12 +18,22 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select";
-import { Loader2, Save, AlertTriangle, Calendar, FileText } from "lucide-react";
+import { Loader2, Save, AlertTriangle, Calendar, FileText, Send, Copy, Trash2, CheckCircle2 } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
 import { applicationStatuses, consultantArchetypes, getStatusInfo, getArchetypeInfo } from "@/data/orchestrationData";
 import { ApplicationStatus, ConsultantArchetype } from "@/types/orchestration";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Separator } from "@/components/ui/separator";
+import {
+  AlertDialog,
+  AlertDialogAction,
+  AlertDialogCancel,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle,
+} from "@/components/ui/alert-dialog";
 
 interface ApplicationDetailDialogProps {
   applicationId: string | null;
@@ -53,6 +63,11 @@ interface ApplicationData {
   code_of_conduct_accepted_at: string | null;
   admin_notes: string | null;
   active_risk_alerts: string[] | null;
+  user_id: string | null;
+  invitation_token: string | null;
+  invitation_sent_at: string | null;
+  invitation_expires_at: string | null;
+  data_consent_accepted_at: string | null;
   created_at: string;
   updated_at: string;
 }
@@ -70,6 +85,9 @@ export function ApplicationDetailDialog({
   const [archetype, setArchetype] = useState<ConsultantArchetype | "">("");
   const [adminNotes, setAdminNotes] = useState("");
   const [interviewNotes, setInterviewNotes] = useState("");
+  const [isInviting, setIsInviting] = useState(false);
+  const [isDeleting, setIsDeleting] = useState(false);
+  const [confirmDeleteOpen, setConfirmDeleteOpen] = useState(false);
   const { toast } = useToast();
 
   useEffect(() => {
@@ -136,6 +154,66 @@ export function ApplicationDetailDialog({
     setIsSaving(false);
   };
 
+  const activationLink = application?.invitation_token
+    ? `${window.location.origin}/consultor/activar?token=${application.invitation_token}`
+    : null;
+
+  const invitationExpired =
+    application?.invitation_expires_at
+      ? new Date(application.invitation_expires_at) < new Date()
+      : false;
+
+  const handleSendInvitation = async () => {
+    if (!applicationId) return;
+    setIsInviting(true);
+    const { data, error } = await supabase.functions.invoke("send-consultant-invitation", {
+      body: { application_id: applicationId },
+    });
+    if (error || !data?.success) {
+      toast({
+        title: "Error al enviar invitación",
+        description: data?.error || error?.message || "Intenta nuevamente.",
+        variant: "destructive",
+      });
+    } else {
+      toast({
+        title: "Invitación enviada",
+        description: `Enlace enviado a ${application?.email}.`,
+      });
+      await fetchApplication();
+      onUpdate();
+    }
+    setIsInviting(false);
+  };
+
+  const handleCopyLink = async () => {
+    if (!activationLink) return;
+    await navigator.clipboard.writeText(activationLink);
+    toast({ title: "Enlace copiado", description: "Comparte este enlace con el consultor." });
+  };
+
+  const handleDelete = async () => {
+    if (!applicationId) return;
+    setIsDeleting(true);
+    const { data, error } = await supabase.functions.invoke("delete-consultant-application", {
+      body: { application_id: applicationId },
+    });
+    if (error || !data?.success) {
+      toast({
+        title: "Error al eliminar",
+        description: data?.error || error?.message || "Intenta nuevamente.",
+        variant: "destructive",
+      });
+      setIsDeleting(false);
+      return;
+    }
+    toast({ title: "Postulación eliminada" });
+    setIsDeleting(false);
+    setConfirmDeleteOpen(false);
+    onOpenChange(false);
+    onUpdate();
+  };
+
   const getStatusBadgeVariant = (s: ApplicationStatus) => {
     switch (s) {
       case 'aceptado': return 'default';
@@ -164,10 +242,11 @@ export function ApplicationDetailDialog({
           </div>
         ) : application ? (
           <Tabs defaultValue="info" className="w-full">
-            <TabsList className="grid w-full grid-cols-3">
+            <TabsList className="grid w-full grid-cols-4">
               <TabsTrigger value="info">Información</TabsTrigger>
               <TabsTrigger value="classification">Clasificación</TabsTrigger>
               <TabsTrigger value="notes">Notas</TabsTrigger>
+              <TabsTrigger value="access">Acceso</TabsTrigger>
             </TabsList>
 
             <TabsContent value="info" className="space-y-4 mt-4">
@@ -341,6 +420,97 @@ export function ApplicationDetailDialog({
                 </div>
               </div>
             </TabsContent>
+
+            <TabsContent value="access" className="space-y-4 mt-4">
+              <div className="p-4 rounded-lg border bg-muted/30 space-y-3">
+                <div className="flex items-center gap-2">
+                  <FileText className="w-4 h-4 text-muted-foreground" />
+                  <Label className="font-medium">Estado de acceso al ecosistema</Label>
+                </div>
+                {application.user_id ? (
+                  <div className="flex items-center gap-2 text-sm text-green-600">
+                    <CheckCircle2 className="w-4 h-4" />
+                    Cuenta activada
+                    {application.data_consent_accepted_at && (
+                      <span className="text-muted-foreground">
+                        · el {new Date(application.data_consent_accepted_at).toLocaleDateString("es-CL")}
+                      </span>
+                    )}
+                  </div>
+                ) : application.invitation_token ? (
+                  <div className="space-y-2 text-sm">
+                    <div>
+                      Invitación enviada el{" "}
+                      <strong>
+                        {application.invitation_sent_at
+                          ? new Date(application.invitation_sent_at).toLocaleString("es-CL")
+                          : "-"}
+                      </strong>
+                    </div>
+                    <div>
+                      Expira:{" "}
+                      <strong className={invitationExpired ? "text-destructive" : ""}>
+                        {application.invitation_expires_at
+                          ? new Date(application.invitation_expires_at).toLocaleString("es-CL")
+                          : "-"}
+                        {invitationExpired && " (expirada)"}
+                      </strong>
+                    </div>
+                    {activationLink && (
+                      <div className="p-2 rounded bg-background border font-mono text-xs break-all">
+                        {activationLink}
+                      </div>
+                    )}
+                  </div>
+                ) : (
+                  <p className="text-sm text-muted-foreground">
+                    Sin invitación enviada. Solo consultores en estado <strong>Aceptado</strong> pueden ser invitados.
+                  </p>
+                )}
+              </div>
+
+              <div className="flex flex-wrap gap-2">
+                <Button
+                  onClick={handleSendInvitation}
+                  disabled={isInviting || application.status !== "aceptado" || !!application.user_id}
+                  variant="gold"
+                >
+                  {isInviting ? (
+                    <Loader2 className="w-4 h-4 mr-2 animate-spin" />
+                  ) : (
+                    <Send className="w-4 h-4 mr-2" />
+                  )}
+                  {application.invitation_token ? "Reenviar invitación" : "Enviar invitación"}
+                </Button>
+                {activationLink && !application.user_id && (
+                  <Button variant="outline" onClick={handleCopyLink}>
+                    <Copy className="w-4 h-4 mr-2" />
+                    Copiar enlace
+                  </Button>
+                )}
+              </div>
+
+              <Separator />
+
+              <div className="p-4 rounded-lg border border-destructive/40 bg-destructive/5 space-y-3">
+                <div className="flex items-center gap-2">
+                  <AlertTriangle className="w-4 h-4 text-destructive" />
+                  <Label className="font-medium text-destructive">Zona de peligro</Label>
+                </div>
+                <p className="text-sm text-muted-foreground">
+                  Eliminar esta postulación borra los datos del test de madurez y, si existiera, la cuenta activada del consultor. Esta acción es irreversible.
+                </p>
+                <Button
+                  variant="destructive"
+                  size="sm"
+                  onClick={() => setConfirmDeleteOpen(true)}
+                  disabled={isDeleting}
+                >
+                  <Trash2 className="w-4 h-4 mr-2" />
+                  Eliminar postulación
+                </Button>
+              </div>
+            </TabsContent>
           </Tabs>
         ) : null}
 
@@ -358,6 +528,31 @@ export function ApplicationDetailDialog({
           </Button>
         </div>
       </DialogContent>
+
+      <AlertDialog open={confirmDeleteOpen} onOpenChange={setConfirmDeleteOpen}>
+        <AlertDialogContent>
+          <AlertDialogHeader>
+            <AlertDialogTitle>¿Eliminar postulación?</AlertDialogTitle>
+            <AlertDialogDescription>
+              Se eliminarán los datos de <strong>{application?.full_name}</strong> y, si existiera, su cuenta activada. Esta acción no se puede deshacer.
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter>
+            <AlertDialogCancel disabled={isDeleting}>Cancelar</AlertDialogCancel>
+            <AlertDialogAction
+              onClick={(e) => {
+                e.preventDefault();
+                handleDelete();
+              }}
+              disabled={isDeleting}
+              className="bg-destructive text-destructive-foreground hover:bg-destructive/90"
+            >
+              {isDeleting && <Loader2 className="w-4 h-4 mr-2 animate-spin" />}
+              Eliminar definitivamente
+            </AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
     </Dialog>
   );
 }
