@@ -1,5 +1,5 @@
 import { useState, useEffect } from 'react';
-import { useNavigate } from 'react-router-dom';
+import { useNavigate, Link } from 'react-router-dom';
 import { useForm } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
 import { z } from 'zod';
@@ -191,7 +191,7 @@ const Auth = () => {
       {/* Left side - Branding */}
       <div className="hidden lg:flex lg:w-1/2 bg-gradient-hero text-primary-foreground p-12 flex-col justify-between">
         <div>
-          <div className="flex items-center gap-3 mb-12">
+          <Link to="/" className="flex items-center gap-3 mb-12 hover:opacity-80 transition-opacity">
             <div className="w-12 h-12 rounded-lg bg-gold flex items-center justify-center">
               <Briefcase className="w-6 h-6 text-accent-foreground" />
             </div>
@@ -199,7 +199,7 @@ const Auth = () => {
               <h1 className="text-2xl font-bold">CORDADA</h1>
               <p className="text-primary-foreground/70">Ecosistema de Consultoría</p>
             </div>
-          </div>
+          </Link>
           <h2 className="text-4xl font-bold leading-tight mb-6">
             Conecta con los mejores<br />
             <span className="text-gradient-gold">consultores del mercado</span>
@@ -229,12 +229,12 @@ const Auth = () => {
       <div className="flex-1 flex items-center justify-center p-6 lg:p-12">
         <Card className="w-full max-w-md">
           <CardHeader className="text-center">
-            <div className="lg:hidden flex items-center justify-center gap-3 mb-4">
+            <Link to="/" className="lg:hidden flex items-center justify-center gap-3 mb-4 hover:opacity-80 transition-opacity">
               <div className="w-10 h-10 rounded-lg bg-gradient-gold flex items-center justify-center">
                 <Briefcase className="w-5 h-5 text-accent-foreground" />
               </div>
               <span className="text-xl font-bold">CORDADA</span>
-            </div>
+            </Link>
             <CardTitle>Accede a tu cuenta</CardTitle>
             <CardDescription>
               Inicia sesión o crea una cuenta nueva
