@@ -13,12 +13,8 @@ import { useToast } from '@/hooks/use-toast';
 import { CODE_OF_CONDUCT_TEXT, CODE_OF_CONDUCT_VERSION } from '@/data/codeOfConduct';
 import { DATA_CONSENT_TEXT, DATA_CONSENT_VERSION } from '@/data/dataConsent';
 
-type State =
-  | { kind: 'loading' }
-  | { kind: 'invalid'; reason: string }
-  | { kind: 'ready'; full_name: string; email: string }
-  | { kind: 'activating' }
-  | { kind: 'done' };
+type Phase = 'loading' | 'invalid' | 'ready' | 'activating' | 'done';
+type InvitationData = { full_name: string; email: string };
 
 const errorMessages: Record<string, string> = {
   not_found: 'Este enlace no es válido.',
