@@ -117,7 +117,7 @@ export default function ConsultantActivate() {
     );
   }
 
-  if (state.kind === 'invalid') {
+  if (phase === 'invalid') {
     return (
       <div className="min-h-screen flex items-center justify-center bg-background p-6">
         <Card className="max-w-md w-full">
@@ -126,7 +126,7 @@ export default function ConsultantActivate() {
               <AlertCircle className="w-6 h-6 text-destructive" />
               <CardTitle>Invitación no válida</CardTitle>
             </div>
-            <CardDescription>{errorMessages[state.reason] || errorMessages.server_error}</CardDescription>
+            <CardDescription>{errorMessages[invalidReason] || errorMessages.server_error}</CardDescription>
           </CardHeader>
           <CardContent>
             <Button asChild variant="outline" className="w-full">
