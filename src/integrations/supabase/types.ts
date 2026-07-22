@@ -86,6 +86,7 @@ export type Database = {
           code_of_conduct_accepted_at: string | null
           company: string | null
           created_at: string
+          data_consent_accepted_at: string | null
           email: string
           enrollment_id: string | null
           full_name: string
@@ -93,6 +94,9 @@ export type Database = {
           interview_date: string | null
           interview_notes: string | null
           interviewer_id: string | null
+          invitation_expires_at: string | null
+          invitation_token: string | null
+          invitation_used_at: string | null
           linkedin: string | null
           maturity_block_scores: Json | null
           maturity_level: string | null
@@ -102,6 +106,7 @@ export type Database = {
           role_archetype_secondary: string | null
           status: Database["public"]["Enums"]["application_status"]
           updated_at: string
+          user_id: string | null
         }
         Insert: {
           active_risk_alerts?:
@@ -114,6 +119,7 @@ export type Database = {
           code_of_conduct_accepted_at?: string | null
           company?: string | null
           created_at?: string
+          data_consent_accepted_at?: string | null
           email: string
           enrollment_id?: string | null
           full_name: string
@@ -121,6 +127,9 @@ export type Database = {
           interview_date?: string | null
           interview_notes?: string | null
           interviewer_id?: string | null
+          invitation_expires_at?: string | null
+          invitation_token?: string | null
+          invitation_used_at?: string | null
           linkedin?: string | null
           maturity_block_scores?: Json | null
           maturity_level?: string | null
@@ -130,6 +139,7 @@ export type Database = {
           role_archetype_secondary?: string | null
           status?: Database["public"]["Enums"]["application_status"]
           updated_at?: string
+          user_id?: string | null
         }
         Update: {
           active_risk_alerts?:
@@ -142,6 +152,7 @@ export type Database = {
           code_of_conduct_accepted_at?: string | null
           company?: string | null
           created_at?: string
+          data_consent_accepted_at?: string | null
           email?: string
           enrollment_id?: string | null
           full_name?: string
@@ -149,6 +160,9 @@ export type Database = {
           interview_date?: string | null
           interview_notes?: string | null
           interviewer_id?: string | null
+          invitation_expires_at?: string | null
+          invitation_token?: string | null
+          invitation_used_at?: string | null
           linkedin?: string | null
           maturity_block_scores?: Json | null
           maturity_level?: string | null
@@ -158,6 +172,7 @@ export type Database = {
           role_archetype_secondary?: string | null
           status?: Database["public"]["Enums"]["application_status"]
           updated_at?: string
+          user_id?: string | null
         }
         Relationships: [
           {
@@ -864,6 +879,24 @@ export type Database = {
           thumbnail_url?: string | null
           title?: string
           updated_at?: string
+        }
+        Relationships: []
+      }
+      platform_settings: {
+        Row: {
+          key: string
+          updated_at: string
+          value: Json
+        }
+        Insert: {
+          key: string
+          updated_at?: string
+          value: Json
+        }
+        Update: {
+          key?: string
+          updated_at?: string
+          value?: Json
         }
         Relationships: []
       }
