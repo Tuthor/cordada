@@ -31,7 +31,9 @@ export default function ConsultantActivate() {
   const { toast } = useToast();
   const token = params.get('token');
 
-  const [state, setState] = useState<State>({ kind: 'loading' });
+  const [phase, setPhase] = useState<Phase>('loading');
+  const [invalidReason, setInvalidReason] = useState<string>('server_error');
+  const [invitation, setInvitation] = useState<InvitationData | null>(null);
   const [password, setPassword] = useState('');
   const [confirmPassword, setConfirmPassword] = useState('');
   const [acceptedCode, setAcceptedCode] = useState(false);
@@ -39,7 +41,8 @@ export default function ConsultantActivate() {
 
   useEffect(() => {
     if (!token) {
-      setState({ kind: 'invalid', reason: 'missing_token' });
+      setInvalidReason('missing_token');
+      setPhase('invalid');
       return;
     }
     (async () => {
@@ -47,25 +50,27 @@ export default function ConsultantActivate() {
         body: { token },
       });
       if (error || !data?.valid) {
-        setState({ kind: 'invalid', reason: data?.error || 'server_error' });
+        setInvalidReason(data?.error || 'server_error');
+        setPhase('invalid');
       } else {
-        setState({ kind: 'ready', full_name: data.full_name, email: data.email });
+        setInvitation({ full_name: data.full_name, email: data.email });
+        setPhase('ready');
       }
     })();
   }, [token]);
 
   const canSubmit =
-    state.kind === 'ready' &&
+    phase === 'ready' &&
     password.length >= 8 &&
     password === confirmPassword &&
     acceptedCode &&
     acceptedConsent;
 
   const handleActivate = async () => {
-    if (state.kind !== 'ready' || !token) return;
+    if (phase !== 'ready' || !token || !invitation) return;
     if (!canSubmit) return;
 
-    setState({ kind: 'activating' });
+    setPhase('activating');
     const { data, error } = await supabase.functions.invoke('activate-consultant', {
       body: {
         token,
@@ -81,13 +86,12 @@ export default function ConsultantActivate() {
         description: data?.error || error?.message || 'Intenta nuevamente.',
         variant: 'destructive',
       });
-      setState({ kind: 'ready', full_name: state.full_name, email: state.email });
+      setPhase('ready');
       return;
     }
 
-    // Auto sign-in
     const { error: signInErr } = await supabase.auth.signInWithPassword({
-      email: state.email,
+      email: invitation.email,
       password,
     });
 
@@ -104,10 +108,11 @@ export default function ConsultantActivate() {
     navigate('/dashboard');
   };
 
-  if (state.kind === 'loading') {
+  if (phase === 'loading') {
     return (
       <div className="min-h-screen flex items-center justify-center bg-background">
         <Loader2 className="w-8 h-8 animate-spin text-muted-foreground" />
+
       </div>
     );
   }
