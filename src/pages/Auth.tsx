@@ -359,6 +359,11 @@ const Auth = () => {
               </TabsContent>
 
               <TabsContent value="signup">
+                <div className="mb-4 p-3 rounded-md bg-muted/40 border text-xs text-muted-foreground">
+                  ¿Eres consultor? El acceso al ecosistema es <strong>solo por invitación</strong>. Realiza el{' '}
+                  <a href="/evaluacion-consultor" className="underline text-primary">Diagnóstico de Madurez</a> y, si eres aprobado,
+                  recibirás un enlace privado para activar tu cuenta.
+                </div>
                 <Form {...signUpForm}>
                   <form onSubmit={signUpForm.handleSubmit(handleSignUp)} className="space-y-4">
                     <FormField
