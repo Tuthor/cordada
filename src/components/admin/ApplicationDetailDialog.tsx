@@ -18,12 +18,22 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select";
-import { Loader2, Save, AlertTriangle, Calendar, FileText } from "lucide-react";
+import { Loader2, Save, AlertTriangle, Calendar, FileText, Send, Copy, Trash2, CheckCircle2 } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
 import { applicationStatuses, consultantArchetypes, getStatusInfo, getArchetypeInfo } from "@/data/orchestrationData";
 import { ApplicationStatus, ConsultantArchetype } from "@/types/orchestration";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Separator } from "@/components/ui/separator";
+import {
+  AlertDialog,
+  AlertDialogAction,
+  AlertDialogCancel,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle,
+} from "@/components/ui/alert-dialog";
 
 interface ApplicationDetailDialogProps {
   applicationId: string | null;
@@ -53,6 +63,11 @@ interface ApplicationData {
   code_of_conduct_accepted_at: string | null;
   admin_notes: string | null;
   active_risk_alerts: string[] | null;
+  user_id: string | null;
+  invitation_token: string | null;
+  invitation_sent_at: string | null;
+  invitation_expires_at: string | null;
+  data_consent_accepted_at: string | null;
   created_at: string;
   updated_at: string;
 }
@@ -70,6 +85,9 @@ export function ApplicationDetailDialog({
   const [archetype, setArchetype] = useState<ConsultantArchetype | "">("");
   const [adminNotes, setAdminNotes] = useState("");
   const [interviewNotes, setInterviewNotes] = useState("");
+  const [isInviting, setIsInviting] = useState(false);
+  const [isDeleting, setIsDeleting] = useState(false);
+  const [confirmDeleteOpen, setConfirmDeleteOpen] = useState(false);
   const { toast } = useToast();
 
   useEffect(() => {
