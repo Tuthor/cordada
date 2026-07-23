@@ -54,6 +54,7 @@ const Directory = () => {
   const [tempFilters, setTempFilters] = useState<Filters>(initialFilters);
   const [isFilterOpen, setIsFilterOpen] = useState(false);
   const [availableExpertise, setAvailableExpertise] = useState<string[]>([]);
+  const [selectedConsultant, setSelectedConsultant] = useState<ConsultantProfile | null>(null);
 
   useEffect(() => {
     fetchConsultants();
