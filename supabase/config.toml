@@ -8,3 +8,12 @@ verify_jwt = false
 
 [functions.send-password-reset]
 verify_jwt = false
+
+[functions.submit-firm-application]
+verify_jwt = false
+
+[functions.validate-firm-invitation]
+verify_jwt = false
+
+[functions.activate-firm]
+verify_jwt = false
