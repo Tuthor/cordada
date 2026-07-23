@@ -36,6 +36,11 @@ interface Cordada {
   budget_currency: string | null;
   estimated_duration_weeks: number | null;
   start_date: string | null;
+  visibility_mode?: 'curated' | 'open_filtered';
+  open_filters?: {
+    expertise_tags?: string[];
+    availability_required?: boolean;
+  } | null;
 }
 
 interface ConsultantProfile {
