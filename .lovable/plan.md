@@ -1,36 +1,75 @@
-## Fase E — Unificar navegación y deprecar el legacy (Opción B aprobada)
 
-Sin cambios de esquema. Solo UI + rutas.
+# Fase F — Parte 1: Nueva mensajería sobre cordadas
 
-### Parte 1 — Sidebar (`src/components/layout/AppSidebar.tsx`)
-En el bloque genérico (base para consultor/firma):
-- Quitar `{ title: "Desafíos", url: "/projects" }` y `{ title: "Propuestas", url: "/proposals" }`.
-- Ajustar índice del `splice` de Cordadas abiertas / Mis Cordadas para insertar tras "Directorio".
+Sólo la migración de esquema. UI e Inbox vienen en Parte 2 tras tu OK.
 
-### Parte 2 — Dashboard (`src/pages/Dashboard.tsx`)
-- CTA cliente: `/projects/new` "Publicar Proyecto" → `/challenges` "Mis Desafíos".
-- CTA consultor/firma: `/projects` "Ver Desafíos" → `/cordadas-abiertas` "Ver Desafíos Abiertos".
-- Card "Desafíos Abiertos" (link `/projects`) → `/cordadas-abiertas`.
+## Tabla `public.cordada_messages`
 
-### Parte 3 — Rutas legacy (`src/App.tsx`)
-Reemplazar las 6 rutas por redirects:
-- `/projects` → componente role-aware: cliente → `/challenges`, consultor/firma → `/cordadas-abiertas`, resto → `/dashboard`.
-- `/projects/new` → `<Navigate to="/challenges/new" replace />`.
-- `/projects/:id` y `/projects/:id/edit` → `/dashboard`.
-- `/projects/:id/apply` → `/cordadas-abiertas`.
-- `/proposals` → `/mis-cordadas`.
-Retirar imports de las 6 páginas legacy.
+Columnas:
+- `id uuid pk default gen_random_uuid()`
+- `cordada_id uuid not null references public.cordadas(id) on delete cascade`
+- `sender_id uuid not null references auth.users(id) on delete cascade`
+- `recipient_id uuid not null references auth.users(id) on delete cascade`
+- `message text not null`
+- `is_read boolean not null default false`
+- `created_at timestamptz not null default now()`
 
-### Parte 4 — Eliminar páginas legacy
-`rm` de: `Projects.tsx`, `ProjectNew.tsx`, `ProjectDetail.tsx`, `ProjectEdit.tsx`, `ProjectApply.tsx`, `Proposals.tsx`.
-Ajustar `src/pages/ConsultantRequirements.tsx:401`: `<Link to="/projects">` → `/cordadas-abiertas`.
+Índices:
+- `(cordada_id, created_at desc)` — cargar hilo.
+- `(recipient_id, is_read)` — badge de no leídos.
 
-### Parte 5 — BD
-Opción B: sin cambios. `projects`, `project_messages`, `discarded_projects`, `proposals.project_id`, `is_legacy` y CHECK quedan dormidos. Inbox sigue funcional.
+## GRANTs + RLS + Realtime
 
-### Verificación
-- `rg -n "/projects|/proposals" src` solo devuelve las líneas `<Navigate>` de `App.tsx`.
-- `rg -n "pages/Project|pages/Proposals" src` vacío.
-- Rutas manuales redirigen; Fases A–D intactas.
+```sql
+GRANT SELECT, INSERT, UPDATE ON public.cordada_messages TO authenticated;
+GRANT ALL ON public.cordada_messages TO service_role;
+ALTER TABLE public.cordada_messages ENABLE ROW LEVEL SECURITY;
+ALTER TABLE public.cordada_messages REPLICA IDENTITY FULL;
+ALTER PUBLICATION supabase_realtime ADD TABLE public.cordada_messages;
+```
 
-Necesito que cambies a build mode para aplicar estos cambios.
+Sin `DELETE` (mensajes inmutables; `ON DELETE CASCADE` en `cordada_id` cubre la limpieza).
+
+## Helper `SECURITY DEFINER` para validar contraparte
+
+Encapsula la traducción `cordada_members.consultant_id → consultant_applications.user_id` y evita recursión de RLS:
+
+```sql
+CREATE OR REPLACE FUNCTION public.is_cordada_counterparty(
+  _cordada_id uuid, _a uuid, _b uuid
+) RETURNS boolean
+LANGUAGE sql STABLE SECURITY DEFINER SET search_path = public AS $$
+  WITH client AS (
+    SELECT client_id AS uid FROM public.cordadas WHERE id = _cordada_id
+  ),
+  members AS (
+    SELECT ca.user_id AS uid
+    FROM public.cordada_members cm
+    JOIN public.consultant_applications ca ON ca.id = cm.consultant_id
+    WHERE cm.cordada_id = _cordada_id
+  ),
+  participants AS (SELECT uid FROM client UNION SELECT uid FROM members)
+  SELECT _a <> _b
+     AND EXISTS (SELECT 1 FROM participants WHERE uid = _a)
+     AND EXISTS (SELECT 1 FROM participants WHERE uid = _b)
+     AND (
+       EXISTS (SELECT 1 FROM client WHERE uid = _a)
+       OR EXISTS (SELECT 1 FROM client WHERE uid = _b)
+     );
+$$;
+```
+
+La última cláusula obliga a que todo par válido sea cliente↔miembro (nunca miembro↔miembro), espejando la mensajería actual.
+
+## Policies
+
+- `SELECT`: `auth.uid() IN (sender_id, recipient_id)`.
+- `INSERT`: `sender_id = auth.uid() AND public.is_cordada_counterparty(cordada_id, sender_id, recipient_id)`.
+- `UPDATE` (marcar leído): `USING (auth.uid() = recipient_id) WITH CHECK (auth.uid() = recipient_id)`.
+
+## Fuera del alcance de esta parte
+
+- Inbox, sidebar badge, Home, ConsultantRequirements → Parte 2 y 3.
+- Cualquier `DROP` de tablas legacy → Parte 4.
+
+Al aprobar, lanzo la migración vía la herramienta de migraciones y te reporto.
