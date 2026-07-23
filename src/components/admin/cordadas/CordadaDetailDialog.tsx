@@ -19,6 +19,7 @@ import { TeamManagement } from "./TeamManagement";
 import { RitualsTimeline } from "./RitualsTimeline";
 import { AttachmentsSection } from "./AttachmentsSection";
 import { EditCordadaDialog } from "./EditCordadaDialog";
+import { InterestedPanel } from "@/components/cordadas/InterestedPanel";
 import type { AttachmentFile } from "./FileUploadField";
 import {
   Select,
@@ -129,7 +130,7 @@ export function CordadaDetailDialog({
         </DialogHeader>
 
         <Tabs value={activeTab} onValueChange={setActiveTab}>
-          <TabsList className="grid w-full grid-cols-4">
+          <TabsList className={`grid w-full ${cordada.visibility_mode === 'open_filtered' ? 'grid-cols-5' : 'grid-cols-4'}`}>
             <TabsTrigger value="info" className="gap-2">
               <Info className="w-4 h-4" />
               Info
@@ -142,6 +143,12 @@ export function CordadaDetailDialog({
               <Users className="w-4 h-4" />
               Equipo ({members?.length || 0})
             </TabsTrigger>
+            {cordada.visibility_mode === 'open_filtered' && (
+              <TabsTrigger value="interested" className="gap-2">
+                <Megaphone className="w-4 h-4" />
+                Interesados
+              </TabsTrigger>
+            )}
             <TabsTrigger value="rituals" className="gap-2">
               <Target className="w-4 h-4" />
               Rituales
@@ -294,6 +301,15 @@ export function CordadaDetailDialog({
               onUpdate={refetchMembers}
             />
           </TabsContent>
+
+          {cordada.visibility_mode === 'open_filtered' && (
+            <TabsContent value="interested" className="mt-4">
+              <InterestedPanel
+                cordadaId={cordada.id}
+                filledRoles={(members || []).map((m) => m.role)}
+              />
+            </TabsContent>
+          )}
 
           <TabsContent value="rituals" className="mt-4">
             <RitualsTimeline 
