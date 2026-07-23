@@ -7,6 +7,7 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/com
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Textarea } from '@/components/ui/textarea';
+import { Badge } from '@/components/ui/badge';
 import { Form, FormControl, FormDescription, FormField, FormItem, FormLabel, FormMessage } from '@/components/ui/form';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { Avatar, AvatarFallback } from '@/components/ui/avatar';
@@ -14,6 +15,7 @@ import { useToast } from '@/hooks/use-toast';
 import { useAuth } from '@/contexts/AuthContext';
 import { supabase } from '@/integrations/supabase/client';
 import { User, Briefcase, Bell, Shield } from 'lucide-react';
+import { expertiseOptions } from '@/data/cordadaData';
 
 const profileSchema = z.object({
   full_name: z.string().min(2, 'El nombre debe tener al menos 2 caracteres'),
@@ -23,7 +25,7 @@ const profileSchema = z.object({
 
 const consultantSchema = z.object({
   headline: z.string().min(5, 'El titular debe tener al menos 5 caracteres'),
-  expertise: z.string().optional(),
+  expertise: z.array(z.string()).optional().default([]),
   hourly_rate: z.coerce.number().min(0).optional(),
   years_experience: z.coerce.number().min(0).max(50).optional(),
   linkedin_url: z.string().url().optional().or(z.literal('')),
@@ -45,7 +47,7 @@ const Settings = () => {
 
   const consultantForm = useForm<ConsultantFormData>({
     resolver: zodResolver(consultantSchema),
-    defaultValues: { headline: '', expertise: '', hourly_rate: undefined, years_experience: undefined, linkedin_url: '' },
+    defaultValues: { headline: '', expertise: [], hourly_rate: undefined, years_experience: undefined, linkedin_url: '' },
   });
 
   useEffect(() => {
@@ -88,7 +90,7 @@ const Settings = () => {
     if (data) {
       consultantForm.reset({
         headline: data.headline || '',
-        expertise: data.expertise?.join(', ') || '',
+        expertise: data.expertise ?? [],
         hourly_rate: data.hourly_rate || undefined,
         years_experience: data.years_experience || undefined,
         linkedin_url: data.linkedin_url || '',
@@ -129,9 +131,7 @@ const Settings = () => {
     if (!user) return;
     setSaving(true);
 
-    const expertiseArray = data.expertise
-      ? data.expertise.split(',').map(s => s.trim()).filter(Boolean)
-      : null;
+    const expertiseArray = data.expertise && data.expertise.length > 0 ? data.expertise : null;
 
     // Check if profile exists
     const { data: existing } = await supabase
@@ -329,21 +329,46 @@ const Settings = () => {
                       <FormField
                         control={consultantForm.control}
                         name="expertise"
-                        render={({ field }) => (
-                          <FormItem>
-                            <FormLabel>Especialidades</FormLabel>
-                            <FormControl>
-                              <Input 
-                                placeholder="Estrategia, Finanzas, Operaciones" 
-                                {...field} 
-                              />
-                            </FormControl>
-                            <FormDescription>
-                              Separa las especialidades con comas
-                            </FormDescription>
-                            <FormMessage />
-                          </FormItem>
-                        )}
+                        render={({ field }) => {
+                          const selected: string[] = field.value ?? [];
+                          const toggle = (tag: string) => {
+                            const next = selected.includes(tag)
+                              ? selected.filter((t) => t !== tag)
+                              : [...selected, tag];
+                            field.onChange(next);
+                          };
+                          return (
+                            <FormItem>
+                              <FormLabel>Especialidades</FormLabel>
+                              <FormControl>
+                                <div className="flex flex-wrap gap-2">
+                                  {expertiseOptions.map((tag) => {
+                                    const active = selected.includes(tag);
+                                    return (
+                                      <button
+                                        type="button"
+                                        key={tag}
+                                        onClick={() => toggle(tag)}
+                                        className="focus:outline-none"
+                                      >
+                                        <Badge
+                                          variant={active ? 'default' : 'outline'}
+                                          className="cursor-pointer select-none"
+                                        >
+                                          {tag}
+                                        </Badge>
+                                      </button>
+                                    );
+                                  })}
+                                </div>
+                              </FormControl>
+                              <FormDescription>
+                                Selecciona las especialidades desde el catálogo. Los clientes filtran perfiles usando estos mismos valores.
+                              </FormDescription>
+                              <FormMessage />
+                            </FormItem>
+                          );
+                        }}
                       />
 
                       <div className="grid gap-4 sm:grid-cols-2">

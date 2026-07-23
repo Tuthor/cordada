@@ -12,6 +12,7 @@ import { Link } from 'react-router-dom';
 import { format } from 'date-fns';
 import { es } from 'date-fns/locale';
 import { ClientChallengeDetailDialog } from '@/components/client/ClientChallengeDetailDialog';
+import { hasEffectiveClientFilter, type CordadaOpenFilters, type CordadaVisibilityMode } from '@/types/cordada';
 import {
   AlertDialog,
   AlertDialogAction,
@@ -40,6 +41,8 @@ interface Cordada {
   estimated_duration_weeks: number | null;
   start_date: string | null;
   created_at: string;
+  visibility_mode: CordadaVisibilityMode;
+  open_filters: CordadaOpenFilters | null;
 }
 
 const statusConfig: Record<CordadaStatus, { label: string; variant: 'default' | 'secondary' | 'outline' | 'destructive' }> = {
@@ -99,6 +102,19 @@ const ClientChallenges = () => {
     },
   });
 
+  const handlePublish = (cordada: Cordada) => {
+    if (cordada.visibility_mode === 'open_filtered' && !hasEffectiveClientFilter(cordada.open_filters)) {
+      toast({
+        title: 'Faltan filtros',
+        description:
+          'Para publicar en modo abierto debes definir al menos un filtro efectivo (expertise requerido o disponibilidad).',
+        variant: 'destructive',
+      });
+      return;
+    }
+    updateStatusMutation.mutate({ id: cordada.id, status: 'convocatoria' });
+  };
+
   const formatBudget = (amount: number | null, currency: string | null) => {
     if (!amount) return 'Sin definir';
     const formatted = new Intl.NumberFormat('es-CL').format(amount);
@@ -148,10 +164,15 @@ const ClientChallenges = () => {
             {cordadas?.map((cordada) => (
               <Card key={cordada.id} className="hover:shadow-md transition-shadow">
                 <CardHeader className="pb-3">
-                  <div className="flex items-start justify-between">
+                  <div className="flex items-start justify-between gap-2">
                     <CardTitle className="text-lg line-clamp-2">{cordada.title}</CardTitle>
                     <Badge variant={statusConfig[cordada.status].variant}>
                       {statusConfig[cordada.status].label}
+                    </Badge>
+                  </div>
+                  <div className="flex flex-wrap gap-1 pt-1">
+                    <Badge variant="outline" className="text-xs">
+                      {cordada.visibility_mode === 'open_filtered' ? 'Abierto filtrado' : 'Match orquestado'}
                     </Badge>
                   </div>
                   {cordada.description && (
@@ -215,7 +236,7 @@ const ClientChallenges = () => {
                         <Button
                           size="sm"
                           variant="gold"
-                          onClick={() => updateStatusMutation.mutate({ id: cordada.id, status: 'convocatoria' })}
+                          onClick={() => handlePublish(cordada)}
                         >
                           Publicar
                         </Button>
