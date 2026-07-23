@@ -4,11 +4,12 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/com
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
-import { Loader2, RefreshCw, UserCheck, Eye, AlertTriangle } from "lucide-react";
+import { Loader2, RefreshCw, UserCheck, Eye, AlertTriangle, Trash2 } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
 import { getArchetypeInfo, getRiskAlertInfo } from "@/data/orchestrationData";
 import { ConsultantArchetype, RiskAlertType } from "@/types/orchestration";
 import { ApplicationDetailDialog } from "./ApplicationDetailDialog";
+import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle } from "@/components/ui/alert-dialog";
 
 interface ConsultantRow {
   id: string;
@@ -28,11 +29,30 @@ export function ConsultantsPanel() {
   const [consultants, setConsultants] = useState<ConsultantRow[]>([]);
   const [isLoading, setIsLoading] = useState(true);
   const [selectedConsultant, setSelectedConsultant] = useState<string | null>(null);
+  const [confirmDelete, setConfirmDelete] = useState<ConsultantRow | null>(null);
+  const [deleting, setDeleting] = useState(false);
   const { toast } = useToast();
 
   useEffect(() => {
     fetchConsultants();
   }, []);
+
+  const handleDelete = async () => {
+    if (!confirmDelete) return;
+    setDeleting(true);
+    const { data, error } = await supabase.functions.invoke("delete-consultant-application", {
+      body: { application_id: confirmDelete.id },
+    });
+    setDeleting(false);
+    if (error || !data?.success) {
+      toast({ title: "Error", description: data?.error || error?.message || "No se pudo eliminar", variant: "destructive" });
+      return;
+    }
+    toast({ title: "Consultor eliminado" });
+    setConfirmDelete(null);
+    fetchConsultants();
+  };
+
 
   const fetchConsultants = async () => {
     setIsLoading(true);
@@ -199,14 +219,25 @@ export function ConsultantsPanel() {
                         </Badge>
                       </TableCell>
                       <TableCell className="text-right">
-                        <Button 
-                          variant="ghost" 
-                          size="sm"
-                          onClick={() => setSelectedConsultant(consultant.id)}
-                        >
-                          <Eye className="w-4 h-4" />
-                        </Button>
+                        <div className="flex justify-end gap-1">
+                          <Button
+                            variant="ghost"
+                            size="sm"
+                            onClick={() => setSelectedConsultant(consultant.id)}
+                          >
+                            <Eye className="w-4 h-4" />
+                          </Button>
+                          <Button
+                            variant="ghost"
+                            size="sm"
+                            onClick={() => setConfirmDelete(consultant)}
+                            title="Eliminar consultor"
+                          >
+                            <Trash2 className="w-4 h-4 text-destructive" />
+                          </Button>
+                        </div>
                       </TableCell>
+
                     </TableRow>
                   ))}
                 </TableBody>
@@ -222,6 +253,25 @@ export function ConsultantsPanel() {
         onOpenChange={(open) => !open && setSelectedConsultant(null)}
         onUpdate={fetchConsultants}
       />
+
+      <AlertDialog open={!!confirmDelete} onOpenChange={(o) => !o && setConfirmDelete(null)}>
+        <AlertDialogContent>
+          <AlertDialogHeader>
+            <AlertDialogTitle>¿Eliminar consultor?</AlertDialogTitle>
+            <AlertDialogDescription>
+              Se eliminará a <strong>{confirmDelete?.full_name}</strong>, su cuenta de usuario, perfil, rol y todo su registro. Esta acción no se puede deshacer.
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter>
+            <AlertDialogCancel disabled={deleting}>Cancelar</AlertDialogCancel>
+            <AlertDialogAction onClick={handleDelete} disabled={deleting} className="bg-destructive text-destructive-foreground hover:bg-destructive/90">
+              {deleting && <Loader2 className="w-4 h-4 mr-2 animate-spin" />}
+              Eliminar
+            </AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
+
     </>
   );
 }

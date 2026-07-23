@@ -4,12 +4,13 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/com
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
-import { Loader2, RefreshCw, ClipboardList, Eye, UserPlus } from "lucide-react";
+import { Loader2, RefreshCw, ClipboardList, Eye, UserPlus, Trash2 } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
 import { applicationStatuses, getStatusInfo } from "@/data/orchestrationData";
 import { ApplicationStatus } from "@/types/orchestration";
 import { ApplicationDetailDialog } from "./ApplicationDetailDialog";
 import { ImportEnrollmentDialog } from "./ImportEnrollmentDialog";
+import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle } from "@/components/ui/alert-dialog";
 
 interface ApplicationRow {
   id: string;
@@ -27,11 +28,30 @@ export function ApplicationsPanel() {
   const [isLoading, setIsLoading] = useState(true);
   const [selectedApplication, setSelectedApplication] = useState<string | null>(null);
   const [showImportDialog, setShowImportDialog] = useState(false);
+  const [confirmDelete, setConfirmDelete] = useState<ApplicationRow | null>(null);
+  const [deleting, setDeleting] = useState(false);
   const { toast } = useToast();
 
   useEffect(() => {
     fetchApplications();
   }, []);
+
+  const handleDelete = async () => {
+    if (!confirmDelete) return;
+    setDeleting(true);
+    const { data, error } = await supabase.functions.invoke("delete-consultant-application", {
+      body: { application_id: confirmDelete.id },
+    });
+    setDeleting(false);
+    if (error || !data?.success) {
+      toast({ title: "Error", description: data?.error || error?.message || "No se pudo eliminar", variant: "destructive" });
+      return;
+    }
+    toast({ title: "Postulación eliminada" });
+    setConfirmDelete(null);
+    fetchApplications();
+  };
+
 
   const fetchApplications = async () => {
     setIsLoading(true);
@@ -171,14 +191,16 @@ export function ApplicationsPanel() {
                         {new Date(app.created_at).toLocaleDateString("es-CL")}
                       </TableCell>
                       <TableCell className="text-right">
-                        <Button
-                          variant="ghost"
-                          size="sm"
-                          onClick={() => setSelectedApplication(app.id)}
-                        >
-                          <Eye className="w-4 h-4" />
-                        </Button>
+                        <div className="flex justify-end gap-1">
+                          <Button variant="ghost" size="sm" onClick={() => setSelectedApplication(app.id)}>
+                            <Eye className="w-4 h-4" />
+                          </Button>
+                          <Button variant="ghost" size="sm" onClick={() => setConfirmDelete(app)} title="Eliminar postulación">
+                            <Trash2 className="w-4 h-4 text-destructive" />
+                          </Button>
+                        </div>
                       </TableCell>
+
                     </TableRow>
                   ))}
                 </TableBody>
@@ -200,6 +222,25 @@ export function ApplicationsPanel() {
         onOpenChange={setShowImportDialog}
         onImport={fetchApplications}
       />
+
+      <AlertDialog open={!!confirmDelete} onOpenChange={(o) => !o && setConfirmDelete(null)}>
+        <AlertDialogContent>
+          <AlertDialogHeader>
+            <AlertDialogTitle>¿Eliminar postulación?</AlertDialogTitle>
+            <AlertDialogDescription>
+              Se eliminará la postulación de <strong>{confirmDelete?.full_name}</strong> y, si ya tiene cuenta activada, también su usuario. Esta acción no se puede deshacer.
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter>
+            <AlertDialogCancel disabled={deleting}>Cancelar</AlertDialogCancel>
+            <AlertDialogAction onClick={handleDelete} disabled={deleting} className="bg-destructive text-destructive-foreground hover:bg-destructive/90">
+              {deleting && <Loader2 className="w-4 h-4 mr-2 animate-spin" />}
+              Eliminar
+            </AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
+
     </>
   );
 }

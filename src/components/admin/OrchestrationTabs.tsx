@@ -1,9 +1,10 @@
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
-import { ClipboardList, UserCheck, Mountain, AlertTriangle, Building2 } from "lucide-react";
+import { ClipboardList, UserCheck, Mountain, AlertTriangle, Building2, Users } from "lucide-react";
 import { ApplicationsPanel } from "./ApplicationsPanel";
 import { ConsultantsPanel } from "./ConsultantsPanel";
 import { CordadasPanel } from "./cordadas/CordadasPanel";
 import { FirmApplicationsPanel } from "./FirmApplicationsPanel";
+import { UsersPanel } from "./UsersPanel";
 
 interface OrchestrationTabsProps {
   activeTab: string;
@@ -13,7 +14,7 @@ interface OrchestrationTabsProps {
 export function OrchestrationTabs({ activeTab, onTabChange }: OrchestrationTabsProps) {
   return (
     <Tabs value={activeTab} onValueChange={onTabChange} className="space-y-4">
-      <TabsList className="grid w-full max-w-3xl grid-cols-5">
+      <TabsList className="grid w-full max-w-4xl grid-cols-6">
         <TabsTrigger value="applications" className="gap-2">
           <ClipboardList className="w-4 h-4" />
           <span className="hidden sm:inline">Postulantes</span>
@@ -30,6 +31,10 @@ export function OrchestrationTabs({ activeTab, onTabChange }: OrchestrationTabsP
           <Mountain className="w-4 h-4" />
           <span className="hidden sm:inline">Cordadas</span>
         </TabsTrigger>
+        <TabsTrigger value="users" className="gap-2">
+          <Users className="w-4 h-4" />
+          <span className="hidden sm:inline">Usuarios</span>
+        </TabsTrigger>
         <TabsTrigger value="alerts" className="gap-2">
           <AlertTriangle className="w-4 h-4" />
           <span className="hidden sm:inline">Alertas</span>
@@ -40,6 +45,7 @@ export function OrchestrationTabs({ activeTab, onTabChange }: OrchestrationTabsP
       <TabsContent value="consultants"><ConsultantsPanel /></TabsContent>
       <TabsContent value="firms"><FirmApplicationsPanel /></TabsContent>
       <TabsContent value="cordadas"><CordadasPanel /></TabsContent>
+      <TabsContent value="users"><UsersPanel /></TabsContent>
       <TabsContent value="alerts">
         <div className="text-center py-12 text-muted-foreground">
           <AlertTriangle className="w-12 h-12 mx-auto mb-4 opacity-50" />
