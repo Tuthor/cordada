@@ -402,6 +402,44 @@ export type Database = {
           },
         ]
       }
+      cordada_messages: {
+        Row: {
+          cordada_id: string
+          created_at: string
+          id: string
+          is_read: boolean
+          message: string
+          recipient_id: string
+          sender_id: string
+        }
+        Insert: {
+          cordada_id: string
+          created_at?: string
+          id?: string
+          is_read?: boolean
+          message: string
+          recipient_id: string
+          sender_id: string
+        }
+        Update: {
+          cordada_id?: string
+          created_at?: string
+          id?: string
+          is_read?: boolean
+          message?: string
+          recipient_id?: string
+          sender_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "cordada_messages_cordada_id_fkey"
+            columns: ["cordada_id"]
+            isOneToOne: false
+            referencedRelation: "cordadas"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       cordada_rituals: {
         Row: {
           attachments: string[] | null
@@ -1311,6 +1349,10 @@ export type Database = {
           _role: Database["public"]["Enums"]["app_role"]
           _user_id: string
         }
+        Returns: boolean
+      }
+      is_cordada_counterparty: {
+        Args: { _a: string; _b: string; _cordada_id: string }
         Returns: boolean
       }
       is_cordada_member: {
