@@ -1,181 +1,119 @@
-## Hallazgo 1 — Fix: propagar `firm_token` / `leader` en la evaluación de líderes
+## Fase C — UI Cliente: Modo de convocatoria + editor de filtros (revisado)
 
-Fix acotado, sin cambios de esquema. Se apoya en columnas ya existentes:
-- `enrollments.source_firm_leader_token`
-- `firm_application_leaders.assessment_status` (TEXT, DEFAULT `'pending'`)
-- `firm_application_leaders.consultant_application_id` (nullable, para trazar líder ↔ postulación resultante)
+### Objetivo
+Permitir que el cliente, al crear o editar un Desafío en borrador, elija entre:
+- **Match orquestado (recomendado)** → `visibility_mode = 'curated'` (comportamiento actual).
+- **Abierto a perfiles filtrados** → `visibility_mode = 'open_filtered'` (los consultores que cumplan los filtros verán el desafío y podrán manifestar interés en Fase D).
 
-Valores normalizados en inglés para calzar con el default actual y no migrar filas: **`'pending'` / `'completed'`**.
+Al publicar, la UI valida que un desafío `open_filtered` tenga al menos un filtro efectivo, coherente con el guard endurecido de `consultant_matches_cordada`.
 
-### Cambios
-
-1. **`src/pages/ConsultantAssessment.tsx`**
-   - Leer con `useSearchParams` los parámetros `firm_token` (UUID de `firm_applications.id`) y `leader` (TEXT de `firm_application_leaders.leader_token`, típicamente con forma UUID).
-   - Pasarlos como props a `<Assessment />`.
-
-2. **`src/components/Assessment.tsx`**
-   - Aceptar props `firmToken?: string`, `leaderToken?: string` y reenviarlos a `<EnrollmentForm />`.
-
-3. **`src/components/EnrollmentForm.tsx`**
-   - Aceptar las mismas props e incluirlas en el body enviado a `supabase.functions.invoke('send-enrollment', ...)` como `firmToken` y `leaderToken`.
-   - Si están presentes, llamar a una edge function pública para obtener el nombre de la firma y del líder y mostrar banner: "Estás completando la evaluación como líder de la firma X".
-
-4. **`supabase/functions/send-enrollment/index.ts`**
-   - Ampliar schema Zod: `firmToken: z.string().uuid().optional()`, `leaderToken: z.string().optional()` (leader_token es TEXT).
-   - Si vienen ambos, validar contra `firm_application_leaders` que exista una fila con `firm_application_id === firmToken` (nombre real del FK) AND `leader_token === leaderToken`.
-   - Idempotencia: si esa fila ya está en `assessment_status = 'completed'`, devolver 409 con mensaje claro.
-   - Insert en `enrollments` con `source_firm_leader_token = leaderToken`.
-   - Tras el insert exitoso, con `service_role`:
-     ```sql
-     UPDATE firm_application_leaders
-     SET assessment_status = 'completed',
-         consultant_application_id = <id de la application creada si existe, si no NULL>
-     WHERE firm_application_id = :firmToken AND leader_token = :leaderToken;
-     ```
-     (No se toca `completed_at` — la columna no existe y se mantiene "sin cambios de esquema". `updated_at` se refresca por trigger.)
-   - Cuando NO vengan los parámetros, el flujo del consultor individual queda idéntico. Mantener reCAPTCHA, rate-limit y validaciones existentes.
-
-5. **`src/components/admin/FirmApplicationsPanel.tsx`**
-   - En el detalle de una firm application, mostrar por cada líder su `assessment_status` real con badges **"Pendiente" (`pending`) / "Completado" (`completed`)** — badges en español, valores en BD en inglés.
-   - Añadir contador "X de N líderes evaluados" en la fila principal.
-
-6. **Nueva edge function pública `get-firm-invitation-context`** (`verify_jwt = false`)
-   - Recibe `firmToken` + `leaderToken` y devuelve solo `{ firm_name, leader_full_name }` — sin datos sensibles.
-
-### Verificación
-
-- Abrir `/evaluacion-consultor?firm_token=<firm_applications.id>&leader=<leader_token>`, completar evaluación, verificar:
-  - `enrollments.source_firm_leader_token` grabado.
-  - `firm_application_leaders.assessment_status = 'completed'` para esa fila.
-- Sin parámetros → comportamiento previo intacto.
-- Reenviar el mismo link ya usado → 409.
+### Alcance del cliente (v1)
+Los únicos ejes visibles al cliente son **Expertise requerido** y **Disponibilidad requerida**. Arquetipo y nivel de madurez son taxonomía interna y NO se exponen al cliente (principio de privacidad — flujo 4.4). El backend sigue soportando los 4 ejes; simplemente ninguna UI del cliente los setea.
 
 ---
 
-## Hallazgo 2 — Plan por fases (requiere aprobación por fase antes de implementar)
+## Paso previo obligatorio — Corrección 1: unificar vocabulario de expertise
 
-No se borra nada hasta la fase final. `visibility_mode` default `'curated'`, sin efecto sobre cordadas existentes.
+Sin esto, el filtro por expertise del cliente casi nunca calzaría con el consultor (texto libre vs. catálogo).
 
-### Fase A — Prerrequisito: visibilidad del consultor sobre `cordadas`
+### 1a. `src/pages/Settings.tsx` — expertise como multi-select controlado
+- Cambiar Zod: `expertise: z.array(z.string()).optional().default([])`.
+- Reemplazar el input de texto libre por un grupo de toggle-badges/checkboxes alimentado desde `expertiseOptions` (`src/data/cordadaData.ts`).
+- Al cargar: poblar el array desde `data.expertise ?? []` (ya no hacer `.join(', ')`).
+- Al guardar: escribir el array tal cual en `consultant_profiles.expertise` (columna `text[]`).
+- Fuente única de verdad: `expertiseOptions`. Client, Settings y Directory deben leer de ahí.
 
-**Ojo con la semántica de `consultant_id`:** en `cordada_members.consultant_id` referencia `consultant_applications(id)`, NO `auth.users`. Hay que atravesar `consultant_applications.user_id`.
+### 1b. Migración one-time de datos existentes
+Función/script SQL no destructivo sobre `consultant_profiles.expertise`:
+- Normalizar cada valor (lowercase + sin acentos + trim) y compararlo contra la versión normalizada de cada valor de `expertiseOptions`.
+- Si mapea → reemplazar por el string exacto del catálogo (ej. `"transformacion digital"` → `"Transformación Digital"`).
+- Si no mapea → preservar tal cual (no borrar).
+- Reportar en la descripción de la migración cuántas filas se normalizaron y cuántas quedaron con al menos un valor sin mapear (para que esos consultores reajusten su expertise en Settings).
 
-- Nueva función `SECURITY DEFINER` para encapsular la lógica y evitar recursión:
-  ```sql
-  CREATE OR REPLACE FUNCTION public.is_cordada_member(_cordada_id uuid, _user_id uuid)
-  RETURNS boolean LANGUAGE sql STABLE SECURITY DEFINER SET search_path = public AS $$
-    SELECT EXISTS (
-      SELECT 1
-      FROM public.cordada_members cm
-      JOIN public.consultant_applications ca ON ca.id = cm.consultant_id
-      WHERE cm.cordada_id = _cordada_id AND ca.user_id = _user_id
-    )
-  $$;
-  ```
-- RLS `cordada_members` — SELECT del consultor sobre sus propias membresías:
-  ```sql
-  CREATE POLICY "Consultants can view their own memberships"
-  ON public.cordada_members FOR SELECT TO authenticated
-  USING (EXISTS (
-    SELECT 1 FROM public.consultant_applications ca
-    WHERE ca.id = cordada_members.consultant_id
-      AND ca.user_id = auth.uid()
-  ));
-  ```
-- RLS `cordadas` — SELECT del consultor sobre cordadas donde es miembro:
-  ```sql
-  CREATE POLICY "Consultants can view cordadas they belong to"
-  ON public.cordadas FOR SELECT TO authenticated
-  USING (public.is_cordada_member(cordadas.id, auth.uid()));
-  ```
-- Rutas nuevas lado consultor: `/mis-cordadas` (lista) y `/mis-cordadas/:id` (detalle read-only con rol, terreno, riesgos no sensibles, rituales, equipo).
-- Sidebar: agregar "Mis Cordadas" para consultores y líderes de firma.
-- Sin cambios en `projects` / `proposals`.
+### 1c. Verificación
+- Consultor con `expertise = ["Estrategia"]` (exacto) matchea un desafío con `expertise_tags: ["Estrategia"]`.
+- Consultor con expertise vacío/NULL no matchea filtros de expertise (comportamiento estricto esperado; se comunica en la UI del cliente).
 
-### Fase B — Modelo de datos: modo de visibilidad + filtros
+---
 
-Migración sobre `cordadas`:
-- `visibility_mode` (enum `cordada_visibility_mode` con `'curated' | 'open_filtered'`) NOT NULL DEFAULT `'curated'`.
-- `open_filters` `jsonb` NULL. Índice GIN.
-- GRANTs: `authenticated` (lectura vía policies), `service_role` full. `anon` sin acceso.
+## Cambios de Fase C
 
-Estructura sugerida de `open_filters` (v1, solo campos que hoy existen):
-```json
-{
-  "archetypes": ["ex_ejecutivo", "tecnico_alto_nivel"],
-  "min_maturity_level": "<valor del catálogo real, a confirmar en Fase C>",
-  "expertise_tags": ["Estrategia", "Transformación Digital"],
-  "availability_required": true
+### 2. Tipos (`src/types/cordada.ts`)
+- `export type CordadaVisibilityMode = 'curated' | 'open_filtered'`.
+- Extender `Cordada`:
+  - `visibility_mode: CordadaVisibilityMode`
+  - `open_filters: CordadaOpenFilters | null`
+- Tipo:
+```ts
+export interface CordadaOpenFilters {
+  // Ejes soportados por el backend; el cliente v1 solo setea los dos últimos.
+  archetypes?: string[];
+  min_maturity_level?: string;
+  expertise_tags?: string[];
+  availability_required?: boolean;
 }
 ```
-- **`regions` queda fuera de v1** (no existe en `consultant_profiles` ni en `consultant_applications`). Se evalúa agregarla como fase posterior.
-- El valor exacto de `min_maturity_level` se define confirmando el catálogo real de `maturity_level` en `consultant_applications` (no hardcodear "consolidado" sin verificar).
 
-Función matcher `SECURITY DEFINER` (fuentes correctas de cada campo):
-```sql
-CREATE OR REPLACE FUNCTION public.consultant_matches_cordada(_user_id uuid, _cordada_id uuid)
-RETURNS boolean LANGUAGE plpgsql STABLE SECURITY DEFINER SET search_path = public AS $$
--- arquetipo y madurez: consultant_applications (join por user_id)
--- disponibilidad (is_available) y expertise: consultant_profiles (join por user_id)
--- lee cordadas.open_filters y aplica el matching
-$$;
-```
+### 3. Catálogos (`src/data/cordadaData.ts`)
+- `visibilityModeOptions`:
+  - `curated`: "Match orquestado (recomendado)"
+  - `open_filtered`: "Abierto a perfiles filtrados"
+- Reutilizar `expertiseOptions` para el editor del cliente.
+- No agregar catálogos de `archetypes` ni `maturityLevelOptions` para el cliente v1 (quedan para un futuro editor solo-admin).
 
-Nueva RLS `cordadas` (modo abierto) para consultores:
-```sql
-CREATE POLICY "Consultants can view matching open cordadas"
-ON public.cordadas FOR SELECT TO authenticated
-USING (
-  visibility_mode = 'open_filtered'
-  AND status = 'convocatoria'
-  AND public.consultant_matches_cordada(auth.uid(), cordadas.id)
-);
-```
+### 4. Componente `OpenFiltersEditor` (cliente)
+- Nuevo: `src/components/client/OpenFiltersEditor.tsx`.
+- Props: `value: CordadaOpenFilters | null`, `onChange`.
+- Se renderiza solo cuando `visibility_mode === 'open_filtered'`.
+- Controles v1:
+  - **Expertise requerido**: multi-select desde `expertiseOptions` → escribe `expertise_tags`.
+  - **Disponibilidad requerida**: checkbox → escribe `availability_required`.
+- Nota inline: *"El filtro por expertise solo alcanza a consultores que hayan completado su perfil profesional."*
+- Helper `hasEffectiveFilter(filters)` v1:
+  - `(filters?.expertise_tags?.length ?? 0) > 0 || filters?.availability_required === true`.
+- Componente extensible para reutilizar en un futuro editor admin (arquetipo/madurez), pero la instancia del cliente NO los muestra.
 
-### Fase C — UI cliente: elegir modo al publicar
+### 5. `ClientChallengeNew.tsx`
+- Extender schema Zod con `visibility_mode` y `open_filters` (objeto opcional/nullable).
+- Defaults: `visibility_mode: 'curated'`, `open_filters: null`.
+- Renderizar selector de modo + `<OpenFiltersEditor />`.
+- Insertar ambas columnas en Supabase.
 
-- En `ClientChallengeNew` y `EditCordadaDialog`: selector "Modo de convocatoria" con **Match orquestado (recomendado)** vs **Abierto a perfiles filtrados**.
-- Si `open_filtered`, formulario de filtros usando catálogos ya existentes (arquetipos, niveles de madurez reales, tags de expertise, disponibilidad).
-- Validación: si `open_filtered` al publicar, exigir al menos un filtro no vacío.
+### 6. `ClientChallengeEdit.tsx`
+- Extender schema igual.
+- Popular desde la cordada cargada.
+- Incluirlas en el `update`.
+- Ya está protegido a `status === 'draft'`.
 
-### Fase D — Manifestación de interés (reutilizar `proposals` apuntando a `cordadas`)
+### 7. `ClientChallenges.tsx` — validación al publicar
+- Antes de `updateStatusMutation.mutate({ id, status: 'convocatoria' })`:
+  - Si `cordada.visibility_mode === 'open_filtered'` y `!hasEffectiveFilter(cordada.open_filters)`:
+    - Toast destructivo: *"Para publicar en modo abierto debes definir al menos un filtro efectivo (expertise requerido o disponibilidad)."*
+    - No ejecutar la mutación.
+- Opcional: badge del modo en cada tarjeta.
 
-**Ojo con la semántica de `consultant_id`:** en `proposals.consultant_id` es un `auth.users.id` (la RLS actual usa `auth.uid() = consultant_id`). En `cordada_members.consultant_id` es `consultant_applications.id`. La conversión debe ser explícita.
+### 8. `ClientChallengeDetailDialog.tsx`
+- Mostrar en lectura el modo de convocatoria.
+- Si `open_filtered`, listar `expertise_tags` y disponibilidad requerida con labels legibles.
 
-- Migración: `proposals.cordada_id uuid REFERENCES cordadas(id) ON DELETE CASCADE`, nullable durante transición. Añadir `is_legacy boolean DEFAULT false` y marcar `true` en filas legacy existentes.
-- RLS nueva sobre `proposals` para el flujo abierto:
-  - Consultor `INSERT` si `public.consultant_matches_cordada(auth.uid(), NEW.cordada_id)`.
-  - Consultor `SELECT/UPDATE/DELETE` de sus propias filas (mantiene `auth.uid() = consultant_id`).
-  - Cliente `SELECT` de propuestas dirigidas a sus cordadas.
-  - Admin `ALL`.
-- UI consultor: `/cordadas-abiertas` lista cordadas visibles + botón "Manifestar interés" → `INSERT proposals` con `cordada_id` y `consultant_id = auth.uid()`.
-- UI cliente/admin: en `CordadaDetailDialog`, pestaña "Interesados". Acción **"Aprobar → agregar al equipo"** ejecuta la traducción auth.uid → consultant_applications.id:
-  ```sql
-  INSERT INTO public.cordada_members (cordada_id, consultant_id, role)
-  SELECT :cordada_id, ca.id, :role
-  FROM public.consultant_applications ca
-  WHERE ca.user_id = :proposal_consultant_auth_uid;
-  ```
-  Si el usuario no tiene fila en `consultant_applications` (caso borde), el admin recibe error explícito — no se inserta el auth uid directo (violaría el FK).
-
-### Fase E — Unificación de navegación y deprecación del legacy
-
-- Sidebar:
-  - Cliente: "Mis Desafíos" → `/challenges` (backing table `cordadas`).
-  - Consultor / firma: "Cordadas Abiertas" (`/cordadas-abiertas`) + "Mis Cordadas" (`/mis-cordadas`). Se retiran del sidebar "Desafíos" (`/projects`) y "Propuestas" (`/proposals`).
-- Rutas legacy `/projects` y `/proposals`: **redirección client-side con `<Navigate replace to="...">`** (no hay 301 HTTP real en SPA con React Router).
-- Componentes/páginas a deprecar (se mantienen unos releases con banner "vista legacy"): `Projects.tsx`, `Proposals.tsx`, `ProjectDetail.tsx`, `ProjectApply.tsx`, `ProjectNew.tsx`, `ProjectEdit.tsx`.
-- Tabla `projects`: no se borra en esta fase. Borrado físico solo tras confirmar cero lecturas durante N semanas.
-
-### Riesgos a tener presentes
-
-- Datos actuales en `projects` / `proposals`: inventariar antes de Fase D. Si hay datos reales, definir política de migración (¿convertir a `cordadas` `open_filtered`?).
-- Precondición para modo abierto: `consultant_applications` y `consultant_profiles` bien poblados en los campos del filtro (arquetipo, madurez, expertise, disponibilidad).
-- Superficie nueva para admin: pestaña "Interesados" en cordadas open.
+### 9. RLS
+- No requiere cambios: agregar columnas no cambia las policies existentes de `cordadas` (son a nivel de fila y no excluyen columnas).
 
 ---
 
-## Orden de ejecución
+## Fuera de alcance
+- Diálogos admin (`CreateCordadaDialog` / `EditCordadaDialog`): sin cambios; siguen creando desafíos en `curated`.
+- Manifestación de interés de consultores: Fase D.
+- Exponer arquetipo/madurez al cliente: requiere fase aparte con etiquetas neutrales y revisión de privacidad, no reutilizando la taxonomía interna cruda.
 
-1. **Ahora, tras tu OK a este plan:** Hallazgo 1 completo con las correcciones (nombres reales, `'pending'/'completed'`, sin tocar `completed_at`).
-2. Después Hallazgo 2 fase por fase (A → B → C → D → E), cada una con aprobación previa.
+---
+
+## Verificación
+
+1. Consultor entra a Settings → selecciona expertise desde el catálogo (multi-select) → se guarda como `text[]` de valores del catálogo.
+2. Migración: consultores con texto libre mapeable quedan normalizados; los no mapeables se conservan sin romper.
+3. Cliente crea desafío en **Match orquestado** → publica sin filtros: igual que hoy.
+4. Cliente crea desafío en **Abierto a perfiles filtrados** sin filtro efectivo → al publicar se bloquea con toast.
+5. Cliente define `expertise_tags = ["Estrategia"]` (y/o `availability_required = true`) → publica; un consultor con "Estrategia" en su perfil lo ve, uno sin ella no.
+6. El editor del cliente NO muestra arquetipo ni madurez.
+7. Detalle del desafío → muestra modo y filtros configurados con labels legibles.
