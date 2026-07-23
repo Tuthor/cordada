@@ -12,6 +12,7 @@ import { Loader2, Mountain, ShieldCheck, AlertCircle } from 'lucide-react';
 import { useToast } from '@/hooks/use-toast';
 import { CODE_OF_CONDUCT_TEXT, CODE_OF_CONDUCT_VERSION } from '@/data/codeOfConduct';
 import { DATA_CONSENT_TEXT, DATA_CONSENT_VERSION } from '@/data/dataConsent';
+import { BackButton } from '@/components/BackButton';
 
 type Phase = 'loading' | 'invalid' | 'ready' | 'activating';
 type Data = { legal_name: string; contact_name: string; email: string };
@@ -93,6 +94,7 @@ export default function FirmActivate() {
 
   return (
     <div className="min-h-screen bg-background py-10 px-4">
+      <BackButton floating />
       <div className="max-w-3xl mx-auto space-y-6">
         <div className="flex items-center gap-3">
           <div className="w-11 h-11 rounded-lg bg-primary flex items-center justify-center">
