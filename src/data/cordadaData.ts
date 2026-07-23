@@ -145,3 +145,17 @@ export const expertiseOptions = [
   'Sostenibilidad',
   'Supply Chain',
 ];
+
+// Visibility mode options for cordada convocatorias
+export const visibilityModeOptions = [
+  {
+    value: 'curated' as const,
+    label: 'Match orquestado (recomendado)',
+    description: 'Nuestro equipo arma el equipo ideal para tu desafío.',
+  },
+  {
+    value: 'open_filtered' as const,
+    label: 'Abierto a perfiles filtrados',
+    description: 'Los consultores que cumplan tus filtros verán el desafío y podrán manifestar interés.',
+  },
+];

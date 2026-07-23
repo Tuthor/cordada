@@ -7,6 +7,27 @@ export type CordadaStatus =
   | 'cumbre_alcanzada'
   | 'cerrada';
 
+export type CordadaVisibilityMode = 'curated' | 'open_filtered';
+
+// Backend supports 4 axes (see consultant_matches_cordada).
+// Client v1 only sets expertise_tags and availability_required.
+// archetypes and min_maturity_level are reserved for a future admin-only editor.
+export interface CordadaOpenFilters {
+  archetypes?: string[];
+  min_maturity_level?: string;
+  expertise_tags?: string[];
+  availability_required?: boolean;
+}
+
+export const hasEffectiveClientFilter = (
+  filters: CordadaOpenFilters | null | undefined
+): boolean => {
+  if (!filters) return false;
+  const hasExpertise = Array.isArray(filters.expertise_tags) && filters.expertise_tags.length > 0;
+  const requiresAvailability = filters.availability_required === true;
+  return hasExpertise || requiresAvailability;
+};
+
 export type RitualType = 
   | 'brief_cordada'
   | 'chequeo_tramo'
@@ -74,6 +95,8 @@ export interface CordadaRitual {
   outcomes: string | null;
   attachments: string[] | null;
   created_by: string | null;
+  visibility_mode: CordadaVisibilityMode;
+  open_filters: CordadaOpenFilters | null;
   created_at: string;
   updated_at: string;
 }
