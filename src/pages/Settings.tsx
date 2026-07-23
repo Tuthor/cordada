@@ -7,6 +7,7 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/com
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Textarea } from '@/components/ui/textarea';
+import { Badge } from '@/components/ui/badge';
 import { Form, FormControl, FormDescription, FormField, FormItem, FormLabel, FormMessage } from '@/components/ui/form';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { Avatar, AvatarFallback } from '@/components/ui/avatar';
@@ -14,6 +15,7 @@ import { useToast } from '@/hooks/use-toast';
 import { useAuth } from '@/contexts/AuthContext';
 import { supabase } from '@/integrations/supabase/client';
 import { User, Briefcase, Bell, Shield } from 'lucide-react';
+import { expertiseOptions } from '@/data/cordadaData';
 
 const profileSchema = z.object({
   full_name: z.string().min(2, 'El nombre debe tener al menos 2 caracteres'),
@@ -23,7 +25,7 @@ const profileSchema = z.object({
 
 const consultantSchema = z.object({
   headline: z.string().min(5, 'El titular debe tener al menos 5 caracteres'),
-  expertise: z.string().optional(),
+  expertise: z.array(z.string()).optional().default([]),
   hourly_rate: z.coerce.number().min(0).optional(),
   years_experience: z.coerce.number().min(0).max(50).optional(),
   linkedin_url: z.string().url().optional().or(z.literal('')),
