@@ -1184,11 +1184,13 @@ export type Database = {
         Row: {
           attachment_url: string | null
           consultant_id: string
+          cordada_id: string | null
           cover_letter: string
           created_at: string
           deliverables: string | null
           id: string
-          project_id: string
+          is_legacy: boolean
+          project_id: string | null
           proposed_budget: number | null
           proposed_duration_weeks: number | null
           scope: string | null
@@ -1199,11 +1201,13 @@ export type Database = {
         Insert: {
           attachment_url?: string | null
           consultant_id: string
+          cordada_id?: string | null
           cover_letter: string
           created_at?: string
           deliverables?: string | null
           id?: string
-          project_id: string
+          is_legacy?: boolean
+          project_id?: string | null
           proposed_budget?: number | null
           proposed_duration_weeks?: number | null
           scope?: string | null
@@ -1214,11 +1218,13 @@ export type Database = {
         Update: {
           attachment_url?: string | null
           consultant_id?: string
+          cordada_id?: string | null
           cover_letter?: string
           created_at?: string
           deliverables?: string | null
           id?: string
-          project_id?: string
+          is_legacy?: boolean
+          project_id?: string | null
           proposed_budget?: number | null
           proposed_duration_weeks?: number | null
           scope?: string | null
@@ -1227,6 +1233,13 @@ export type Database = {
           updated_at?: string
         }
         Relationships: [
+          {
+            foreignKeyName: "proposals_cordada_id_fkey"
+            columns: ["cordada_id"]
+            isOneToOne: false
+            referencedRelation: "cordadas"
+            referencedColumns: ["id"]
+          },
           {
             foreignKeyName: "proposals_project_id_fkey"
             columns: ["project_id"]
@@ -1262,6 +1275,13 @@ export type Database = {
       [_ in never]: never
     }
     Functions: {
+      approve_cordada_interest: {
+        Args: {
+          _proposal_id: string
+          _role: Database["public"]["Enums"]["cordada_role"]
+        }
+        Returns: string
+      }
       consultant_matches_cordada: {
         Args: { _cordada_id: string; _user_id: string }
         Returns: boolean
