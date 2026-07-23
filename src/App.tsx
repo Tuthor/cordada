@@ -15,7 +15,7 @@ import ClientChallenges from "./pages/ClientChallenges";
 import ClientChallengeNew from "./pages/ClientChallengeNew";
 import ClientChallengeEdit from "./pages/ClientChallengeEdit";
 import Inbox from "./pages/Inbox";
-import Proposals from "./pages/Proposals";
+
 import Training from "./pages/Training";
 import Settings from "./pages/Settings";
 import NotFound from "./pages/NotFound";
