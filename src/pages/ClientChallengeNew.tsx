@@ -103,7 +103,9 @@ const ClientChallengeNew = () => {
         budget_currency: data.budget_currency || 'CLP',
         estimated_duration_weeks: data.estimated_duration_weeks || null,
         status: 'draft',
-      })
+        visibility_mode: data.visibility_mode,
+        open_filters: data.visibility_mode === 'open_filtered' ? (data.open_filters ?? null) : null,
+      } as any)
       .select()
       .single();
 
