@@ -101,7 +101,9 @@ const enrollmentSchema = z.object({
   maturityLevel: z.string().max(100, "Maturity level too long").optional().nullable(),
   archetype: z.string().max(100, "Archetype too long").optional().nullable(),
   overallScore: z.number().min(0, "Score cannot be negative").max(100, "Score cannot exceed 100"),
-  captchaToken: z.string().min(1, "CAPTCHA token is required")
+  captchaToken: z.string().min(1, "CAPTCHA token is required"),
+  firmToken: z.string().uuid().optional().nullable(),
+  leaderToken: z.string().optional().nullable()
 });
 
 type EnrollmentRequest = z.infer<typeof enrollmentSchema>;
