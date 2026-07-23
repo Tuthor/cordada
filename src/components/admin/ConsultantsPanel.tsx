@@ -29,11 +29,30 @@ export function ConsultantsPanel() {
   const [consultants, setConsultants] = useState<ConsultantRow[]>([]);
   const [isLoading, setIsLoading] = useState(true);
   const [selectedConsultant, setSelectedConsultant] = useState<string | null>(null);
+  const [confirmDelete, setConfirmDelete] = useState<ConsultantRow | null>(null);
+  const [deleting, setDeleting] = useState(false);
   const { toast } = useToast();
 
   useEffect(() => {
     fetchConsultants();
   }, []);
+
+  const handleDelete = async () => {
+    if (!confirmDelete) return;
+    setDeleting(true);
+    const { data, error } = await supabase.functions.invoke("delete-consultant-application", {
+      body: { application_id: confirmDelete.id },
+    });
+    setDeleting(false);
+    if (error || !data?.success) {
+      toast({ title: "Error", description: data?.error || error?.message || "No se pudo eliminar", variant: "destructive" });
+      return;
+    }
+    toast({ title: "Consultor eliminado" });
+    setConfirmDelete(null);
+    fetchConsultants();
+  };
+
 
   const fetchConsultants = async () => {
     setIsLoading(true);
@@ -200,14 +219,25 @@ export function ConsultantsPanel() {
                         </Badge>
                       </TableCell>
                       <TableCell className="text-right">
-                        <Button 
-                          variant="ghost" 
-                          size="sm"
-                          onClick={() => setSelectedConsultant(consultant.id)}
-                        >
-                          <Eye className="w-4 h-4" />
-                        </Button>
+                        <div className="flex justify-end gap-1">
+                          <Button
+                            variant="ghost"
+                            size="sm"
+                            onClick={() => setSelectedConsultant(consultant.id)}
+                          >
+                            <Eye className="w-4 h-4" />
+                          </Button>
+                          <Button
+                            variant="ghost"
+                            size="sm"
+                            onClick={() => setConfirmDelete(consultant)}
+                            title="Eliminar consultor"
+                          >
+                            <Trash2 className="w-4 h-4 text-destructive" />
+                          </Button>
+                        </div>
                       </TableCell>
+
                     </TableRow>
                   ))}
                 </TableBody>
