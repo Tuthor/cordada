@@ -1333,6 +1333,14 @@ export type Database = {
           full_name: string
         }[]
       }
+      get_my_consultant_application: {
+        Args: never
+        Returns: {
+          full_name: string
+          id: string
+          user_id: string
+        }[]
+      }
       get_safe_profile_data: {
         Args: { target_user_id: string }
         Returns: {
@@ -1357,6 +1365,10 @@ export type Database = {
       }
       is_cordada_member: {
         Args: { _cordada_id: string; _user_id: string }
+        Returns: boolean
+      }
+      owns_consultant_application: {
+        Args: { _application_id: string; _user_id: string }
         Returns: boolean
       }
     }
