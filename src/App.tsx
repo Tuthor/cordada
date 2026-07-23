@@ -9,11 +9,8 @@ import Auth from "./pages/Auth";
 import Dashboard from "./pages/Dashboard";
 import PartnerDashboard from "./pages/PartnerDashboard";
 import Directory from "./pages/Directory";
-import Projects from "./pages/Projects";
-import ProjectNew from "./pages/ProjectNew";
-import ProjectDetail from "./pages/ProjectDetail";
-import ProjectEdit from "./pages/ProjectEdit";
-import ProjectApply from "./pages/ProjectApply";
+import { LegacyProjectsRedirect } from "./components/LegacyProjectsRedirect";
+
 import ClientChallenges from "./pages/ClientChallenges";
 import ClientChallengeNew from "./pages/ClientChallengeNew";
 import ClientChallengeEdit from "./pages/ClientChallengeEdit";
