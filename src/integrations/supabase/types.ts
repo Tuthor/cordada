@@ -1274,6 +1274,10 @@ export type Database = {
         }
         Returns: boolean
       }
+      is_cordada_member: {
+        Args: { _cordada_id: string; _user_id: string }
+        Returns: boolean
+      }
     }
     Enums: {
       app_role:
