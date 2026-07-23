@@ -269,6 +269,31 @@ export const ClientChallengeDetailDialog = ({ cordada, open, onOpenChange }: Pro
             </div>
           )}
 
+          {/* Convocatoria mode + filters */}
+          <div>
+            <h4 className="text-sm font-medium text-muted-foreground mb-2">Modo de convocatoria</h4>
+            <div className="flex flex-wrap gap-2 items-center">
+              <Badge variant="outline">
+                {cordada.visibility_mode === 'open_filtered' ? 'Abierto a perfiles filtrados' : 'Match orquestado'}
+              </Badge>
+              {cordada.visibility_mode === 'open_filtered' && cordada.open_filters?.availability_required && (
+                <Badge variant="secondary">Disponibilidad requerida</Badge>
+              )}
+            </div>
+            {cordada.visibility_mode === 'open_filtered' &&
+              cordada.open_filters?.expertise_tags &&
+              cordada.open_filters.expertise_tags.length > 0 && (
+                <div className="mt-2">
+                  <p className="text-xs text-muted-foreground mb-1">Expertise requerido</p>
+                  <div className="flex flex-wrap gap-2">
+                    {cordada.open_filters.expertise_tags.map((t) => (
+                      <Badge key={t} variant="secondary">{t}</Badge>
+                    ))}
+                  </div>
+                </div>
+              )}
+          </div>
+
           <Separator />
 
           {/* Team Section */}
