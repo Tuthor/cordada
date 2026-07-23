@@ -205,6 +205,16 @@ const EnrollmentForm = ({ result, levelInfo, roleResult, onBack, firmToken, lead
   return (
     <div className="min-h-screen bg-background py-8 lg:py-12">
       <div className="container mx-auto px-4 max-w-4xl">
+        {firmContext && (
+          <div className="mb-6 rounded-xl border border-gold/40 bg-gold/10 p-4 text-center animate-fade-in">
+            <p className="text-sm text-foreground">
+              Estás completando la evaluación como líder de la firma{' '}
+              <span className="font-semibold">{firmContext.firm_name}</span>
+              {firmContext.leader_full_name ? ` (${firmContext.leader_full_name})` : ''}.
+            </p>
+          </div>
+        )}
+
         {/* Encabezado */}
         <div className="text-center mb-8 animate-fade-in">
           <div className="inline-flex items-center gap-2 px-4 py-2 rounded-full bg-gold/10 text-gold mb-4">
