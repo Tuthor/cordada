@@ -101,7 +101,9 @@ const enrollmentSchema = z.object({
   maturityLevel: z.string().max(100, "Maturity level too long").optional().nullable(),
   archetype: z.string().max(100, "Archetype too long").optional().nullable(),
   overallScore: z.number().min(0, "Score cannot be negative").max(100, "Score cannot exceed 100"),
-  captchaToken: z.string().min(1, "CAPTCHA token is required")
+  captchaToken: z.string().min(1, "CAPTCHA token is required"),
+  firmToken: z.string().uuid().optional().nullable(),
+  leaderToken: z.string().optional().nullable()
 });
 
 type EnrollmentRequest = z.infer<typeof enrollmentSchema>;
@@ -207,6 +209,30 @@ const handler = async (req: Request): Promise<Response> => {
     const supabaseServiceKey = Deno.env.get("SUPABASE_SERVICE_ROLE_KEY")!;
     const supabase = createClient(supabaseUrl, supabaseServiceKey);
 
+    // If firm leader flow: validate token pair against firm_application_leaders (idempotency)
+    let firmLeaderRow: { id: string; assessment_status: string } | null = null;
+    if (data.firmToken && data.leaderToken) {
+      const { data: leaderRow, error: leaderErr } = await supabase
+        .from("firm_application_leaders")
+        .select("id, assessment_status")
+        .eq("firm_application_id", data.firmToken)
+        .eq("leader_token", data.leaderToken)
+        .maybeSingle();
+      if (leaderErr || !leaderRow) {
+        return new Response(
+          JSON.stringify({ error: "Invalid firm leader invitation link." }),
+          { status: 404, headers: { "Content-Type": "application/json", ...corsHeaders } }
+        );
+      }
+      if (leaderRow.assessment_status === "completed") {
+        return new Response(
+          JSON.stringify({ error: "This leader assessment link has already been used." }),
+          { status: 409, headers: { "Content-Type": "application/json", ...corsHeaders } }
+        );
+      }
+      firmLeaderRow = leaderRow as any;
+    }
+
     // Save to database (data is already validated and sanitized)
     const { data: insertedData, error: dbError } = await supabase
       .from("enrollments")
@@ -223,6 +249,7 @@ const handler = async (req: Request): Promise<Response> => {
         archetype: data.archetype || null,
         overall_score: data.overallScore,
         status: "pending",
+        source_firm_leader_token: data.leaderToken || null,
       })
       .select()
       .single();
@@ -239,6 +266,19 @@ const handler = async (req: Request): Promise<Response> => {
     }
 
     console.log("Enrollment saved to database:", insertedData.id);
+
+    // If firm leader flow: mark leader as completed
+    if (firmLeaderRow) {
+      const { error: updErr } = await supabase
+        .from("firm_application_leaders")
+        .update({ assessment_status: "completed" })
+        .eq("id", firmLeaderRow.id);
+      if (updErr) {
+        console.error("Failed to update firm_application_leaders:", updErr);
+      } else {
+        console.log("Firm leader marked as completed:", firmLeaderRow.id);
+      }
+    }
 
     // Send notification email with HTML-escaped user content
     const emailResponse = await resend.emails.send({

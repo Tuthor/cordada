@@ -1,8 +1,13 @@
+import { useSearchParams } from 'react-router-dom';
 import Assessment from '@/components/Assessment';
 import { Helmet, HelmetProvider } from 'react-helmet-async';
 
 
 const ConsultantAssessment = () => {
+  const [searchParams] = useSearchParams();
+  const firmToken = searchParams.get('firm_token') || undefined;
+  const leaderToken = searchParams.get('leader') || undefined;
+
   return (
     <HelmetProvider>
       <Helmet>
@@ -13,7 +18,7 @@ const ConsultantAssessment = () => {
         />
       </Helmet>
       
-      <Assessment />
+      <Assessment firmToken={firmToken} leaderToken={leaderToken} />
     </HelmetProvider>
   );
 };

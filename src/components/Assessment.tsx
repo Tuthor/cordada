@@ -11,7 +11,12 @@ import RoleAssessment from './RoleAssessment';
 
 type AssessmentState = 'welcome' | 'questions' | 'results' | 'role_assessment' | 'enrollment';
 
-const Assessment = () => {
+interface AssessmentProps {
+  firmToken?: string;
+  leaderToken?: string;
+}
+
+const Assessment = ({ firmToken, leaderToken }: AssessmentProps = {}) => {
   const [state, setState] = useState<AssessmentState>('welcome');
   const [currentQuestionIndex, setCurrentQuestionIndex] = useState(0);
   const [answers, setAnswers] = useState<Map<string, number>>(new Map());
@@ -140,7 +145,9 @@ const Assessment = () => {
         result={result} 
         levelInfo={result.dominantLevel} 
         roleResult={roleResult}
-        onBack={handleBackToResults} 
+        onBack={handleBackToResults}
+        firmToken={firmToken}
+        leaderToken={leaderToken}
       />
     );
   }

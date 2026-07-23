@@ -27,9 +27,11 @@ interface EnrollmentFormProps {
   levelInfo: MaturityLevelInfo;
   roleResult?: RoleAssessmentResult | null;
   onBack: () => void;
+  firmToken?: string;
+  leaderToken?: string;
 }
 
-const EnrollmentForm = ({ result, levelInfo, roleResult, onBack }: EnrollmentFormProps) => {
+const EnrollmentForm = ({ result, levelInfo, roleResult, onBack, firmToken, leaderToken }: EnrollmentFormProps) => {
   const [formData, setFormData] = useState({
     fullName: '',
     email: '',
@@ -46,6 +48,31 @@ const EnrollmentForm = ({ result, levelInfo, roleResult, onBack }: EnrollmentFor
   const [isCaptchaKeyLoading, setIsCaptchaKeyLoading] = useState(true);
   const [captchaToken, setCaptchaToken] = useState<string | null>(null);
   const recaptchaRef = useRef<ReCAPTCHA>(null);
+  const [firmContext, setFirmContext] = useState<{ firm_name: string; leader_full_name: string } | null>(null);
+
+  useEffect(() => {
+    if (!firmToken || !leaderToken) return;
+    let active = true;
+    (async () => {
+      try {
+        const { data, error } = await supabase.functions.invoke('get-firm-invitation-context', {
+          body: { firmToken, leaderToken },
+        });
+        if (error) throw error;
+        if (active && data?.firm_name) {
+          setFirmContext({ firm_name: data.firm_name, leader_full_name: data.leader_full_name });
+          setFormData((prev) => ({
+            ...prev,
+            fullName: prev.fullName || data.leader_full_name || '',
+            company: prev.company || data.firm_name || '',
+          }));
+        }
+      } catch (err) {
+        console.error('Error loading firm context:', err);
+      }
+    })();
+    return () => { active = false; };
+  }, [firmToken, leaderToken]);
 
   useEffect(() => {
     let active = true;
@@ -110,6 +137,8 @@ const EnrollmentForm = ({ result, levelInfo, roleResult, onBack }: EnrollmentFor
           archetype: roleResult?.dominantArchetype?.name || null,
           overallScore: Math.round(result.overallPercentage),
           captchaToken: captchaToken,
+          firmToken: firmToken || null,
+          leaderToken: leaderToken || null,
         },
       });
 
@@ -176,6 +205,16 @@ const EnrollmentForm = ({ result, levelInfo, roleResult, onBack }: EnrollmentFor
   return (
     <div className="min-h-screen bg-background py-8 lg:py-12">
       <div className="container mx-auto px-4 max-w-4xl">
+        {firmContext && (
+          <div className="mb-6 rounded-xl border border-gold/40 bg-gold/10 p-4 text-center animate-fade-in">
+            <p className="text-sm text-foreground">
+              Estás completando la evaluación como líder de la firma{' '}
+              <span className="font-semibold">{firmContext.firm_name}</span>
+              {firmContext.leader_full_name ? ` (${firmContext.leader_full_name})` : ''}.
+            </p>
+          </div>
+        )}
+
         {/* Encabezado */}
         <div className="text-center mb-8 animate-fade-in">
           <div className="inline-flex items-center gap-2 px-4 py-2 rounded-full bg-gold/10 text-gold mb-4">

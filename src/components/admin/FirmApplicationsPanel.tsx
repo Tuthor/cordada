@@ -61,22 +61,7 @@ export function FirmApplicationsPanel() {
   return (
     <div className="space-y-3">
       {apps.map((a) => (
-        <Card key={a.id} className="cursor-pointer hover:border-primary/50 transition-colors" onClick={() => setSelected(a)}>
-          <CardHeader className="pb-3">
-            <div className="flex items-start justify-between gap-4">
-              <div className="min-w-0">
-                <CardTitle className="text-base truncate">{a.legal_name}</CardTitle>
-                <CardDescription className="text-xs">{a.contact_name} · {a.contact_email}</CardDescription>
-              </div>
-              <div className="flex flex-col items-end gap-1 shrink-0">
-                <Badge className={statusColors[a.status] || ''}>{a.status}</Badge>
-                {a.maturity_overall != null && (
-                  <span className="text-xs text-muted-foreground">Madurez: {a.maturity_overall.toFixed(1)}/5</span>
-                )}
-              </div>
-            </div>
-          </CardHeader>
-        </Card>
+        <FirmAppCard key={a.id} app={a} onSelect={() => setSelected(a)} />
       ))}
 
       {selected && (
@@ -88,6 +73,45 @@ export function FirmApplicationsPanel() {
         />
       )}
     </div>
+  );
+}
+
+function FirmAppCard({ app, onSelect }: { app: FirmApp; onSelect: () => void }) {
+  const { data: leaders } = useQuery({
+    queryKey: ['firm-leaders-summary', app.id],
+    queryFn: async () => {
+      const { data } = await supabase
+        .from('firm_application_leaders' as any)
+        .select('assessment_status')
+        .eq('firm_application_id', app.id);
+      return (data || []) as unknown as { assessment_status: string }[];
+    },
+  });
+  const total = leaders?.length ?? 0;
+  const completed = (leaders || []).filter((l) => l.assessment_status === 'completed').length;
+
+  return (
+    <Card className="cursor-pointer hover:border-primary/50 transition-colors" onClick={onSelect}>
+      <CardHeader className="pb-3">
+        <div className="flex items-start justify-between gap-4">
+          <div className="min-w-0">
+            <CardTitle className="text-base truncate">{app.legal_name}</CardTitle>
+            <CardDescription className="text-xs">{app.contact_name} · {app.contact_email}</CardDescription>
+          </div>
+          <div className="flex flex-col items-end gap-1 shrink-0">
+            <Badge className={statusColors[app.status] || ''}>{app.status}</Badge>
+            {total > 0 && (
+              <span className="text-xs text-muted-foreground">
+                Líderes evaluados: {completed} de {total}
+              </span>
+            )}
+            {app.maturity_overall != null && (
+              <span className="text-xs text-muted-foreground">Madurez: {app.maturity_overall.toFixed(1)}/5</span>
+            )}
+          </div>
+        </div>
+      </CardHeader>
+    </Card>
   );
 }
 
@@ -192,7 +216,13 @@ function FirmDetailDialog({ app, onClose, onStatusChange, onDeleted }: {
                     <div>
                       <p className="font-medium">{l.full_name}{l.position ? ` — ${l.position}` : ''}</p>
                       <p className="text-xs text-muted-foreground">{l.email}</p>
-                      <p className="text-xs text-muted-foreground">Evaluación: {l.assessment_status}</p>
+                      <div className="mt-1">
+                        <Badge className={l.assessment_status === 'completed'
+                          ? 'bg-green-500/15 text-green-700 dark:text-green-400'
+                          : 'bg-yellow-500/15 text-yellow-700 dark:text-yellow-400'}>
+                          {l.assessment_status === 'completed' ? 'Completado' : 'Pendiente'}
+                        </Badge>
+                      </div>
                     </div>
                     <Button size="sm" variant="outline" onClick={() => copyLeaderLink(l.leader_token)}>
                       <Copy className="w-4 h-4 mr-1" /> Copiar enlace
