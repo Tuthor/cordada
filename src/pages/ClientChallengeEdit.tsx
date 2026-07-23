@@ -351,6 +351,54 @@ const ClientChallengeEdit = () => {
                   )}
                 />
 
+                <FormField
+                  control={form.control}
+                  name="visibility_mode"
+                  render={({ field }) => (
+                    <FormItem>
+                      <FormLabel>Modo de convocatoria</FormLabel>
+                      <Select onValueChange={field.onChange} value={field.value}>
+                        <FormControl>
+                          <SelectTrigger>
+                            <SelectValue />
+                          </SelectTrigger>
+                        </FormControl>
+                        <SelectContent>
+                          {visibilityModeOptions.map((opt) => (
+                            <SelectItem key={opt.value} value={opt.value}>
+                              {opt.label}
+                            </SelectItem>
+                          ))}
+                        </SelectContent>
+                      </Select>
+                      <FormDescription>
+                        {visibilityModeOptions.find((o) => o.value === field.value)?.description}
+                      </FormDescription>
+                      <FormMessage />
+                    </FormItem>
+                  )}
+                />
+
+                {visibilityMode === 'open_filtered' && (
+                  <FormField
+                    control={form.control}
+                    name="open_filters"
+                    render={({ field }) => (
+                      <FormItem>
+                        <FormLabel>Filtros de perfiles</FormLabel>
+                        <FormControl>
+                          <OpenFiltersEditor
+                            value={(field.value as CordadaOpenFilters | null) ?? null}
+                            onChange={field.onChange}
+                          />
+                        </FormControl>
+                        <FormMessage />
+                      </FormItem>
+                    )}
+                  />
+                )}
+
+
                 <div className="flex gap-4">
                   <Button type="button" variant="outline" onClick={() => navigate('/challenges')}>
                     Cancelar
