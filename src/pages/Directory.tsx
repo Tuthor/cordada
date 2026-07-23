@@ -464,7 +464,7 @@ const Directory = () => {
                     )}
                   </div>
 
-                  <Button variant="outline" className="w-full">
+                  <Button variant="outline" className="w-full" onClick={() => setSelectedConsultant(consultant)}>
                     Ver Perfil
                   </Button>
                 </CardContent>
