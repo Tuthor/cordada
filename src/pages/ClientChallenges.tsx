@@ -164,10 +164,15 @@ const ClientChallenges = () => {
             {cordadas?.map((cordada) => (
               <Card key={cordada.id} className="hover:shadow-md transition-shadow">
                 <CardHeader className="pb-3">
-                  <div className="flex items-start justify-between">
+                  <div className="flex items-start justify-between gap-2">
                     <CardTitle className="text-lg line-clamp-2">{cordada.title}</CardTitle>
                     <Badge variant={statusConfig[cordada.status].variant}>
                       {statusConfig[cordada.status].label}
+                    </Badge>
+                  </div>
+                  <div className="flex flex-wrap gap-1 pt-1">
+                    <Badge variant="outline" className="text-xs">
+                      {cordada.visibility_mode === 'open_filtered' ? 'Abierto filtrado' : 'Match orquestado'}
                     </Badge>
                   </div>
                   {cordada.description && (
