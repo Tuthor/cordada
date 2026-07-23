@@ -66,25 +66,26 @@ export function AppSidebar() {
 
   const fetchUnreadCount = async () => {
     if (!user) return;
-    
+
     const { count } = await supabase
-      .from('project_messages')
+      .from('cordada_messages')
       .select('*', { count: 'exact', head: true })
       .eq('recipient_id', user.id)
       .eq('is_read', false);
-    
+
     setUnreadCount(count || 0);
   };
 
   const subscribeToMessages = () => {
     const channel = supabase
-      .channel('sidebar-unread')
+      .channel('sidebar-cordada-unread')
       .on(
         'postgres_changes',
         {
           event: '*',
           schema: 'public',
-          table: 'project_messages',
+          table: 'cordada_messages',
+          filter: `recipient_id=eq.${user!.id}`,
         },
         () => {
           fetchUnreadCount();

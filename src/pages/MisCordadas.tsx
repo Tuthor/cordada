@@ -21,13 +21,10 @@ export default function MisCordadas() {
     if (!user) return;
     (async () => {
       setLoading(true);
-      const { data: app } = await supabase
-        .from("consultant_applications")
-        .select("id")
-        .eq("user_id", user.id)
-        .maybeSingle();
+      const { data: appRows } = await supabase.rpc("get_my_consultant_application");
+      const app = Array.isArray(appRows) ? appRows[0] : null;
 
-      if (!app) {
+      if (!app?.id) {
         setRows([]);
         setLoading(false);
         return;
