@@ -102,6 +102,19 @@ const ClientChallenges = () => {
     },
   });
 
+  const handlePublish = (cordada: Cordada) => {
+    if (cordada.visibility_mode === 'open_filtered' && !hasEffectiveClientFilter(cordada.open_filters)) {
+      toast({
+        title: 'Faltan filtros',
+        description:
+          'Para publicar en modo abierto debes definir al menos un filtro efectivo (expertise requerido o disponibilidad).',
+        variant: 'destructive',
+      });
+      return;
+    }
+    updateStatusMutation.mutate({ id: cordada.id, status: 'convocatoria' });
+  };
+
   const formatBudget = (amount: number | null, currency: string | null) => {
     if (!amount) return 'Sin definir';
     const formatted = new Intl.NumberFormat('es-CL').format(amount);
