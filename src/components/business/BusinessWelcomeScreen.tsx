@@ -1,7 +1,7 @@
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Building2, ClipboardCheck, TrendingUp, Users, ArrowRight, Clock } from 'lucide-react';
-import { Link } from 'react-router-dom';
+import { BackButton } from '@/components/BackButton';
 
 interface BusinessWelcomeScreenProps {
   onStart: () => void;
@@ -38,7 +38,9 @@ const BusinessWelcomeScreen = ({ onStart }: BusinessWelcomeScreenProps) => {
   return (
     <div className="min-h-screen bg-background py-8 lg:py-16">
       <div className="container mx-auto px-4 max-w-4xl">
-        {/* Header */}
+        <div className="mb-4">
+          <BackButton />
+        </div>
         <div className="text-center mb-12">
           <div className="inline-flex items-center justify-center w-20 h-20 rounded-2xl bg-primary mb-6">
             <Building2 className="w-10 h-10 text-primary-foreground" />
@@ -107,15 +109,8 @@ const BusinessWelcomeScreen = ({ onStart }: BusinessWelcomeScreenProps) => {
           <p className="text-sm text-muted-foreground">
             Sus respuestas son confidenciales y serán utilizadas únicamente para generar su diagnóstico.
           </p>
-          <div className="pt-4">
-            <Link 
-              to="/" 
-              className="text-sm text-muted-foreground hover:text-foreground transition-colors"
-            >
-              ← Volver al inicio
-            </Link>
-          </div>
         </div>
+
       </div>
     </div>
   );
