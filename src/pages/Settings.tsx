@@ -47,7 +47,7 @@ const Settings = () => {
 
   const consultantForm = useForm<ConsultantFormData>({
     resolver: zodResolver(consultantSchema),
-    defaultValues: { headline: '', expertise: '', hourly_rate: undefined, years_experience: undefined, linkedin_url: '' },
+    defaultValues: { headline: '', expertise: [], hourly_rate: undefined, years_experience: undefined, linkedin_url: '' },
   });
 
   useEffect(() => {
