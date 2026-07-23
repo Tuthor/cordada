@@ -398,7 +398,7 @@ export default function ConsultantRequirements() {
                   {client.isCompliant && client.projectCount > 0 && (
                     <div className="mt-4">
                       <Button variant="gold" asChild size="sm">
-                        <Link to="/projects">
+                        <Link to="/cordadas-abiertas">
                           Ver proyectos de este cliente
                           <ChevronRight className="w-4 h-4 ml-1" />
                         </Link>
