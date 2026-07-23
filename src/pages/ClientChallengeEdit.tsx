@@ -16,6 +16,19 @@ import { useAuth } from '@/contexts/AuthContext';
 import { supabase } from '@/integrations/supabase/client';
 import { ArrowLeft, Loader2 } from 'lucide-react';
 import { Link } from 'react-router-dom';
+import { visibilityModeOptions } from '@/data/cordadaData';
+import { OpenFiltersEditor } from '@/components/client/OpenFiltersEditor';
+import type { CordadaOpenFilters } from '@/types/cordada';
+
+const openFiltersSchema = z
+  .object({
+    archetypes: z.array(z.string()).optional(),
+    min_maturity_level: z.string().optional(),
+    expertise_tags: z.array(z.string()).optional(),
+    availability_required: z.boolean().optional(),
+  })
+  .nullable()
+  .optional();
 
 const challengeSchema = z.object({
   title: z.string().min(5, 'El título debe tener al menos 5 caracteres'),
@@ -27,6 +40,8 @@ const challengeSchema = z.object({
   budget_amount: z.coerce.number().min(0).optional(),
   budget_currency: z.enum(['CLP', 'UF', 'USD']).optional(),
   estimated_duration_weeks: z.coerce.number().min(1).max(52).optional(),
+  visibility_mode: z.enum(['curated', 'open_filtered']).default('curated'),
+  open_filters: openFiltersSchema,
 });
 
 type ChallengeFormData = z.infer<typeof challengeSchema>;
