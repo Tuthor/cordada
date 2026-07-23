@@ -19,6 +19,7 @@ import { TeamManagement } from "./TeamManagement";
 import { RitualsTimeline } from "./RitualsTimeline";
 import { AttachmentsSection } from "./AttachmentsSection";
 import { EditCordadaDialog } from "./EditCordadaDialog";
+import { InterestedPanel } from "@/components/cordadas/InterestedPanel";
 import type { AttachmentFile } from "./FileUploadField";
 import {
   Select,
