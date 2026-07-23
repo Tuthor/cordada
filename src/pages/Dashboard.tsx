@@ -51,20 +51,21 @@ const Dashboard = () => {
           <div className="flex gap-3">
             {userRole === 'client' && (
               <Button variant="gold" asChild>
-                <Link to="/projects/new">
+                <Link to="/challenges">
                   <Plus className="w-4 h-4 mr-2" />
-                  Publicar Proyecto
+                  Mis Desafíos
                 </Link>
               </Button>
             )}
             {(userRole === 'consultant' || userRole === 'consulting_firm') && (
               <Button variant="gold" asChild>
-                <Link to="/projects">
+                <Link to="/cordadas-abiertas">
                   <Eye className="w-4 h-4 mr-2" />
-                  Ver Desafíos
+                  Ver Desafíos Abiertos
                 </Link>
               </Button>
             )}
+
           </div>
         </div>
 
