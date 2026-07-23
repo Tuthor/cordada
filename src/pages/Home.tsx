@@ -313,12 +313,18 @@ const Home = () => {
                       </div>
                     ))}
                   </div>
-                  <div className="pt-6 mt-auto">
+                  <div className="pt-6 mt-auto space-y-2">
                     <Button variant="gold" className="w-full group" asChild>
                       <Link to="/evaluacion-consultor">
                         <ClipboardCheck className="w-4 h-4 mr-2" />
                         Evaluar mi Nivel de Madurez
                         <ArrowRight className="w-4 h-4 ml-2 group-hover:translate-x-1 transition-transform" />
+                      </Link>
+                    </Button>
+                    <Button variant="outline" className="w-full group" asChild>
+                      <Link to="/diagnostico-firma">
+                        <Building2 className="w-4 h-4 mr-2" />
+                        Postular como empresa consultora
                       </Link>
                     </Button>
                   </div>
