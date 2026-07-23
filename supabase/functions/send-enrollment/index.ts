@@ -267,6 +267,19 @@ const handler = async (req: Request): Promise<Response> => {
 
     console.log("Enrollment saved to database:", insertedData.id);
 
+    // If firm leader flow: mark leader as completed
+    if (firmLeaderRow) {
+      const { error: updErr } = await supabase
+        .from("firm_application_leaders")
+        .update({ assessment_status: "completed" })
+        .eq("id", firmLeaderRow.id);
+      if (updErr) {
+        console.error("Failed to update firm_application_leaders:", updErr);
+      } else {
+        console.log("Firm leader marked as completed:", firmLeaderRow.id);
+      }
+    }
+
     // Send notification email with HTML-escaped user content
     const emailResponse = await resend.emails.send({
       from: "Consultant Enrollment <onboarding@resend.dev>",
