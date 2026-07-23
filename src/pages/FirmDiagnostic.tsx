@@ -18,6 +18,7 @@ import {
 } from '@/data/firmAssessmentData';
 import { CODE_OF_CONDUCT_TEXT, CODE_OF_CONDUCT_VERSION } from '@/data/codeOfConduct';
 import { DATA_CONSENT_TEXT, DATA_CONSENT_VERSION } from '@/data/dataConsent';
+import { BackButton } from '@/components/BackButton';
 
 type Leader = { full_name: string; position: string; email: string; linkedin: string };
 type LeaderLink = { id: string; full_name: string; position: string | null; email: string; url: string };
@@ -122,6 +123,7 @@ export default function FirmDiagnostic() {
 
   return (
     <div className="min-h-screen bg-background py-10 px-4">
+      <BackButton floating />
       <div className="max-w-4xl mx-auto space-y-6">
         <div className="flex items-center gap-3">
           <div className="w-11 h-11 rounded-lg bg-primary flex items-center justify-center">

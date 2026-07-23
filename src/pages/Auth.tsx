@@ -182,6 +182,7 @@ const Auth = () => {
 
   return (
     <div className="min-h-screen bg-background flex">
+      <BackButton floating />
       {/* Left side - Branding */}
       <div className="hidden lg:flex lg:w-1/2 bg-gradient-hero text-primary-foreground p-12 flex-col justify-between">
         <div>
