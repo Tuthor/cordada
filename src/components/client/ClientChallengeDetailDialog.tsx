@@ -20,7 +20,6 @@ import { useToast } from '@/hooks/use-toast';
 import { Mountain, Calendar, DollarSign, Target, AlertTriangle, Users, Check, X, Clock, Linkedin, Building2, User, ExternalLink } from 'lucide-react';
 import { useState } from 'react';
 import { InterestedPanel } from '@/components/cordadas/InterestedPanel';
-import type { CordadaRole } from '@/types/cordada';
 
 type CordadaStatus = 'draft' | 'convocatoria' | 'en_curso' | 'cumbre_alcanzada' | 'cerrada';
 type CordadaRole = 'guia_alta_montana' | 'primer_de_cuerda' | 'asegurador' | 'explorador' | 'sherpa' | 'cronista';
