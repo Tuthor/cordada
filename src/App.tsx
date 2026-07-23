@@ -30,6 +30,8 @@ import ConsultantRequirements from "./pages/ConsultantRequirements";
 import BusinessDiagnostic from "./pages/BusinessDiagnostic";
 import ConsultantAssessment from "./pages/ConsultantAssessment";
 import ConsultantActivate from "./pages/ConsultantActivate";
+import FirmDiagnostic from "./pages/FirmDiagnostic";
+import FirmActivate from "./pages/FirmActivate";
 
 const queryClient = new QueryClient();
 
@@ -45,6 +47,8 @@ const App = () => (
             <Route path="/diagnostico-empresarial" element={<BusinessDiagnostic />} />
             <Route path="/evaluacion-consultor" element={<ConsultantAssessment />} />
             <Route path="/consultor/activar" element={<ConsultantActivate />} />
+            <Route path="/diagnostico-firma" element={<FirmDiagnostic />} />
+            <Route path="/firma/activar" element={<FirmActivate />} />
             <Route path="/auth" element={<Auth />} />
             <Route path="/dashboard" element={<Dashboard />} />
             <Route path="/partner" element={<PartnerDashboard />} />

@@ -104,6 +104,7 @@ export type Database = {
           phone: string | null
           role_archetype: string | null
           role_archetype_secondary: string | null
+          source_firm_leader_token: string | null
           status: Database["public"]["Enums"]["application_status"]
           updated_at: string
           user_id: string | null
@@ -137,6 +138,7 @@ export type Database = {
           phone?: string | null
           role_archetype?: string | null
           role_archetype_secondary?: string | null
+          source_firm_leader_token?: string | null
           status?: Database["public"]["Enums"]["application_status"]
           updated_at?: string
           user_id?: string | null
@@ -170,6 +172,7 @@ export type Database = {
           phone?: string | null
           role_archetype?: string | null
           role_archetype_secondary?: string | null
+          source_firm_leader_token?: string | null
           status?: Database["public"]["Enums"]["application_status"]
           updated_at?: string
           user_id?: string | null
@@ -761,6 +764,158 @@ export type Database = {
           phone?: string | null
           status?: string | null
           years_experience?: string | null
+        }
+        Relationships: []
+      }
+      firm_application_leaders: {
+        Row: {
+          assessment_status: string
+          consultant_application_id: string | null
+          created_at: string
+          email: string
+          firm_application_id: string
+          full_name: string
+          id: string
+          leader_token: string
+          linkedin: string | null
+          position: string | null
+          updated_at: string
+        }
+        Insert: {
+          assessment_status?: string
+          consultant_application_id?: string | null
+          created_at?: string
+          email: string
+          firm_application_id: string
+          full_name: string
+          id?: string
+          leader_token: string
+          linkedin?: string | null
+          position?: string | null
+          updated_at?: string
+        }
+        Update: {
+          assessment_status?: string
+          consultant_application_id?: string | null
+          created_at?: string
+          email?: string
+          firm_application_id?: string
+          full_name?: string
+          id?: string
+          leader_token?: string
+          linkedin?: string | null
+          position?: string | null
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "firm_application_leaders_firm_application_id_fkey"
+            columns: ["firm_application_id"]
+            isOneToOne: false
+            referencedRelation: "firm_applications"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      firm_applications: {
+        Row: {
+          accepted_code_of_conduct: boolean | null
+          accepted_data_consent: boolean | null
+          activated_at: string | null
+          activated_user_id: string | null
+          admin_notes: string | null
+          annual_revenue_uf: string | null
+          certifications: string | null
+          consent_accepted_at: string | null
+          contact_email: string
+          contact_name: string
+          contact_phone: string | null
+          contact_position: string | null
+          created_at: string
+          founded_year: number | null
+          id: string
+          invitation_expires_at: string | null
+          invitation_sent_at: string | null
+          invitation_token: string | null
+          key_clients: string | null
+          legal_name: string
+          maturity_answers: Json | null
+          maturity_overall: number | null
+          maturity_scores: Json | null
+          practice_areas: string[] | null
+          rut: string | null
+          sectors: string[] | null
+          size_consultants: number | null
+          size_partners: number | null
+          status: string
+          updated_at: string
+          website: string | null
+        }
+        Insert: {
+          accepted_code_of_conduct?: boolean | null
+          accepted_data_consent?: boolean | null
+          activated_at?: string | null
+          activated_user_id?: string | null
+          admin_notes?: string | null
+          annual_revenue_uf?: string | null
+          certifications?: string | null
+          consent_accepted_at?: string | null
+          contact_email: string
+          contact_name: string
+          contact_phone?: string | null
+          contact_position?: string | null
+          created_at?: string
+          founded_year?: number | null
+          id?: string
+          invitation_expires_at?: string | null
+          invitation_sent_at?: string | null
+          invitation_token?: string | null
+          key_clients?: string | null
+          legal_name: string
+          maturity_answers?: Json | null
+          maturity_overall?: number | null
+          maturity_scores?: Json | null
+          practice_areas?: string[] | null
+          rut?: string | null
+          sectors?: string[] | null
+          size_consultants?: number | null
+          size_partners?: number | null
+          status?: string
+          updated_at?: string
+          website?: string | null
+        }
+        Update: {
+          accepted_code_of_conduct?: boolean | null
+          accepted_data_consent?: boolean | null
+          activated_at?: string | null
+          activated_user_id?: string | null
+          admin_notes?: string | null
+          annual_revenue_uf?: string | null
+          certifications?: string | null
+          consent_accepted_at?: string | null
+          contact_email?: string
+          contact_name?: string
+          contact_phone?: string | null
+          contact_position?: string | null
+          created_at?: string
+          founded_year?: number | null
+          id?: string
+          invitation_expires_at?: string | null
+          invitation_sent_at?: string | null
+          invitation_token?: string | null
+          key_clients?: string | null
+          legal_name?: string
+          maturity_answers?: Json | null
+          maturity_overall?: number | null
+          maturity_scores?: Json | null
+          practice_areas?: string[] | null
+          rut?: string | null
+          sectors?: string[] | null
+          size_consultants?: number | null
+          size_partners?: number | null
+          status?: string
+          updated_at?: string
+          website?: string | null
         }
         Relationships: []
       }

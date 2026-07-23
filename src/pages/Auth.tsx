@@ -23,7 +23,7 @@ const signUpSchema = z.object({
   fullName: z.string().min(2, 'El nombre debe tener al menos 2 caracteres'),
   email: z.string().email('Email inválido'),
   password: z.string().min(6, 'La contraseña debe tener al menos 6 caracteres'),
-  role: z.enum(['client', 'consulting_firm', 'partner'], {
+  role: z.enum(['client', 'partner'], {
     required_error: 'Selecciona un tipo de cuenta',
   }),
 });
@@ -37,12 +37,6 @@ const roleOptions = [
     label: 'Cliente (Empresa)',
     description: 'Busco consultores para mis desafíos',
     icon: Building2,
-  },
-  {
-    value: 'consulting_firm' as const,
-    label: 'Empresa de Consultoría',
-    description: 'Gestiono un equipo de consultores',
-    icon: Users,
   },
   {
     value: 'partner' as const,
@@ -359,10 +353,16 @@ const Auth = () => {
               </TabsContent>
 
               <TabsContent value="signup">
-                <div className="mb-4 p-3 rounded-md bg-muted/40 border text-xs text-muted-foreground">
-                  ¿Eres consultor? El acceso al ecosistema es <strong>solo por invitación</strong>. Realiza el{' '}
-                  <a href="/evaluacion-consultor" className="underline text-primary">Diagnóstico de Madurez</a> y, si eres aprobado,
-                  recibirás un enlace privado para activar tu cuenta.
+                <div className="mb-4 p-3 rounded-md bg-muted/40 border text-xs text-muted-foreground space-y-2">
+                  <p>
+                    ¿Eres consultor? El acceso al ecosistema es <strong>solo por invitación</strong>. Realiza el{' '}
+                    <a href="/evaluacion-consultor" className="underline text-primary">Diagnóstico de Madurez</a> y, si eres aprobado,
+                    recibirás un enlace privado para activar tu cuenta.
+                  </p>
+                  <p>
+                    ¿Representas una empresa consultora? Postula a través del{' '}
+                    <a href="/diagnostico-firma" className="underline text-primary">Diagnóstico de Firma</a>.
+                  </p>
                 </div>
                 <Form {...signUpForm}>
                   <form onSubmit={signUpForm.handleSubmit(handleSignUp)} className="space-y-4">
