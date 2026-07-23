@@ -164,7 +164,7 @@ export default function FirmActivate() {
 
         <div className="flex justify-end gap-2">
           <Button variant="outline" asChild><Link to="/">Cancelar</Link></Button>
-          <Button variant="gold" disabled={!canSubmit || phase === 'activating'} onClick={activate}>
+          <Button variant="gold" disabled={!canSubmit || (phase as Phase) === 'activating'} onClick={activate}>
             {phase === 'activating' && <Loader2 className="w-4 h-4 mr-2 animate-spin" />}
             Activar cuenta
           </Button>
