@@ -1286,6 +1286,15 @@ export type Database = {
         Args: { _cordada_id: string; _user_id: string }
         Returns: boolean
       }
+      get_cordada_interest_profiles: {
+        Args: { _cordada_id: string }
+        Returns: {
+          bio: string
+          consultant_user_id: string
+          expertise: string[]
+          full_name: string
+        }[]
+      }
       get_safe_profile_data: {
         Args: { target_user_id: string }
         Returns: {
