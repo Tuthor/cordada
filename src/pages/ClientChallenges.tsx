@@ -236,7 +236,7 @@ const ClientChallenges = () => {
                         <Button
                           size="sm"
                           variant="gold"
-                          onClick={() => updateStatusMutation.mutate({ id: cordada.id, status: 'convocatoria' })}
+                          onClick={() => handlePublish(cordada)}
                         >
                           Publicar
                         </Button>
