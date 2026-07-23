@@ -39,9 +39,9 @@ const Home = () => {
           .from('client_companies')
           .select('id', { count: 'exact', head: true }),
         supabase
-          .from('projects')
+          .from('cordadas')
           .select('id', { count: 'exact', head: true })
-          .eq('status', 'published')
+          .eq('status', 'convocatoria')
       ]);
 
       return {

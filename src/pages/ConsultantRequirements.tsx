@@ -108,7 +108,7 @@ export default function ConsultantRequirements() {
         const [profilesResult, companiesResult, projectsResult] = await Promise.all([
           supabase.from("profiles").select("user_id, full_name").in("user_id", clientIds),
           supabase.from("client_companies").select("user_id, company_name").in("user_id", clientIds),
-          supabase.from("projects").select("id, client_id").in("client_id", clientIds).eq("status", "open")
+          supabase.from("cordadas").select("id, client_id").in("client_id", clientIds).eq("status", "convocatoria")
         ]);
 
         const requirementsWithNames = reqData.map(r => ({

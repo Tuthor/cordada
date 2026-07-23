@@ -7,6 +7,7 @@ import { Avatar, AvatarFallback } from '@/components/ui/avatar';
 import { Badge } from '@/components/ui/badge';
 import { supabase } from '@/integrations/supabase/client';
 import { useAuth } from '@/contexts/AuthContext';
+import { useToast } from '@/hooks/use-toast';
 import { Search, MessageSquare, Send, Plus, Users } from 'lucide-react';
 import { Textarea } from '@/components/ui/textarea';
 import {
@@ -24,83 +25,65 @@ import {
   SelectValue,
 } from '@/components/ui/select';
 
-interface ProjectMessage {
-  id: string;
-  project_id: string;
-  sender_id: string;
-  recipient_id: string;
-  message: string;
-  is_read: boolean;
-  created_at: string;
-  projects: {
-    title: string;
-  } | null;
-  sender: {
-    full_name: string;
-  } | null;
-}
+type ConversationRole = 'client' | 'consultant';
 
-interface Conversation {
-  project_id: string;
-  project_title: string;
+interface CordadaConversationTarget {
+  cordada_id: string;
+  cordada_title: string;
   other_user_id: string;
   other_user_name: string;
+  role: ConversationRole;
+}
+
+interface Conversation extends CordadaConversationTarget {
   last_message: string;
   last_message_at: string;
   unread_count: number;
 }
 
-interface MutualProject {
+interface CordadaMessage {
   id: string;
-  title: string;
-  client_id: string;
-  consultant_id: string;
-  client_name: string;
-  consultant_name: string;
-  status: string;
+  cordada_id: string;
+  sender_id: string;
+  recipient_id: string;
+  message: string;
+  is_read: boolean;
+  created_at: string;
 }
 
 const Inbox = () => {
-  const { user, userRole } = useAuth();
+  const { user } = useAuth();
+  const { toast } = useToast();
   const [conversations, setConversations] = useState<Conversation[]>([]);
   const [loading, setLoading] = useState(true);
   const [searchTerm, setSearchTerm] = useState('');
   const [selectedConversation, setSelectedConversation] = useState<Conversation | null>(null);
-  const [messages, setMessages] = useState<ProjectMessage[]>([]);
+  const [messages, setMessages] = useState<CordadaMessage[]>([]);
   const [newMessage, setNewMessage] = useState('');
-  
+
   // New conversation dialog
   const [showNewConversation, setShowNewConversation] = useState(false);
-  const [mutualProjects, setMutualProjects] = useState<MutualProject[]>([]);
-  const [selectedProject, setSelectedProject] = useState<string>('');
-  const [loadingProjects, setLoadingProjects] = useState(false);
+  const [availableTargets, setAvailableTargets] = useState<CordadaConversationTarget[]>([]);
+  const [selectedTargetKey, setSelectedTargetKey] = useState<string>('');
+  const [loadingTargets, setLoadingTargets] = useState(false);
 
   useEffect(() => {
-    if (user) {
-      fetchConversations();
-      fetchMutualProjects();
-      const cleanup = subscribeToMessages();
-      return cleanup;
-    }
-  }, [user]);
-
-  const subscribeToMessages = () => {
+    if (!user) return;
+    void loadAll();
     const channel = supabase
-      .channel('inbox-messages')
+      .channel('cordada-messages-inbox')
       .on(
         'postgres_changes',
         {
-          event: 'INSERT',
+          event: '*',
           schema: 'public',
-          table: 'project_messages',
+          table: 'cordada_messages',
+          filter: `recipient_id=eq.${user.id}`,
         },
-        (payload) => {
-          const newMsg = payload.new as ProjectMessage;
-          if (newMsg.sender_id === user?.id || newMsg.recipient_id === user?.id) {
-            fetchConversations();
-            if (selectedConversation) {
-              fetchMessages(selectedConversation.project_id, selectedConversation.other_user_id);
-            }
+        () => {
+          void fetchConversations(availableTargets);
+          if (selectedConversation) {
+            void fetchMessages(selectedConversation.cordada_id, selectedConversation.other_user_id);
           }
         }
       )
@@ -109,294 +92,244 @@ const Inbox = () => {
     return () => {
       supabase.removeChannel(channel);
     };
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [user]);
+
+  const loadAll = async () => {
+    const targets = await fetchAvailableTargets();
+    setAvailableTargets(targets);
+    await fetchConversations(targets);
   };
 
-  const fetchMutualProjects = async () => {
-    if (!user) return;
-    setLoadingProjects(true);
+  const fetchAvailableTargets = async (): Promise<CordadaConversationTarget[]> => {
+    if (!user) return [];
+    setLoadingTargets(true);
+    const targets: CordadaConversationTarget[] = [];
 
     try {
-      // Get projects where user is client with accepted proposals
-      const { data: clientProjects } = await supabase
-        .from('projects')
-        .select(`
-          id,
-          title,
-          client_id,
-          status,
-          proposals!inner(
-            consultant_id,
-            status
-          )
-        `)
-        .eq('client_id', user.id)
-        .eq('proposals.status', 'accepted');
+      // As client: cordadas I own + their members
+      const { data: myCordadas } = await supabase
+        .from('cordadas')
+        .select('id, title')
+        .eq('client_id', user.id);
 
-      // Get projects where user is consultant with accepted proposals
-      const { data: consultantProjects } = await supabase
-        .from('proposals')
-        .select(`
-          consultant_id,
-          status,
-          projects!inner(
-            id,
-            title,
-            client_id,
-            status
-          )
-        `)
-        .eq('consultant_id', user.id)
-        .eq('status', 'accepted');
+      if (myCordadas && myCordadas.length > 0) {
+        const ids = myCordadas.map((c) => c.id);
+        const { data: mems } = await supabase
+          .from('cordada_members')
+          .select('cordada_id, consultant:consultant_applications(user_id, full_name)')
+          .in('cordada_id', ids);
 
-      const projectsList: MutualProject[] = [];
-
-      // Process client projects
-      if (clientProjects) {
-        for (const project of clientProjects) {
-          const proposals = project.proposals as any[];
-          for (const proposal of proposals) {
-            // Get consultant name
-            const { data: consultantProfile } = await supabase
-              .from('profiles')
-              .select('full_name')
-              .eq('user_id', proposal.consultant_id)
-              .maybeSingle();
-
-            // Get client name
-            const { data: clientProfile } = await supabase
-              .from('profiles')
-              .select('full_name')
-              .eq('user_id', project.client_id)
-              .maybeSingle();
-
-            projectsList.push({
-              id: project.id,
-              title: project.title,
-              client_id: project.client_id,
-              consultant_id: proposal.consultant_id,
-              client_name: clientProfile?.full_name || 'Cliente',
-              consultant_name: consultantProfile?.full_name || 'Consultor',
-              status: project.status,
-            });
-          }
-        }
-      }
-
-      // Process consultant projects
-      if (consultantProjects) {
-        for (const proposal of consultantProjects) {
-          const project = proposal.projects as any;
-          
-          // Avoid duplicates
-          if (projectsList.some(p => p.id === project.id && p.consultant_id === proposal.consultant_id)) {
-            continue;
-          }
-
-          // Get consultant name
-          const { data: consultantProfile } = await supabase
-            .from('profiles')
-            .select('full_name')
-            .eq('user_id', proposal.consultant_id)
-            .maybeSingle();
-
-          // Get client name
-          const { data: clientProfile } = await supabase
-            .from('profiles')
-            .select('full_name')
-            .eq('user_id', project.client_id)
-            .maybeSingle();
-
-          projectsList.push({
-            id: project.id,
-            title: project.title,
-            client_id: project.client_id,
-            consultant_id: proposal.consultant_id,
-            client_name: clientProfile?.full_name || 'Cliente',
-            consultant_name: consultantProfile?.full_name || 'Consultor',
-            status: project.status,
+        (mems || []).forEach((m: any) => {
+          const cordada = myCordadas.find((c) => c.id === m.cordada_id);
+          const ca = m.consultant;
+          if (!cordada || !ca?.user_id) return;
+          targets.push({
+            cordada_id: cordada.id,
+            cordada_title: cordada.title,
+            other_user_id: ca.user_id,
+            other_user_name: ca.full_name || 'Consultor',
+            role: 'client',
           });
-        }
+        });
       }
 
-      setMutualProjects(projectsList);
+      // As consultant: cordadas I'm a member of + their client
+      const { data: appRows } = await supabase.rpc('get_my_consultant_application');
+      const app = Array.isArray(appRows) ? appRows[0] : null;
+
+      if (app?.id) {
+        const { data: myMems } = await supabase
+          .from('cordada_members')
+          .select('cordada:cordadas(id, title, client_id, client_name, client_company)')
+          .eq('consultant_id', app.id);
+
+        (myMems || []).forEach((m: any) => {
+          const c = m.cordada;
+          if (!c?.id || !c?.client_id) return;
+          targets.push({
+            cordada_id: c.id,
+            cordada_title: c.title,
+            other_user_id: c.client_id,
+            other_user_name: c.client_company || c.client_name || 'Cliente',
+            role: 'consultant',
+          });
+        });
+      }
     } catch (error) {
-      console.error('Error fetching mutual projects:', error);
+      console.error('Error fetching conversation targets:', error);
     }
-    
-    setLoadingProjects(false);
+
+    setLoadingTargets(false);
+    return targets;
   };
 
-  const fetchConversations = async () => {
+  const fetchConversations = async (targets: CordadaConversationTarget[]) => {
     if (!user) return;
 
     const { data, error } = await supabase
-      .from('project_messages')
-      .select(`
-        id,
-        project_id,
-        sender_id,
-        recipient_id,
-        message,
-        is_read,
-        created_at,
-        projects (title)
-      `)
+      .from('cordada_messages')
+      .select('*')
       .or(`sender_id.eq.${user.id},recipient_id.eq.${user.id}`)
       .order('created_at', { ascending: false });
 
-    if (!error && data) {
-      const convMap = new Map<string, Conversation>();
-      
-      for (const msg of data) {
-        const otherId = msg.sender_id === user.id ? msg.recipient_id : msg.sender_id;
-        const key = `${msg.project_id}-${otherId}`;
-        
-        if (!convMap.has(key)) {
-          const { data: profile } = await supabase
-            .from('profiles')
-            .select('full_name')
-            .eq('user_id', otherId)
-            .maybeSingle();
+    if (error) {
+      console.error('Error fetching cordada messages:', error);
+      setLoading(false);
+      return;
+    }
 
-          convMap.set(key, {
-            project_id: msg.project_id,
-            project_title: msg.projects?.title || 'Proyecto',
-            other_user_id: otherId,
-            other_user_name: profile?.full_name || 'Usuario',
-            last_message: msg.message,
-            last_message_at: msg.created_at,
-            unread_count: 0,
-          });
-        }
+    const targetMap = new Map<string, CordadaConversationTarget>();
+    targets.forEach((t) => targetMap.set(`${t.cordada_id}-${t.other_user_id}`, t));
 
-        const conv = convMap.get(key)!;
-        if (!msg.is_read && msg.recipient_id === user.id) {
-          conv.unread_count++;
-        }
+    const convMap = new Map<string, Conversation>();
+    (data || []).forEach((msg) => {
+      const otherId = msg.sender_id === user.id ? msg.recipient_id : msg.sender_id;
+      const key = `${msg.cordada_id}-${otherId}`;
+
+      if (!convMap.has(key)) {
+        const target = targetMap.get(key);
+        convMap.set(key, {
+          cordada_id: msg.cordada_id,
+          cordada_title: target?.cordada_title || 'Cordada',
+          other_user_id: otherId,
+          other_user_name: target?.other_user_name || 'Usuario',
+          role: target?.role || 'client',
+          last_message: msg.message,
+          last_message_at: msg.created_at,
+          unread_count: 0,
+        });
       }
 
-      setConversations(Array.from(convMap.values()));
-    }
+      const conv = convMap.get(key)!;
+      if (!msg.is_read && msg.recipient_id === user.id) {
+        conv.unread_count++;
+      }
+    });
+
+    setConversations(Array.from(convMap.values()));
     setLoading(false);
   };
 
-  const fetchMessages = async (projectId: string, otherUserId: string) => {
+  const fetchMessages = async (cordadaId: string, otherUserId: string) => {
     if (!user) return;
 
     const { data } = await supabase
-      .from('project_messages')
-      .select(`
-        *,
-        projects (title)
-      `)
-      .eq('project_id', projectId)
-      .or(`and(sender_id.eq.${user.id},recipient_id.eq.${otherUserId}),and(sender_id.eq.${otherUserId},recipient_id.eq.${user.id})`)
+      .from('cordada_messages')
+      .select('*')
+      .eq('cordada_id', cordadaId)
+      .or(
+        `and(sender_id.eq.${user.id},recipient_id.eq.${otherUserId}),and(sender_id.eq.${otherUserId},recipient_id.eq.${user.id})`
+      )
       .order('created_at', { ascending: true });
 
     if (data) {
-      setMessages(data as ProjectMessage[]);
+      setMessages(data as CordadaMessage[]);
 
       await supabase
-        .from('project_messages')
+        .from('cordada_messages')
         .update({ is_read: true })
-        .eq('project_id', projectId)
+        .eq('cordada_id', cordadaId)
         .eq('sender_id', otherUserId)
-        .eq('recipient_id', user.id);
+        .eq('recipient_id', user.id)
+        .eq('is_read', false);
     }
   };
 
   const handleSelectConversation = (conv: Conversation) => {
     setSelectedConversation(conv);
-    fetchMessages(conv.project_id, conv.other_user_id);
+    void fetchMessages(conv.cordada_id, conv.other_user_id);
   };
 
   const handleSendMessage = async () => {
     if (!user || !selectedConversation || !newMessage.trim()) return;
 
-    const trimmedMessage = newMessage.trim();
-    
-    // Validate message length (max 10,000 characters to match database constraint)
-    if (trimmedMessage.length > 10000) {
-      // Import toast if not already available, using console for now
-      alert('El mensaje es demasiado largo (máximo 10,000 caracteres)');
+    const trimmed = newMessage.trim();
+    if (trimmed.length > 10000) {
+      toast({
+        title: 'Mensaje demasiado largo',
+        description: 'El máximo son 10.000 caracteres.',
+        variant: 'destructive',
+      });
       return;
     }
 
-    await supabase.from('project_messages').insert({
-      project_id: selectedConversation.project_id,
+    const { error } = await supabase.from('cordada_messages').insert({
+      cordada_id: selectedConversation.cordada_id,
       sender_id: user.id,
       recipient_id: selectedConversation.other_user_id,
-      message: trimmedMessage,
+      message: trimmed,
     });
 
+    if (error) {
+      toast({
+        title: 'No se pudo enviar el mensaje',
+        description: error.message,
+        variant: 'destructive',
+      });
+      return;
+    }
+
     setNewMessage('');
-    fetchMessages(selectedConversation.project_id, selectedConversation.other_user_id);
+    void fetchMessages(selectedConversation.cordada_id, selectedConversation.other_user_id);
+    void fetchConversations(availableTargets);
   };
 
-  const handleStartNewConversation = async () => {
-    if (!user || !selectedProject) return;
+  const handleStartNewConversation = () => {
+    if (!user || !selectedTargetKey) return;
 
-    const project = mutualProjects.find(p => p.id === selectedProject);
-    if (!project) return;
+    const target = availableTargets.find(
+      (t) => `${t.cordada_id}-${t.other_user_id}` === selectedTargetKey
+    );
+    if (!target) return;
 
-    // Determine the other user based on current user role
-    const otherUserId = project.client_id === user.id ? project.consultant_id : project.client_id;
-    const otherUserName = project.client_id === user.id ? project.consultant_name : project.client_name;
-
-    // Check if conversation already exists
-    const existingConv = conversations.find(
-      c => c.project_id === project.id && c.other_user_id === otherUserId
+    const existing = conversations.find(
+      (c) => c.cordada_id === target.cordada_id && c.other_user_id === target.other_user_id
     );
 
-    if (existingConv) {
-      setSelectedConversation(existingConv);
-      fetchMessages(existingConv.project_id, existingConv.other_user_id);
+    if (existing) {
+      setSelectedConversation(existing);
+      void fetchMessages(existing.cordada_id, existing.other_user_id);
     } else {
-      // Create new conversation placeholder
-      const newConv: Conversation = {
-        project_id: project.id,
-        project_title: project.title,
-        other_user_id: otherUserId,
-        other_user_name: otherUserName,
+      const placeholder: Conversation = {
+        ...target,
         last_message: '',
         last_message_at: new Date().toISOString(),
         unread_count: 0,
       };
-      setSelectedConversation(newConv);
+      setSelectedConversation(placeholder);
       setMessages([]);
     }
 
     setShowNewConversation(false);
-    setSelectedProject('');
+    setSelectedTargetKey('');
   };
 
   const formatDate = (dateString: string) => {
     const date = new Date(dateString);
     const today = new Date();
     const isToday = date.toDateString() === today.toDateString();
-    
     if (isToday) {
       return date.toLocaleTimeString('es-ES', { hour: '2-digit', minute: '2-digit' });
     }
     return date.toLocaleDateString('es-ES', { day: 'numeric', month: 'short' });
   };
 
-  const getInitials = (name: string) => {
-    return name.split(' ').map(n => n[0]).join('').toUpperCase();
-  };
+  const getInitials = (name: string) =>
+    name.split(' ').map((n) => n[0]).join('').toUpperCase();
 
-  const filteredConversations = conversations.filter((conv) =>
-    conv.project_title.toLowerCase().includes(searchTerm.toLowerCase()) ||
-    conv.other_user_name.toLowerCase().includes(searchTerm.toLowerCase())
+  const filteredConversations = conversations.filter(
+    (conv) =>
+      conv.cordada_title.toLowerCase().includes(searchTerm.toLowerCase()) ||
+      conv.other_user_name.toLowerCase().includes(searchTerm.toLowerCase())
   );
 
-  // Filter projects that don't already have a conversation
-  const availableProjects = mutualProjects.filter(project => {
-    const otherUserId = project.client_id === user?.id ? project.consultant_id : project.client_id;
-    return !conversations.some(
-      c => c.project_id === project.id && c.other_user_id === otherUserId
-    );
-  });
+  const availableTargetsFiltered = availableTargets.filter(
+    (t) =>
+      !conversations.some(
+        (c) => c.cordada_id === t.cordada_id && c.other_user_id === t.other_user_id
+      )
+  );
 
   return (
     <DashboardLayout>
@@ -426,45 +359,47 @@ const Inbox = () => {
                     </DialogHeader>
                     <div className="space-y-4 pt-4">
                       <p className="text-sm text-muted-foreground">
-                        Selecciona un desafío activo para iniciar una conversación con el cliente o consultor asociado.
+                        Elige una cordada para iniciar una conversación con el cliente o consultor asociado.
                       </p>
-                      {loadingProjects ? (
+                      {loadingTargets ? (
                         <div className="text-center py-4 text-muted-foreground">
-                          Cargando desafíos...
+                          Cargando cordadas...
                         </div>
-                      ) : availableProjects.length === 0 && mutualProjects.length === 0 ? (
+                      ) : availableTargets.length === 0 ? (
                         <div className="text-center py-4 text-muted-foreground">
-                          No tienes desafíos activos con propuestas aceptadas.
+                          No tienes cordadas con contrapartes disponibles.
                         </div>
-                      ) : availableProjects.length === 0 ? (
+                      ) : availableTargetsFiltered.length === 0 ? (
                         <div className="text-center py-4 text-muted-foreground">
-                          Ya tienes conversaciones con todos tus contactos de desafíos activos.
+                          Ya tienes conversaciones con todas las contrapartes de tus cordadas.
                         </div>
                       ) : (
                         <>
-                          <Select value={selectedProject} onValueChange={setSelectedProject}>
+                          <Select value={selectedTargetKey} onValueChange={setSelectedTargetKey}>
                             <SelectTrigger>
-                              <SelectValue placeholder="Selecciona un desafío" />
+                              <SelectValue placeholder="Selecciona una cordada" />
                             </SelectTrigger>
                             <SelectContent className="bg-background border">
-                              {availableProjects.map((project) => (
-                                <SelectItem key={project.id} value={project.id}>
-                                  <div className="flex flex-col">
-                                    <span className="font-medium">{project.title}</span>
-                                    <span className="text-xs text-muted-foreground">
-                                      {project.client_id === user?.id 
-                                        ? `Consultor: ${project.consultant_name}`
-                                        : `Cliente: ${project.client_name}`
-                                      }
-                                    </span>
-                                  </div>
-                                </SelectItem>
-                              ))}
+                              {availableTargetsFiltered.map((t) => {
+                                const key = `${t.cordada_id}-${t.other_user_id}`;
+                                return (
+                                  <SelectItem key={key} value={key}>
+                                    <div className="flex flex-col">
+                                      <span className="font-medium">{t.cordada_title}</span>
+                                      <span className="text-xs text-muted-foreground">
+                                        {t.role === 'client'
+                                          ? `Consultor: ${t.other_user_name}`
+                                          : `Cliente: ${t.other_user_name}`}
+                                      </span>
+                                    </div>
+                                  </SelectItem>
+                                );
+                              })}
                             </SelectContent>
                           </Select>
-                          <Button 
-                            onClick={handleStartNewConversation} 
-                            disabled={!selectedProject}
+                          <Button
+                            onClick={handleStartNewConversation}
+                            disabled={!selectedTargetKey}
                             className="w-full"
                           >
                             Iniciar Conversación
@@ -504,10 +439,10 @@ const Inbox = () => {
                   <p className="text-muted-foreground mb-3">
                     {searchTerm ? 'No se encontraron conversaciones' : 'No tienes mensajes aún'}
                   </p>
-                  {!searchTerm && mutualProjects.length > 0 && (
-                    <Button 
-                      size="sm" 
-                      variant="outline" 
+                  {!searchTerm && availableTargets.length > 0 && (
+                    <Button
+                      size="sm"
+                      variant="outline"
                       onClick={() => setShowNewConversation(true)}
                     >
                       <Plus className="w-4 h-4 mr-1" />
@@ -519,9 +454,9 @@ const Inbox = () => {
                 <div className="divide-y divide-border">
                   {filteredConversations.map((conv) => (
                     <button
-                      key={`${conv.project_id}-${conv.other_user_id}`}
+                      key={`${conv.cordada_id}-${conv.other_user_id}`}
                       className={`w-full p-4 text-left hover:bg-muted/50 transition-colors ${
-                        selectedConversation?.project_id === conv.project_id &&
+                        selectedConversation?.cordada_id === conv.cordada_id &&
                         selectedConversation?.other_user_id === conv.other_user_id
                           ? 'bg-muted'
                           : ''
@@ -544,7 +479,7 @@ const Inbox = () => {
                             </span>
                           </div>
                           <p className="text-sm text-muted-foreground truncate">
-                            {conv.project_title}
+                            {conv.cordada_title}
                           </p>
                           <p className="text-sm text-muted-foreground truncate">
                             {conv.last_message}
@@ -579,7 +514,7 @@ const Inbox = () => {
                         {selectedConversation.other_user_name}
                       </CardTitle>
                       <p className="text-sm text-muted-foreground">
-                        {selectedConversation.project_title}
+                        {selectedConversation.cordada_title}
                       </p>
                     </div>
                   </div>
@@ -605,12 +540,14 @@ const Inbox = () => {
                               : 'bg-muted'
                           }`}
                         >
-                          <p className="text-sm">{msg.message}</p>
-                          <p className={`text-xs mt-1 ${
-                            msg.sender_id === user?.id
-                              ? 'text-primary-foreground/70'
-                              : 'text-muted-foreground'
-                          }`}>
+                          <p className="text-sm whitespace-pre-wrap">{msg.message}</p>
+                          <p
+                            className={`text-xs mt-1 ${
+                              msg.sender_id === user?.id
+                                ? 'text-primary-foreground/70'
+                                : 'text-muted-foreground'
+                            }`}
+                          >
                             {formatDate(msg.created_at)}
                           </p>
                         </div>
@@ -629,7 +566,7 @@ const Inbox = () => {
                       onKeyDown={(e) => {
                         if (e.key === 'Enter' && !e.shiftKey) {
                           e.preventDefault();
-                          handleSendMessage();
+                          void handleSendMessage();
                         }
                       }}
                     />
@@ -648,11 +585,8 @@ const Inbox = () => {
                 <p className="text-muted-foreground mb-4">
                   Elige una conversación de la lista o inicia una nueva
                 </p>
-                {mutualProjects.length > 0 && (
-                  <Button 
-                    variant="outline" 
-                    onClick={() => setShowNewConversation(true)}
-                  >
+                {availableTargets.length > 0 && (
+                  <Button variant="outline" onClick={() => setShowNewConversation(true)}>
                     <Plus className="w-4 h-4 mr-2" />
                     Nueva conversación
                   </Button>

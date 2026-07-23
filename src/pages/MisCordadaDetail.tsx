@@ -24,9 +24,9 @@ export default function MisCordadaDetail() {
     if (!user || !id) return;
     (async () => {
       setLoading(true);
-      const [{ data: cord }, { data: app }, { data: rits }] = await Promise.all([
+      const [{ data: cord }, { data: appRows }, { data: rits }] = await Promise.all([
         supabase.from("cordadas").select("*").eq("id", id).maybeSingle(),
-        supabase.from("consultant_applications").select("id").eq("user_id", user.id).maybeSingle(),
+        supabase.rpc("get_my_consultant_application"),
         supabase.from("cordada_rituals").select("*").eq("cordada_id", id).order("scheduled_date", { ascending: true }),
       ]);
 
@@ -39,7 +39,8 @@ export default function MisCordadaDetail() {
         .eq("cordada_id", id);
       setMembers((mems || []) as CordadaMember[]);
 
-      if (app && mems) {
+      const app = Array.isArray(appRows) ? appRows[0] : null;
+      if (app?.id && mems) {
         const mine = mems.find((m: any) => m.consultant_id === app.id);
         setMyRole((mine?.role as CordadaRole) ?? null);
       }
