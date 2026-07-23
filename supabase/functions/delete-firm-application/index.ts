@@ -34,11 +34,25 @@ Deno.serve(async (req) => {
     if (!parsed.success) return json({ error: parsed.error.flatten() }, 400);
     const { application_id } = parsed.data;
 
+    // Fetch to see if firm was already activated
+    const { data: app } = await admin
+      .from('firm_applications')
+      .select('activated_user_id')
+      .eq('id', application_id)
+      .maybeSingle();
+
+    // Delete application (cascades to firm_application_leaders)
     const { error } = await admin
       .from('firm_applications')
       .delete()
       .eq('id', application_id);
     if (error) return json({ error: error.message }, 500);
+
+    // If activated, delete the auth user; FK cascade cleans profiles/user_roles/consulting_firms/firm_members
+    if (app?.activated_user_id) {
+      const { error: userErr } = await admin.auth.admin.deleteUser(app.activated_user_id);
+      if (userErr) console.error('auth user delete error', userErr);
+    }
 
     return json({ success: true });
   } catch (err) {
