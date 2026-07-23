@@ -216,7 +216,13 @@ function FirmDetailDialog({ app, onClose, onStatusChange, onDeleted }: {
                     <div>
                       <p className="font-medium">{l.full_name}{l.position ? ` — ${l.position}` : ''}</p>
                       <p className="text-xs text-muted-foreground">{l.email}</p>
-                      <p className="text-xs text-muted-foreground">Evaluación: {l.assessment_status}</p>
+                      <div className="mt-1">
+                        <Badge className={l.assessment_status === 'completed'
+                          ? 'bg-green-500/15 text-green-700 dark:text-green-400'
+                          : 'bg-yellow-500/15 text-yellow-700 dark:text-yellow-400'}>
+                          {l.assessment_status === 'completed' ? 'Completado' : 'Pendiente'}
+                        </Badge>
+                      </div>
                     </div>
                     <Button size="sm" variant="outline" onClick={() => copyLeaderLink(l.leader_token)}>
                       <Copy className="w-4 h-4 mr-1" /> Copiar enlace
