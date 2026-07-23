@@ -48,6 +48,31 @@ const EnrollmentForm = ({ result, levelInfo, roleResult, onBack, firmToken, lead
   const [isCaptchaKeyLoading, setIsCaptchaKeyLoading] = useState(true);
   const [captchaToken, setCaptchaToken] = useState<string | null>(null);
   const recaptchaRef = useRef<ReCAPTCHA>(null);
+  const [firmContext, setFirmContext] = useState<{ firm_name: string; leader_full_name: string } | null>(null);
+
+  useEffect(() => {
+    if (!firmToken || !leaderToken) return;
+    let active = true;
+    (async () => {
+      try {
+        const { data, error } = await supabase.functions.invoke('get-firm-invitation-context', {
+          body: { firmToken, leaderToken },
+        });
+        if (error) throw error;
+        if (active && data?.firm_name) {
+          setFirmContext({ firm_name: data.firm_name, leader_full_name: data.leader_full_name });
+          setFormData((prev) => ({
+            ...prev,
+            fullName: prev.fullName || data.leader_full_name || '',
+            company: prev.company || data.firm_name || '',
+          }));
+        }
+      } catch (err) {
+        console.error('Error loading firm context:', err);
+      }
+    })();
+    return () => { active = false; };
+  }, [firmToken, leaderToken]);
 
   useEffect(() => {
     let active = true;
