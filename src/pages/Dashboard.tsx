@@ -120,7 +120,7 @@ const Dashboard = () => {
             </CardHeader>
             <CardContent>
               <Button variant="outline" className="w-full group" asChild>
-                <Link to="/projects">
+                <Link to="/cordadas-abiertas">
                   Ver Desafíos
                   <ArrowRight className="w-4 h-4 ml-2 group-hover:translate-x-1 transition-transform" />
                 </Link>
