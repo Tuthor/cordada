@@ -302,6 +302,15 @@ export function CordadaDetailDialog({
             />
           </TabsContent>
 
+          {cordada.visibility_mode === 'open_filtered' && (
+            <TabsContent value="interested" className="mt-4">
+              <InterestedPanel
+                cordadaId={cordada.id}
+                filledRoles={(members || []).map((m) => m.role)}
+              />
+            </TabsContent>
+          )}
+
           <TabsContent value="rituals" className="mt-4">
             <RitualsTimeline 
               cordadaId={cordada.id}
