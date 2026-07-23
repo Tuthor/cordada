@@ -27,9 +27,11 @@ interface EnrollmentFormProps {
   levelInfo: MaturityLevelInfo;
   roleResult?: RoleAssessmentResult | null;
   onBack: () => void;
+  firmToken?: string;
+  leaderToken?: string;
 }
 
-const EnrollmentForm = ({ result, levelInfo, roleResult, onBack }: EnrollmentFormProps) => {
+const EnrollmentForm = ({ result, levelInfo, roleResult, onBack, firmToken, leaderToken }: EnrollmentFormProps) => {
   const [formData, setFormData] = useState({
     fullName: '',
     email: '',
@@ -110,6 +112,8 @@ const EnrollmentForm = ({ result, levelInfo, roleResult, onBack }: EnrollmentFor
           archetype: roleResult?.dominantArchetype?.name || null,
           overallScore: Math.round(result.overallPercentage),
           captchaToken: captchaToken,
+          firmToken: firmToken || null,
+          leaderToken: leaderToken || null,
         },
       });
 
