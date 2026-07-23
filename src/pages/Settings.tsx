@@ -329,21 +329,46 @@ const Settings = () => {
                       <FormField
                         control={consultantForm.control}
                         name="expertise"
-                        render={({ field }) => (
-                          <FormItem>
-                            <FormLabel>Especialidades</FormLabel>
-                            <FormControl>
-                              <Input 
-                                placeholder="Estrategia, Finanzas, Operaciones" 
-                                {...field} 
-                              />
-                            </FormControl>
-                            <FormDescription>
-                              Separa las especialidades con comas
-                            </FormDescription>
-                            <FormMessage />
-                          </FormItem>
-                        )}
+                        render={({ field }) => {
+                          const selected: string[] = field.value ?? [];
+                          const toggle = (tag: string) => {
+                            const next = selected.includes(tag)
+                              ? selected.filter((t) => t !== tag)
+                              : [...selected, tag];
+                            field.onChange(next);
+                          };
+                          return (
+                            <FormItem>
+                              <FormLabel>Especialidades</FormLabel>
+                              <FormControl>
+                                <div className="flex flex-wrap gap-2">
+                                  {expertiseOptions.map((tag) => {
+                                    const active = selected.includes(tag);
+                                    return (
+                                      <button
+                                        type="button"
+                                        key={tag}
+                                        onClick={() => toggle(tag)}
+                                        className="focus:outline-none"
+                                      >
+                                        <Badge
+                                          variant={active ? 'default' : 'outline'}
+                                          className="cursor-pointer select-none"
+                                        >
+                                          {tag}
+                                        </Badge>
+                                      </button>
+                                    );
+                                  })}
+                                </div>
+                              </FormControl>
+                              <FormDescription>
+                                Selecciona las especialidades desde el catálogo. Los clientes filtran perfiles usando estos mismos valores.
+                              </FormDescription>
+                              <FormMessage />
+                            </FormItem>
+                          );
+                        }}
                       />
 
                       <div className="grid gap-4 sm:grid-cols-2">
