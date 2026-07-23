@@ -9,16 +9,13 @@ import Auth from "./pages/Auth";
 import Dashboard from "./pages/Dashboard";
 import PartnerDashboard from "./pages/PartnerDashboard";
 import Directory from "./pages/Directory";
-import Projects from "./pages/Projects";
-import ProjectNew from "./pages/ProjectNew";
-import ProjectDetail from "./pages/ProjectDetail";
-import ProjectEdit from "./pages/ProjectEdit";
-import ProjectApply from "./pages/ProjectApply";
+import { LegacyProjectsRedirect } from "./components/LegacyProjectsRedirect";
+
 import ClientChallenges from "./pages/ClientChallenges";
 import ClientChallengeNew from "./pages/ClientChallengeNew";
 import ClientChallengeEdit from "./pages/ClientChallengeEdit";
 import Inbox from "./pages/Inbox";
-import Proposals from "./pages/Proposals";
+
 import Training from "./pages/Training";
 import Settings from "./pages/Settings";
 import NotFound from "./pages/NotFound";
@@ -56,16 +53,17 @@ const App = () => (
             <Route path="/dashboard" element={<Dashboard />} />
             <Route path="/partner" element={<PartnerDashboard />} />
             <Route path="/directory" element={<Directory />} />
-            <Route path="/projects" element={<Projects />} />
-            <Route path="/projects/new" element={<ProjectNew />} />
-            <Route path="/projects/:id" element={<ProjectDetail />} />
-            <Route path="/projects/:id/edit" element={<ProjectEdit />} />
-            <Route path="/projects/:id/apply" element={<ProjectApply />} />
+            <Route path="/projects" element={<LegacyProjectsRedirect />} />
+            <Route path="/projects/new" element={<Navigate to="/challenges/new" replace />} />
+            <Route path="/projects/:id" element={<Navigate to="/dashboard" replace />} />
+            <Route path="/projects/:id/edit" element={<Navigate to="/dashboard" replace />} />
+            <Route path="/projects/:id/apply" element={<Navigate to="/cordadas-abiertas" replace />} />
             <Route path="/challenges" element={<ClientChallenges />} />
             <Route path="/challenges/new" element={<ClientChallengeNew />} />
             <Route path="/challenges/:id/edit" element={<ClientChallengeEdit />} />
             <Route path="/inbox" element={<Inbox />} />
-            <Route path="/proposals" element={<Proposals />} />
+            <Route path="/proposals" element={<Navigate to="/mis-cordadas" replace />} />
+
             <Route path="/training" element={<Training />} />
             <Route path="/settings" element={<Settings />} />
             <Route path="/requirements" element={<ClientRequirements />} />
