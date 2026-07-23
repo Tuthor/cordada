@@ -183,7 +183,6 @@ const Auth = () => {
 
   return (
     <div className="min-h-screen bg-background flex">
-      <BackButton floating />
       {/* Left side - Branding */}
       <div className="hidden lg:flex lg:w-1/2 bg-gradient-hero text-primary-foreground p-12 flex-col justify-between">
         <div>
@@ -222,7 +221,10 @@ const Auth = () => {
       </div>
 
       {/* Right side - Forms */}
-      <div className="flex-1 flex items-center justify-center p-6 lg:p-12">
+      <div className="flex-1 flex flex-col items-center justify-center p-6 lg:p-12">
+        <div className="w-full max-w-md mb-4">
+          <BackButton />
+        </div>
         <Card className="w-full max-w-md">
           <CardHeader className="text-center">
             <Link to="/" className="lg:hidden flex items-center justify-center gap-3 mb-4 hover:opacity-80 transition-opacity">

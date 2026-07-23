@@ -1,5 +1,6 @@
 import { Button } from '@/components/ui/button';
 import { ArrowRight, Clock, Shield, Target, CheckCircle, Mountain, TrendingUp, Flag, Users } from 'lucide-react';
+import { BackButton } from '@/components/BackButton';
 
 interface WelcomeScreenProps {
   onStart: () => void;
@@ -35,7 +36,10 @@ const WelcomeScreen = ({ onStart }: WelcomeScreenProps) => {
     <div className="min-h-screen bg-background">
       {/* Sección Hero */}
       <div className="bg-gradient-hero text-primary-foreground">
-        <div className="container mx-auto px-4 py-16 lg:py-24">
+        <div className="container mx-auto px-4 pt-4">
+          <BackButton className="text-primary-foreground hover:text-primary-foreground hover:bg-primary-foreground/10" />
+        </div>
+        <div className="container mx-auto px-4 py-16 lg:py-24 pt-8">
           <div className="max-w-3xl mx-auto text-center animate-fade-in">
             <div className="inline-flex items-center gap-2 px-4 py-2 rounded-full bg-gold/20 text-gold mb-6">
               <Mountain className="w-4 h-4" />

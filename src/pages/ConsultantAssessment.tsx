@@ -1,6 +1,6 @@
 import Assessment from '@/components/Assessment';
 import { Helmet, HelmetProvider } from 'react-helmet-async';
-import { BackButton } from '@/components/BackButton';
+
 
 const ConsultantAssessment = () => {
   return (
@@ -12,7 +12,7 @@ const ConsultantAssessment = () => {
           content="Evalúa tu preparación para unirte a CORDADA, el ecosistema élite de consultoría empresarial. Evaluación integral de madurez profesional."
         />
       </Helmet>
-      <BackButton floating />
+      
       <Assessment />
     </HelmetProvider>
   );
