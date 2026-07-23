@@ -191,14 +191,16 @@ export function ApplicationsPanel() {
                         {new Date(app.created_at).toLocaleDateString("es-CL")}
                       </TableCell>
                       <TableCell className="text-right">
-                        <Button
-                          variant="ghost"
-                          size="sm"
-                          onClick={() => setSelectedApplication(app.id)}
-                        >
-                          <Eye className="w-4 h-4" />
-                        </Button>
+                        <div className="flex justify-end gap-1">
+                          <Button variant="ghost" size="sm" onClick={() => setSelectedApplication(app.id)}>
+                            <Eye className="w-4 h-4" />
+                          </Button>
+                          <Button variant="ghost" size="sm" onClick={() => setConfirmDelete(app)} title="Eliminar postulación">
+                            <Trash2 className="w-4 h-4 text-destructive" />
+                          </Button>
+                        </div>
                       </TableCell>
+
                     </TableRow>
                   ))}
                 </TableBody>
