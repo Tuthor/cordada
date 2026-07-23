@@ -42,6 +42,8 @@ const Assessment = () => {
   const handlePrevious = () => {
     if (currentQuestionIndex > 0) {
       setCurrentQuestionIndex(currentQuestionIndex - 1);
+    } else {
+      setState('welcome');
     }
   };
 
@@ -176,7 +178,7 @@ const Assessment = () => {
           onAnswer={handleAnswer}
           onNext={handleNext}
           onPrevious={handlePrevious}
-          isFirst={currentQuestionIndex === 0}
+          isFirst={false}
           isLast={currentQuestionIndex === questions.length - 1}
         />
       </div>
