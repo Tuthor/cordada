@@ -506,6 +506,7 @@ export type Database = {
           estimated_duration_weeks: number | null
           id: string
           objectives: string[] | null
+          open_filters: Json | null
           required_expertise: string[] | null
           risks: string | null
           risks_attachments: Json | null
@@ -515,6 +516,7 @@ export type Database = {
           terrain_attachments: Json | null
           title: string
           updated_at: string
+          visibility_mode: Database["public"]["Enums"]["cordada_visibility_mode"]
         }
         Insert: {
           budget_amount?: number | null
@@ -531,6 +533,7 @@ export type Database = {
           estimated_duration_weeks?: number | null
           id?: string
           objectives?: string[] | null
+          open_filters?: Json | null
           required_expertise?: string[] | null
           risks?: string | null
           risks_attachments?: Json | null
@@ -540,6 +543,7 @@ export type Database = {
           terrain_attachments?: Json | null
           title: string
           updated_at?: string
+          visibility_mode?: Database["public"]["Enums"]["cordada_visibility_mode"]
         }
         Update: {
           budget_amount?: number | null
@@ -556,6 +560,7 @@ export type Database = {
           estimated_duration_weeks?: number | null
           id?: string
           objectives?: string[] | null
+          open_filters?: Json | null
           required_expertise?: string[] | null
           risks?: string | null
           risks_attachments?: Json | null
@@ -565,6 +570,7 @@ export type Database = {
           terrain_attachments?: Json | null
           title?: string
           updated_at?: string
+          visibility_mode?: Database["public"]["Enums"]["cordada_visibility_mode"]
         }
         Relationships: []
       }
@@ -1256,6 +1262,10 @@ export type Database = {
       [_ in never]: never
     }
     Functions: {
+      consultant_matches_cordada: {
+        Args: { _cordada_id: string; _user_id: string }
+        Returns: boolean
+      }
       get_safe_profile_data: {
         Args: { target_user_id: string }
         Returns: {
@@ -1313,6 +1323,7 @@ export type Database = {
         | "en_curso"
         | "cumbre_alcanzada"
         | "cerrada"
+      cordada_visibility_mode: "curated" | "open_filtered"
       course_type: "course" | "workshop"
       risk_alert_type:
         | "riesgo_comercial"
@@ -1484,6 +1495,7 @@ export const Constants = {
         "cumbre_alcanzada",
         "cerrada",
       ],
+      cordada_visibility_mode: ["curated", "open_filtered"],
       course_type: ["course", "workshop"],
       risk_alert_type: [
         "riesgo_comercial",
