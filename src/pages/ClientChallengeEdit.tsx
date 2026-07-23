@@ -79,11 +79,16 @@ const ClientChallengeEdit = () => {
       objectives: '',
       required_expertise: '',
       budget_currency: 'CLP',
+      visibility_mode: 'curated',
+      open_filters: null,
     },
   });
 
+  const visibilityMode = form.watch('visibility_mode');
+
   useEffect(() => {
     if (cordada) {
+      const anyC = cordada as any;
       form.reset({
         title: cordada.title,
         description: cordada.description || '',
@@ -94,6 +99,8 @@ const ClientChallengeEdit = () => {
         budget_amount: cordada.budget_amount || undefined,
         budget_currency: (cordada.budget_currency as 'CLP' | 'UF' | 'USD') || 'CLP',
         estimated_duration_weeks: cordada.estimated_duration_weeks || undefined,
+        visibility_mode: (anyC.visibility_mode as 'curated' | 'open_filtered') || 'curated',
+        open_filters: (anyC.open_filters as CordadaOpenFilters | null) ?? null,
       });
     }
   }, [cordada, form]);
@@ -123,7 +130,9 @@ const ClientChallengeEdit = () => {
         budget_amount: data.budget_amount || null,
         budget_currency: data.budget_currency || 'CLP',
         estimated_duration_weeks: data.estimated_duration_weeks || null,
-      })
+        visibility_mode: data.visibility_mode,
+        open_filters: data.visibility_mode === 'open_filtered' ? (data.open_filters ?? null) : null,
+      } as any)
       .eq('id', id)
       .eq('client_id', user.id);
 
