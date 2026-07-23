@@ -12,6 +12,7 @@ import { Slider } from '@/components/ui/slider';
 import { Sheet, SheetContent, SheetHeader, SheetTitle, SheetTrigger } from '@/components/ui/sheet';
 import { Label } from '@/components/ui/label';
 import { Separator } from '@/components/ui/separator';
+import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription } from '@/components/ui/dialog';
 
 interface ConsultantProfile {
   id: string;
@@ -53,6 +54,7 @@ const Directory = () => {
   const [tempFilters, setTempFilters] = useState<Filters>(initialFilters);
   const [isFilterOpen, setIsFilterOpen] = useState(false);
   const [availableExpertise, setAvailableExpertise] = useState<string[]>([]);
+  const [selectedConsultant, setSelectedConsultant] = useState<ConsultantProfile | null>(null);
 
   useEffect(() => {
     fetchConsultants();
@@ -462,7 +464,7 @@ const Directory = () => {
                     )}
                   </div>
 
-                  <Button variant="outline" className="w-full">
+                  <Button variant="outline" className="w-full" onClick={() => setSelectedConsultant(consultant)}>
                     Ver Perfil
                   </Button>
                 </CardContent>
@@ -471,6 +473,63 @@ const Directory = () => {
           </div>
         )}
       </div>
+
+      <Dialog open={!!selectedConsultant} onOpenChange={(open) => !open && setSelectedConsultant(null)}>
+        <DialogContent className="max-w-lg">
+          <DialogHeader>
+            <div className="flex items-center gap-4">
+              <Avatar className="w-16 h-16">
+                <AvatarFallback className="bg-primary text-primary-foreground text-lg">
+                  {getInitials(selectedConsultant?.profiles?.full_name || 'U')}
+                </AvatarFallback>
+              </Avatar>
+              <div className="flex-1 min-w-0 text-left">
+                <DialogTitle>{selectedConsultant?.profiles?.full_name || 'Consultor'}</DialogTitle>
+                <DialogDescription>
+                  {selectedConsultant?.headline || 'Consultor profesional'}
+                </DialogDescription>
+              </div>
+            </div>
+          </DialogHeader>
+
+          <div className="space-y-4">
+            {selectedConsultant?.profiles?.bio && (
+              <div>
+                <h4 className="text-sm font-semibold mb-1">Sobre mí</h4>
+                <p className="text-sm text-muted-foreground whitespace-pre-wrap">
+                  {selectedConsultant.profiles.bio}
+                </p>
+              </div>
+            )}
+
+            {selectedConsultant?.expertise && selectedConsultant.expertise.length > 0 && (
+              <div>
+                <h4 className="text-sm font-semibold mb-2">Especialidades</h4>
+                <div className="flex flex-wrap gap-1">
+                  {selectedConsultant.expertise.map((skill, i) => (
+                    <Badge key={i} variant="outline" className="text-xs">{skill}</Badge>
+                  ))}
+                </div>
+              </div>
+            )}
+
+            <div className="flex items-center gap-6 text-sm text-muted-foreground">
+              {selectedConsultant?.years_experience != null && (
+                <span className="flex items-center gap-1">
+                  <Briefcase className="w-4 h-4" />
+                  {selectedConsultant.years_experience} años de experiencia
+                </span>
+              )}
+              {selectedConsultant?.hourly_rate != null && (
+                <span className="flex items-center gap-1">
+                  <DollarSign className="w-4 h-4" />
+                  ${selectedConsultant.hourly_rate}/hr
+                </span>
+              )}
+            </div>
+          </div>
+        </DialogContent>
+      </Dialog>
     </DashboardLayout>
   );
 };
