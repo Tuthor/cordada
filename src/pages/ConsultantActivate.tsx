@@ -141,8 +141,8 @@ export default function ConsultantActivate() {
 
   return (
     <div className="min-h-screen bg-background py-10 px-4">
-      <BackButton floating />
       <div className="max-w-3xl mx-auto space-y-6">
+        <BackButton />
         <div className="flex items-center gap-3">
           <div className="w-11 h-11 rounded-lg bg-primary flex items-center justify-center">
             <Mountain className="w-6 h-6 text-primary-foreground" />
