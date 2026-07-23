@@ -4,12 +4,13 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/com
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
-import { Loader2, RefreshCw, ClipboardList, Eye, UserPlus } from "lucide-react";
+import { Loader2, RefreshCw, ClipboardList, Eye, UserPlus, Trash2 } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
 import { applicationStatuses, getStatusInfo } from "@/data/orchestrationData";
 import { ApplicationStatus } from "@/types/orchestration";
 import { ApplicationDetailDialog } from "./ApplicationDetailDialog";
 import { ImportEnrollmentDialog } from "./ImportEnrollmentDialog";
+import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle } from "@/components/ui/alert-dialog";
 
 interface ApplicationRow {
   id: string;

@@ -4,11 +4,12 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/com
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
-import { Loader2, RefreshCw, UserCheck, Eye, AlertTriangle } from "lucide-react";
+import { Loader2, RefreshCw, UserCheck, Eye, AlertTriangle, Trash2 } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
 import { getArchetypeInfo, getRiskAlertInfo } from "@/data/orchestrationData";
 import { ConsultantArchetype, RiskAlertType } from "@/types/orchestration";
 import { ApplicationDetailDialog } from "./ApplicationDetailDialog";
+import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle } from "@/components/ui/alert-dialog";
 
 interface ConsultantRow {
   id: string;
