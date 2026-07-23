@@ -120,19 +120,18 @@ export function AppSidebar() {
     const baseItems = [
       { title: "Inicio", url: "/dashboard", icon: Home, badge: 0 },
       { title: "Directorio", url: "/directory", icon: Users, badge: 0 },
-      { title: "Desafíos", url: "/projects", icon: Briefcase, badge: 0 },
       { title: "Inbox", url: "/inbox", icon: Inbox, badge: unreadCount },
-      { title: "Propuestas", url: "/proposals", icon: FileText, badge: 0 },
       { title: "Capacitación", url: "/training", icon: GraduationCap, badge: 0 },
     ];
 
     // Mis Cordadas + Cordadas abiertas para consultores y firmas
     if (userRole === "consultant" || userRole === "consulting_firm") {
-      baseItems.splice(3, 0,
+      baseItems.splice(2, 0,
         { title: "Cordadas abiertas", url: "/cordadas-abiertas", icon: Compass, badge: 0 },
         { title: "Mis Cordadas", url: "/mis-cordadas", icon: Mountain, badge: 0 },
       );
     }
+
 
     // Add requirements link for consultant
     if (userRole === "consultant") {
