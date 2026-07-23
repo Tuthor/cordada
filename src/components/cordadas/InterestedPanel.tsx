@@ -64,20 +64,22 @@ export function InterestedPanel({ cordadaId, filledRoles = [] }: Props) {
       if (error) throw error;
       if (!proposals?.length) return [] as InterestRow[];
 
-      // Enrich with safe profile data (name + bio)
-      const enriched: InterestRow[] = await Promise.all(
-        proposals.map(async (p) => {
-          const { data: profile } = await supabase
-            .rpc("get_safe_profile_data", { target_user_id: p.consultant_id });
-          const first = Array.isArray(profile) ? profile[0] : null;
-          return {
-            ...p,
-            full_name: first?.full_name || "Consultor",
-            bio: first?.bio || null,
-          };
-        })
-      );
-      return enriched;
+      const { data: profiles } = await supabase.rpc("get_cordada_interest_profiles", {
+        _cordada_id: cordadaId,
+      });
+      const byUser = new Map<string, { full_name: string | null; bio: string | null; expertise: string[] | null }>();
+      (profiles ?? []).forEach((p: any) => {
+        byUser.set(p.consultant_user_id, { full_name: p.full_name, bio: p.bio, expertise: p.expertise });
+      });
+
+      return proposals.map((p) => {
+        const info = byUser.get(p.consultant_id);
+        return {
+          ...p,
+          full_name: info?.full_name || "Consultor",
+          bio: info?.bio || null,
+        };
+      }) as InterestRow[];
     },
     enabled: !!cordadaId,
   });
