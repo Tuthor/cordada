@@ -34,6 +34,7 @@ import FirmDiagnostic from "./pages/FirmDiagnostic";
 import FirmActivate from "./pages/FirmActivate";
 import MisCordadas from "./pages/MisCordadas";
 import MisCordadaDetail from "./pages/MisCordadaDetail";
+import CordadasAbiertas from "./pages/CordadasAbiertas";
 
 const queryClient = new QueryClient();
 
@@ -71,6 +72,7 @@ const App = () => (
             <Route path="/consultant-requirements" element={<ConsultantRequirements />} />
             <Route path="/mis-cordadas" element={<MisCordadas />} />
             <Route path="/mis-cordadas/:id" element={<MisCordadaDetail />} />
+            <Route path="/cordadas-abiertas" element={<CordadasAbiertas />} />
             <Route path="/admin" element={<Navigate to="/admin/login" replace />} />
             <Route path="/admin/login" element={<AdminLogin />} />
             <Route path="/admin/dashboard" element={<AdminDashboard />} />

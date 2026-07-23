@@ -14,7 +14,8 @@ import {
   Building,
   ClipboardCheck,
   Handshake,
-  Mountain
+  Mountain,
+  Compass
 } from "lucide-react";
 import { NavLink } from "@/components/NavLink";
 import { useAuth } from "@/contexts/AuthContext";
@@ -125,9 +126,12 @@ export function AppSidebar() {
       { title: "Capacitación", url: "/training", icon: GraduationCap, badge: 0 },
     ];
 
-    // Mis Cordadas para consultores y firmas
+    // Mis Cordadas + Cordadas abiertas para consultores y firmas
     if (userRole === "consultant" || userRole === "consulting_firm") {
-      baseItems.splice(3, 0, { title: "Mis Cordadas", url: "/mis-cordadas", icon: Mountain, badge: 0 });
+      baseItems.splice(3, 0,
+        { title: "Cordadas abiertas", url: "/cordadas-abiertas", icon: Compass, badge: 0 },
+        { title: "Mis Cordadas", url: "/mis-cordadas", icon: Mountain, badge: 0 },
+      );
     }
 
     // Add requirements link for consultant
