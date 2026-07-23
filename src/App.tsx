@@ -53,16 +53,17 @@ const App = () => (
             <Route path="/dashboard" element={<Dashboard />} />
             <Route path="/partner" element={<PartnerDashboard />} />
             <Route path="/directory" element={<Directory />} />
-            <Route path="/projects" element={<Projects />} />
-            <Route path="/projects/new" element={<ProjectNew />} />
-            <Route path="/projects/:id" element={<ProjectDetail />} />
-            <Route path="/projects/:id/edit" element={<ProjectEdit />} />
-            <Route path="/projects/:id/apply" element={<ProjectApply />} />
+            <Route path="/projects" element={<LegacyProjectsRedirect />} />
+            <Route path="/projects/new" element={<Navigate to="/challenges/new" replace />} />
+            <Route path="/projects/:id" element={<Navigate to="/dashboard" replace />} />
+            <Route path="/projects/:id/edit" element={<Navigate to="/dashboard" replace />} />
+            <Route path="/projects/:id/apply" element={<Navigate to="/cordadas-abiertas" replace />} />
             <Route path="/challenges" element={<ClientChallenges />} />
             <Route path="/challenges/new" element={<ClientChallengeNew />} />
             <Route path="/challenges/:id/edit" element={<ClientChallengeEdit />} />
             <Route path="/inbox" element={<Inbox />} />
-            <Route path="/proposals" element={<Proposals />} />
+            <Route path="/proposals" element={<Navigate to="/mis-cordadas" replace />} />
+
             <Route path="/training" element={<Training />} />
             <Route path="/settings" element={<Settings />} />
             <Route path="/requirements" element={<ClientRequirements />} />
