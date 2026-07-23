@@ -209,6 +209,30 @@ const handler = async (req: Request): Promise<Response> => {
     const supabaseServiceKey = Deno.env.get("SUPABASE_SERVICE_ROLE_KEY")!;
     const supabase = createClient(supabaseUrl, supabaseServiceKey);
 
+    // If firm leader flow: validate token pair against firm_application_leaders (idempotency)
+    let firmLeaderRow: { id: string; assessment_status: string } | null = null;
+    if (data.firmToken && data.leaderToken) {
+      const { data: leaderRow, error: leaderErr } = await supabase
+        .from("firm_application_leaders")
+        .select("id, assessment_status")
+        .eq("firm_application_id", data.firmToken)
+        .eq("leader_token", data.leaderToken)
+        .maybeSingle();
+      if (leaderErr || !leaderRow) {
+        return new Response(
+          JSON.stringify({ error: "Invalid firm leader invitation link." }),
+          { status: 404, headers: { "Content-Type": "application/json", ...corsHeaders } }
+        );
+      }
+      if (leaderRow.assessment_status === "completed") {
+        return new Response(
+          JSON.stringify({ error: "This leader assessment link has already been used." }),
+          { status: 409, headers: { "Content-Type": "application/json", ...corsHeaders } }
+        );
+      }
+      firmLeaderRow = leaderRow as any;
+    }
+
     // Save to database (data is already validated and sanitized)
     const { data: insertedData, error: dbError } = await supabase
       .from("enrollments")
@@ -225,6 +249,7 @@ const handler = async (req: Request): Promise<Response> => {
         archetype: data.archetype || null,
         overall_score: data.overallScore,
         status: "pending",
+        source_firm_leader_token: data.leaderToken || null,
       })
       .select()
       .single();
