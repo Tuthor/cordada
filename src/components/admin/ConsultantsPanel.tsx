@@ -253,6 +253,25 @@ export function ConsultantsPanel() {
         onOpenChange={(open) => !open && setSelectedConsultant(null)}
         onUpdate={fetchConsultants}
       />
+
+      <AlertDialog open={!!confirmDelete} onOpenChange={(o) => !o && setConfirmDelete(null)}>
+        <AlertDialogContent>
+          <AlertDialogHeader>
+            <AlertDialogTitle>¿Eliminar consultor?</AlertDialogTitle>
+            <AlertDialogDescription>
+              Se eliminará a <strong>{confirmDelete?.full_name}</strong>, su cuenta de usuario, perfil, rol y todo su registro. Esta acción no se puede deshacer.
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter>
+            <AlertDialogCancel disabled={deleting}>Cancelar</AlertDialogCancel>
+            <AlertDialogAction onClick={handleDelete} disabled={deleting} className="bg-destructive text-destructive-foreground hover:bg-destructive/90">
+              {deleting && <Loader2 className="w-4 h-4 mr-2 animate-spin" />}
+              Eliminar
+            </AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
+
     </>
   );
 }
