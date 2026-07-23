@@ -28,11 +28,30 @@ export function ApplicationsPanel() {
   const [isLoading, setIsLoading] = useState(true);
   const [selectedApplication, setSelectedApplication] = useState<string | null>(null);
   const [showImportDialog, setShowImportDialog] = useState(false);
+  const [confirmDelete, setConfirmDelete] = useState<ApplicationRow | null>(null);
+  const [deleting, setDeleting] = useState(false);
   const { toast } = useToast();
 
   useEffect(() => {
     fetchApplications();
   }, []);
+
+  const handleDelete = async () => {
+    if (!confirmDelete) return;
+    setDeleting(true);
+    const { data, error } = await supabase.functions.invoke("delete-consultant-application", {
+      body: { application_id: confirmDelete.id },
+    });
+    setDeleting(false);
+    if (error || !data?.success) {
+      toast({ title: "Error", description: data?.error || error?.message || "No se pudo eliminar", variant: "destructive" });
+      return;
+    }
+    toast({ title: "Postulación eliminada" });
+    setConfirmDelete(null);
+    fetchApplications();
+  };
+
 
   const fetchApplications = async () => {
     setIsLoading(true);
