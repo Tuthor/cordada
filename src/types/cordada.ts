@@ -59,6 +59,8 @@ export interface Cordada {
   start_date: string | null;
   end_date: string | null;
   created_by: string | null;
+  visibility_mode: CordadaVisibilityMode;
+  open_filters: CordadaOpenFilters | null;
   created_at: string;
   updated_at: string;
 }
@@ -95,8 +97,6 @@ export interface CordadaRitual {
   outcomes: string | null;
   attachments: string[] | null;
   created_by: string | null;
-  visibility_mode: CordadaVisibilityMode;
-  open_filters: CordadaOpenFilters | null;
   created_at: string;
   updated_at: string;
 }
