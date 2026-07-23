@@ -90,7 +90,7 @@ const Settings = () => {
     if (data) {
       consultantForm.reset({
         headline: data.headline || '',
-        expertise: data.expertise?.join(', ') || '',
+        expertise: data.expertise ?? [],
         hourly_rate: data.hourly_rate || undefined,
         years_experience: data.years_experience || undefined,
         linkedin_url: data.linkedin_url || '',
@@ -131,9 +131,7 @@ const Settings = () => {
     if (!user) return;
     setSaving(true);
 
-    const expertiseArray = data.expertise
-      ? data.expertise.split(',').map(s => s.trim()).filter(Boolean)
-      : null;
+    const expertiseArray = data.expertise && data.expertise.length > 0 ? data.expertise : null;
 
     // Check if profile exists
     const { data: existing } = await supabase
