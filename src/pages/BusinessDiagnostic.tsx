@@ -1,6 +1,6 @@
 import BusinessAssessment from '@/components/business/BusinessAssessment';
 import { Helmet, HelmetProvider } from 'react-helmet-async';
-import { BackButton } from '@/components/BackButton';
+
 
 const BusinessDiagnostic = () => {
   return (
@@ -12,7 +12,7 @@ const BusinessDiagnostic = () => {
           content="Diagnostique la salud organizacional de su empresa. Evaluación integral en 6 dimensiones clave para identificar oportunidades de mejora."
         />
       </Helmet>
-      <BackButton floating />
+      
       <BusinessAssessment />
     </HelmetProvider>
   );
