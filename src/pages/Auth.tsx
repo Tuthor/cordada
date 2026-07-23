@@ -23,7 +23,7 @@ const signUpSchema = z.object({
   fullName: z.string().min(2, 'El nombre debe tener al menos 2 caracteres'),
   email: z.string().email('Email inválido'),
   password: z.string().min(6, 'La contraseña debe tener al menos 6 caracteres'),
-  role: z.enum(['client', 'consulting_firm', 'partner'], {
+  role: z.enum(['client', 'partner'], {
     required_error: 'Selecciona un tipo de cuenta',
   }),
 });
@@ -37,12 +37,6 @@ const roleOptions = [
     label: 'Cliente (Empresa)',
     description: 'Busco consultores para mis desafíos',
     icon: Building2,
-  },
-  {
-    value: 'consulting_firm' as const,
-    label: 'Empresa de Consultoría',
-    description: 'Gestiono un equipo de consultores',
-    icon: Users,
   },
   {
     value: 'partner' as const,
