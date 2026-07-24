@@ -25,35 +25,24 @@ const COMPANY_THRESHOLD = 10;
 const Home = () => {
   const { user } = useAuth();
 
-  // Query to get platform stats
+  // Public aggregated counts via RPC (no RLS exposure).
   const { data: platformStats } = useQuery({
     queryKey: ['platform-stats'],
     queryFn: async () => {
-      const [consultantsResult, companiesResult, projectsResult] = await Promise.all([
-        supabase
-          .from('consultant_applications')
-          .select('id', { count: 'exact', head: true })
-          .eq('status', 'aceptado'),
-        supabase
-          .from('client_companies')
-          .select('id', { count: 'exact', head: true }),
-        supabase
-          .from('cordadas')
-          .select('id', { count: 'exact', head: true })
-          .eq('status', 'convocatoria')
-      ]);
-
+      const { data, error } = await supabase.rpc('get_public_platform_stats');
+      if (error) throw error;
+      const row = Array.isArray(data) ? data[0] : data;
       return {
-        consultants: consultantsResult.count || 0,
-        companies: companiesResult.count || 0,
-        projects: projectsResult.count || 0
+        consultants: row?.consultants_accepted ?? 0,
+        companies: row?.companies ?? 0,
+        projects: row?.cordadas_convocatoria ?? 0,
       };
     },
-    staleTime: 1000 * 60 * 5, // Cache for 5 minutes
+    staleTime: 1000 * 60 * 5,
   });
 
-  const showRealStats = platformStats && 
-    platformStats.consultants >= CONSULTANT_THRESHOLD && 
+  const showRealStats = !!platformStats &&
+    platformStats.consultants >= CONSULTANT_THRESHOLD &&
     platformStats.companies >= COMPANY_THRESHOLD;
 
   const features = [
@@ -81,28 +70,6 @@ const Home = () => {
     { value: '95%', label: 'Satisfacción' },
   ];
 
-  const motivationalQuotes = [
-    {
-      quote: "Tu expertise merece el escenario correcto",
-      audience: "Consultores",
-      icon: Users
-    },
-    {
-      quote: "El talento que buscas está aquí",
-      audience: "Empresas",
-      icon: Building2
-    },
-    {
-      quote: "Conecta. Crece. Transforma.",
-      audience: "Comunidad",
-      icon: Handshake
-    },
-    {
-      quote: "Tu próximo gran proyecto te espera",
-      audience: "Consultores",
-      icon: Star
-    },
-  ];
 
   return (
     <HelmetProvider>
