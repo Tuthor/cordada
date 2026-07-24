@@ -152,10 +152,10 @@ const Home = () => {
           </div>
         </section>
 
-        {/* Stats Section */}
-        <section className="py-12 bg-card border-b border-border">
-          <div className="container mx-auto px-4">
-            {showRealStats ? (
+        {/* Stats Section — hidden until platform reaches 20 consultants + 10 companies */}
+        {showRealStats && (
+          <section className="py-12 bg-card border-b border-border">
+            <div className="container mx-auto px-4">
               <div className="grid grid-cols-2 md:grid-cols-4 gap-8">
                 {stats.map((stat) => (
                   <div key={stat.label} className="text-center">
@@ -164,24 +164,9 @@ const Home = () => {
                   </div>
                 ))}
               </div>
-            ) : (
-              <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
-                {motivationalQuotes.map((item, index) => (
-                  <div key={index} className="text-center p-4 rounded-lg bg-secondary/30">
-                    <Quote className="w-6 h-6 text-gold mx-auto mb-3" />
-                    <p className="text-lg font-medium text-foreground italic mb-2">
-                      "{item.quote}"
-                    </p>
-                    <div className="flex items-center justify-center gap-2 text-sm text-muted-foreground">
-                      <item.icon className="w-4 h-4" />
-                      <span>{item.audience}</span>
-                    </div>
-                  </div>
-                ))}
-              </div>
-            )}
-          </div>
-        </section>
+            </div>
+          </section>
+        )}
 
         {/* Features Section */}
         <section className="py-20">
