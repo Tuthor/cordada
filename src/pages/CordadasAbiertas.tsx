@@ -71,7 +71,6 @@ export default function CordadasAbiertas() {
         cover_letter: coverLetter,
         scope: scope || null,
         timeline: timeline || null,
-        is_legacy: false,
       });
       if (error) throw error;
     },

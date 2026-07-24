@@ -1,52 +1,56 @@
 
-## Contexto verificado
+# Fase F · Parte 4 — Limpieza del esquema legacy (irreversible)
 
-- `pablo@corte2.cl` (uid `35b7f848…c188c`, rol `client`) **ya es dueño** de la cordada **"Estrategia de Innovación Abierta - Minería"** (`5295db15…`), status `convocatoria`. Es la única en `convocatoria` de la base.
-- `p.corte.p@gmail.com` (uid `8689f1c7…88eb`, rol `consultant`) **no tiene fila en `consultant_applications`** (la RPC `get_my_consultant_application` devolvió `[]` en el network log). Por eso `/mis-cordadas` y el lado consultor del Inbox le salen vacíos hoy.
-- Los 5 miembros actuales de la cordada de minería son los sintéticos con `user_id = NULL` (inútiles para runtime).
+Ejecución en tres pasos, en orden estricto para no romper inserts en vuelo.
 
-Sin tocar código ni esquema, alcanza con dos inserciones para desbloquear los tres casos del smoke test.
+## Paso 1 — Ajuste de código (antes de la migración)
 
-## Sembrado propuesto (una sola migración de datos, reversible)
+`src/pages/CordadasAbiertas.tsx` (línea 74): eliminar `is_legacy: false,` del payload al insertar en `proposals`. Confirmado que es la última referencia viva a esa columna en el código de aplicación.
 
-1. Insertar en `public.consultant_applications` una fila para `p.corte.p@gmail.com`:
-   - `user_id = 8689f1c7-a3f8-443d-ad3d-9ab83d9a88eb`
-   - `full_name = 'Pablo Corte'` (mismo que `profiles`)
-   - `email = 'p.corte.p@gmail.com'`
-   - `status = 'aceptado'`
-   - `archetype` y `maturity_level`: valores plausibles (ej. `'Estratega'` / `'Alta Montaña'`) para que la fila pase por las funciones existentes, sin exponerlos al consultor.
-2. Insertar en `public.cordada_members` un miembro con `role = 'guia_alta_montana'`, `is_confirmed = true`, apuntando a esa nueva application y a la cordada `5295db15…`.
+## Paso 2 — Migración destructiva
 
-Con esto:
-- `get_my_consultant_application()` devuelve la fila de p.corte.p → `/mis-cordadas` la muestra.
-- `is_cordada_counterparty(cordada, pablo, p.corte.p)` pasa a `true` → RLS de `cordada_messages` permite el intercambio en ambos sentidos.
-- El cliente pablo, en Inbox, verá "Pablo Corte" como contraparte disponible en esa cordada.
+Ejecutar como una sola migración, en este orden:
 
-Nada de esto altera código, esquema, ni el legacy; solo son dos filas de datos.
+```sql
+-- 1. Purga legacy de proposals
+DELETE FROM public.proposals WHERE project_id IS NOT NULL;
 
-## Checklist de smoke test que hará el usuario después
+-- 2. Desacoplar proposals de projects
+ALTER TABLE public.proposals DROP CONSTRAINT IF EXISTS proposals_project_xor_cordada;
+ALTER TABLE public.proposals DROP COLUMN IF EXISTS project_id;
+ALTER TABLE public.proposals DROP COLUMN IF EXISTS is_legacy;
+ALTER TABLE public.proposals ALTER COLUMN cordada_id SET NOT NULL;
 
-Corrés estos tres casos en la app (ideal en dos navegadores/perfiles distintos para pablo y p.corte.p):
+-- 3. Retirar realtime + tablas legacy
+ALTER PUBLICATION supabase_realtime DROP TABLE public.project_messages;
+DROP TABLE public.project_messages;
+DROP TABLE public.discarded_projects;
+DROP TABLE public.projects;
 
-1. **`/mis-cordadas` (consultor p.corte.p)** — debe listar "Estrategia de Innovación Abierta - Minería". Entrar al detalle no debe explotar.
-2. **Inbox (ambos lados)**
-   - pablo abre Inbox → "Nueva conversación" → aparece "Pablo Corte" en esa cordada → envía un mensaje.
-   - p.corte.p, sin recargar, ve subir el badge del sidebar en realtime, abre Inbox, ve el mensaje con nombre del cliente ("Prueba Prueba" o el `client_company/client_name` de la cordada), responde.
-   - pablo ve la respuesta llegar en realtime y el badge decrecer al abrir el hilo.
-3. **Stats (Parte 3)**
-   - `Home.tsx`: la stat "Desafíos" debe contar **1** (la única cordada en `convocatoria`).
-   - En `ConsultantRequirements`, la ficha del cliente pablo debe reportar **1** desafío abierto.
+-- 4. Endurecer is_cordada_counterparty (pendiente de Parte 1)
+REVOKE EXECUTE ON FUNCTION public.is_cordada_counterparty(uuid, uuid, uuid) FROM PUBLIC, anon;
+GRANT  EXECUTE ON FUNCTION public.is_cordada_counterparty(uuid, uuid, uuid) TO authenticated, service_role;
+```
 
-## Post-verificación
+Advertencias:
+- Irreversible: se borran datos y tablas legacy.
+- El typecheck quedará roto en cuanto Postgres aplique el DROP y hasta que Supabase regenere `src/integrations/supabase/types.ts`. Es esperado en la ventana entre migración y regeneración.
 
-- Si los tres casos pasan → luz verde para Parte 4 (dropear `projects`, `project_messages`, `discarded_projects`, columnas legacy de `proposals`).
-- Si algo falla en runtime, lo diagnostico con los datos ya en pie (el legacy sigue disponible como red).
-- Los datos sembrados quedan como fixture útil; no es necesario borrarlos.
+## Paso 3 — Verificación post-migración
 
-## Detalle técnico
+1. `rg -n "projects|project_messages|project_id|is_legacy|discarded_projects" src` → tolerable solo en:
+   - `src/integrations/supabase/types.ts` (regenerado, ya sin `projects`/`project_messages`; matches residuales aceptables únicamente por nombres derivados como `project_x_...` en tipos regenerados).
+   - `src/App.tsx` en los `<Navigate>` de `/projects` y `/proposals` legacy.
+2. Typecheck limpio (harness lo corre automáticamente).
+3. Smoke funcional (yo lo corro con Playwright autenticado como `pablo@corte2.cl` y `p.corte.p@gmail.com`):
+   - `/cordadas-abiertas` → manifestar interés inserta en `proposals` sin `is_legacy` (200 OK).
+   - `/mis-cordadas` → sigue listando cordada de Minería.
+   - `/challenges` (cliente) → lista y detalle sin errores.
+   - Inbox → conversación cliente↔consultor visible, badge se actualiza al leer.
 
-- Uso `supabase--insert` (no migración) porque son cambios de datos, no de esquema.
-- No inserto `cordada_messages` de prueba: el punto del test 2 es que la UI las cree en vivo y valide la RLS + realtime.
-- No agrego roles ni policies; todo funciona con lo ya migrado en Partes 1–3.
+## Entregable
 
-¿Doy luz verde a las dos inserciones?
+Reporte con:
+- Archivos tocados (`CordadasAbiertas.tsx` + migración + types regenerado por Cloud).
+- Salida del `rg` de verificación.
+- Estado de los 4 smoke checks.

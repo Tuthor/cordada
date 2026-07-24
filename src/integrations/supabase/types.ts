@@ -731,35 +731,6 @@ export type Database = {
         }
         Relationships: []
       }
-      discarded_projects: {
-        Row: {
-          discarded_at: string
-          id: string
-          project_id: string
-          user_id: string
-        }
-        Insert: {
-          discarded_at?: string
-          id?: string
-          project_id: string
-          user_id: string
-        }
-        Update: {
-          discarded_at?: string
-          id?: string
-          project_id?: string
-          user_id?: string
-        }
-        Relationships: [
-          {
-            foreignKeyName: "discarded_projects_project_id_fkey"
-            columns: ["project_id"]
-            isOneToOne: false
-            referencedRelation: "projects"
-            referencedColumns: ["id"]
-          },
-        ]
-      }
       enrollments: {
         Row: {
           archetype: string | null
@@ -1135,100 +1106,15 @@ export type Database = {
         }
         Relationships: []
       }
-      project_messages: {
-        Row: {
-          created_at: string
-          id: string
-          is_read: boolean | null
-          message: string
-          project_id: string
-          recipient_id: string
-          sender_id: string
-        }
-        Insert: {
-          created_at?: string
-          id?: string
-          is_read?: boolean | null
-          message: string
-          project_id: string
-          recipient_id: string
-          sender_id: string
-        }
-        Update: {
-          created_at?: string
-          id?: string
-          is_read?: boolean | null
-          message?: string
-          project_id?: string
-          recipient_id?: string
-          sender_id?: string
-        }
-        Relationships: [
-          {
-            foreignKeyName: "project_messages_project_id_fkey"
-            columns: ["project_id"]
-            isOneToOne: false
-            referencedRelation: "projects"
-            referencedColumns: ["id"]
-          },
-        ]
-      }
-      projects: {
-        Row: {
-          budget_max: number | null
-          budget_min: number | null
-          client_id: string
-          created_at: string
-          description: string
-          duration_weeks: number | null
-          expertise_needed: string[] | null
-          id: string
-          requirements: string | null
-          status: string
-          title: string
-          updated_at: string
-        }
-        Insert: {
-          budget_max?: number | null
-          budget_min?: number | null
-          client_id: string
-          created_at?: string
-          description: string
-          duration_weeks?: number | null
-          expertise_needed?: string[] | null
-          id?: string
-          requirements?: string | null
-          status?: string
-          title: string
-          updated_at?: string
-        }
-        Update: {
-          budget_max?: number | null
-          budget_min?: number | null
-          client_id?: string
-          created_at?: string
-          description?: string
-          duration_weeks?: number | null
-          expertise_needed?: string[] | null
-          id?: string
-          requirements?: string | null
-          status?: string
-          title?: string
-          updated_at?: string
-        }
-        Relationships: []
-      }
       proposals: {
         Row: {
           attachment_url: string | null
           consultant_id: string
-          cordada_id: string | null
+          cordada_id: string
           cover_letter: string
           created_at: string
           deliverables: string | null
           id: string
-          is_legacy: boolean
-          project_id: string | null
           proposed_budget: number | null
           proposed_duration_weeks: number | null
           scope: string | null
@@ -1239,13 +1125,11 @@ export type Database = {
         Insert: {
           attachment_url?: string | null
           consultant_id: string
-          cordada_id?: string | null
+          cordada_id: string
           cover_letter: string
           created_at?: string
           deliverables?: string | null
           id?: string
-          is_legacy?: boolean
-          project_id?: string | null
           proposed_budget?: number | null
           proposed_duration_weeks?: number | null
           scope?: string | null
@@ -1256,13 +1140,11 @@ export type Database = {
         Update: {
           attachment_url?: string | null
           consultant_id?: string
-          cordada_id?: string | null
+          cordada_id?: string
           cover_letter?: string
           created_at?: string
           deliverables?: string | null
           id?: string
-          is_legacy?: boolean
-          project_id?: string | null
           proposed_budget?: number | null
           proposed_duration_weeks?: number | null
           scope?: string | null
@@ -1276,13 +1158,6 @@ export type Database = {
             columns: ["cordada_id"]
             isOneToOne: false
             referencedRelation: "cordadas"
-            referencedColumns: ["id"]
-          },
-          {
-            foreignKeyName: "proposals_project_id_fkey"
-            columns: ["project_id"]
-            isOneToOne: false
-            referencedRelation: "projects"
             referencedColumns: ["id"]
           },
         ]
