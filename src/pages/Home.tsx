@@ -16,7 +16,6 @@ import {
   CheckCircle,
   Star,
   Handshake,
-  Quote,
   ClipboardCheck
 } from 'lucide-react';
 
@@ -26,35 +25,24 @@ const COMPANY_THRESHOLD = 10;
 const Home = () => {
   const { user } = useAuth();
 
-  // Query to get platform stats
+  // Public aggregated counts via RPC (no RLS exposure).
   const { data: platformStats } = useQuery({
     queryKey: ['platform-stats'],
     queryFn: async () => {
-      const [consultantsResult, companiesResult, projectsResult] = await Promise.all([
-        supabase
-          .from('consultant_applications')
-          .select('id', { count: 'exact', head: true })
-          .eq('status', 'aceptado'),
-        supabase
-          .from('client_companies')
-          .select('id', { count: 'exact', head: true }),
-        supabase
-          .from('cordadas')
-          .select('id', { count: 'exact', head: true })
-          .eq('status', 'convocatoria')
-      ]);
-
+      const { data, error } = await supabase.rpc('get_public_platform_stats');
+      if (error) throw error;
+      const row = Array.isArray(data) ? data[0] : data;
       return {
-        consultants: consultantsResult.count || 0,
-        companies: companiesResult.count || 0,
-        projects: projectsResult.count || 0
+        consultants: row?.consultants_accepted ?? 0,
+        companies: row?.companies ?? 0,
+        projects: row?.cordadas_convocatoria ?? 0,
       };
     },
-    staleTime: 1000 * 60 * 5, // Cache for 5 minutes
+    staleTime: 1000 * 60 * 5,
   });
 
-  const showRealStats = platformStats && 
-    platformStats.consultants >= CONSULTANT_THRESHOLD && 
+  const showRealStats = !!platformStats &&
+    platformStats.consultants >= CONSULTANT_THRESHOLD &&
     platformStats.companies >= COMPANY_THRESHOLD;
 
   const features = [
@@ -82,28 +70,6 @@ const Home = () => {
     { value: '95%', label: 'Satisfacción' },
   ];
 
-  const motivationalQuotes = [
-    {
-      quote: "Tu expertise merece el escenario correcto",
-      audience: "Consultores",
-      icon: Users
-    },
-    {
-      quote: "El talento que buscas está aquí",
-      audience: "Empresas",
-      icon: Building2
-    },
-    {
-      quote: "Conecta. Crece. Transforma.",
-      audience: "Comunidad",
-      icon: Handshake
-    },
-    {
-      quote: "Tu próximo gran proyecto te espera",
-      audience: "Consultores",
-      icon: Star
-    },
-  ];
 
   return (
     <HelmetProvider>
@@ -186,10 +152,10 @@ const Home = () => {
           </div>
         </section>
 
-        {/* Stats Section */}
-        <section className="py-12 bg-card border-b border-border">
-          <div className="container mx-auto px-4">
-            {showRealStats ? (
+        {/* Stats Section — hidden until platform reaches 20 consultants + 10 companies */}
+        {showRealStats && (
+          <section className="py-12 bg-card border-b border-border">
+            <div className="container mx-auto px-4">
               <div className="grid grid-cols-2 md:grid-cols-4 gap-8">
                 {stats.map((stat) => (
                   <div key={stat.label} className="text-center">
@@ -198,24 +164,9 @@ const Home = () => {
                   </div>
                 ))}
               </div>
-            ) : (
-              <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
-                {motivationalQuotes.map((item, index) => (
-                  <div key={index} className="text-center p-4 rounded-lg bg-secondary/30">
-                    <Quote className="w-6 h-6 text-gold mx-auto mb-3" />
-                    <p className="text-lg font-medium text-foreground italic mb-2">
-                      "{item.quote}"
-                    </p>
-                    <div className="flex items-center justify-center gap-2 text-sm text-muted-foreground">
-                      <item.icon className="w-4 h-4" />
-                      <span>{item.audience}</span>
-                    </div>
-                  </div>
-                ))}
-              </div>
-            )}
-          </div>
-        </section>
+            </div>
+          </section>
+        )}
 
         {/* Features Section */}
         <section className="py-20">

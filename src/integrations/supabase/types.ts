@@ -1216,6 +1216,14 @@ export type Database = {
           user_id: string
         }[]
       }
+      get_public_platform_stats: {
+        Args: never
+        Returns: {
+          companies: number
+          consultants_accepted: number
+          cordadas_convocatoria: number
+        }[]
+      }
       get_safe_profile_data: {
         Args: { target_user_id: string }
         Returns: {
