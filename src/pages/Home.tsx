@@ -16,7 +16,6 @@ import {
   CheckCircle,
   Star,
   Handshake,
-  Quote,
   ClipboardCheck
 } from 'lucide-react';
 
