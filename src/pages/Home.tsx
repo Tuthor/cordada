@@ -67,7 +67,6 @@ const Home = () => {
     { value: `${platformStats?.consultants || 0}+`, label: 'Consultores' },
     { value: `${platformStats?.companies || 0}+`, label: 'Empresas' },
     { value: `${platformStats?.projects || 0}+`, label: 'Desafíos' },
-    { value: '95%', label: 'Satisfacción' },
   ];
 
 
@@ -125,7 +124,7 @@ const Home = () => {
             <div className="max-w-4xl mx-auto text-center">
               <div className="inline-flex items-center gap-2 px-4 py-2 rounded-full bg-mountaineer-red text-mountaineer-red-foreground mb-6">
                 <Star className="w-4 h-4" />
-                <span className="text-sm font-medium">Plataforma #1 de Consultoría B2B</span>
+                <span className="text-sm font-medium">Ágora de Colaboración Estratégica</span>
               </div>
               <h1 className="text-4xl lg:text-6xl font-bold mb-6 leading-tight">
                 Conecta con los mejores{' '}
@@ -156,7 +155,7 @@ const Home = () => {
         {showRealStats && (
           <section className="py-12 bg-card border-b border-border">
             <div className="container mx-auto px-4">
-              <div className="grid grid-cols-2 md:grid-cols-4 gap-8">
+              <div className="grid grid-cols-1 sm:grid-cols-3 gap-8">
                 {stats.map((stat) => (
                   <div key={stat.label} className="text-center">
                     <p className="text-3xl lg:text-4xl font-bold text-primary">{stat.value}</p>
@@ -219,10 +218,10 @@ const Home = () => {
                 <CardContent className="flex-1 flex flex-col">
                   <div className="space-y-3 flex-1">
                     {[
-                      'Publica tu proyecto con requisitos específicos',
+                      'Publica tu desafío con requisitos específicos',
                       'Recibe propuestas de consultores calificados',
                       'Revisa perfiles y selecciona al mejor candidato',
-                      'Gestiona el proyecto y la comunicación en un solo lugar',
+                      'Gestiona el desafío y la comunicación en un solo lugar',
                     ].map((step, i) => (
                       <div key={i} className="flex items-start gap-3">
                         <CheckCircle className="w-5 h-5 text-success flex-shrink-0 mt-0.5" />
