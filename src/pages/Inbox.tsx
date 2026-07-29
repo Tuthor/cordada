@@ -114,25 +114,21 @@ const Inbox = () => {
         .eq('client_id', user.id);
 
       if (myCordadas && myCordadas.length > 0) {
-        const ids = myCordadas.map((c) => c.id);
-        const { data: mems } = await supabase
-          .from('cordada_members')
-          .select('cordada_id, consultant:consultant_applications(user_id, full_name)')
-          .in('cordada_id', ids);
+        const { data: mems } = await supabase.rpc('get_client_cordada_consultants');
 
         (mems || []).forEach((m: any) => {
           const cordada = myCordadas.find((c) => c.id === m.cordada_id);
-          const ca = m.consultant;
-          if (!cordada || !ca?.user_id) return;
+          if (!cordada || !m.user_id) return;
           targets.push({
             cordada_id: cordada.id,
             cordada_title: cordada.title,
-            other_user_id: ca.user_id,
-            other_user_name: ca.full_name || 'Consultor',
+            other_user_id: m.user_id,
+            other_user_name: m.full_name || 'Consultor',
             role: 'client',
           });
         });
       }
+
 
       // As consultant: cordadas I'm a member of + their client
       const { data: appRows } = await supabase.rpc('get_my_consultant_application');

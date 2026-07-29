@@ -139,18 +139,24 @@ export const ClientChallengeDetailDialog = ({ cordada, open, onOpenChange }: Pro
       if (membersError) throw membersError;
       if (!membersData || membersData.length === 0) return [];
 
-      // Fetch consultant details - now client has RLS access to consultants in their cordadas
-      const consultantIds = membersData.map(m => m.consultant_id);
-      const { data: consultants } = await supabase
-        .from('consultant_applications')
-        .select('id, full_name, email, company, linkedin, archetype, maturity_level, maturity_score')
-        .in('id', consultantIds);
+      // Fetch safe consultant details via secure function (no PII beyond what's needed)
+      const { data: consultants } = await supabase.rpc('get_client_cordada_consultants', {
+        _cordada_id: cordada.id,
+      });
 
       // Map consultants to members
       return membersData.map(member => ({
         ...member,
-        consultant: consultants?.find(c => c.id === member.consultant_id) || { id: member.consultant_id, full_name: 'Consultor asignado' },
+        consultant: consultants?.find((c: any) => c.consultant_id === member.consultant_id)
+          ? {
+              id: member.consultant_id,
+              full_name: consultants.find((c: any) => c.consultant_id === member.consultant_id)!.full_name,
+              company: consultants.find((c: any) => c.consultant_id === member.consultant_id)!.company,
+              linkedin: consultants.find((c: any) => c.consultant_id === member.consultant_id)!.linkedin,
+            }
+          : { id: member.consultant_id, full_name: 'Consultor asignado' },
       })) as CordadaMember[];
+
     },
     enabled: !!cordada?.id && cordada.status !== 'draft',
   });
